@@ -9,6 +9,12 @@ import { PORTS } from "../../data/ports";
 import type { Port } from "../../data/types";
 import type { OwnedShip } from "../../data/types";
 
+/** Ship data enriched with player info for rendering on the map. */
+export interface MapShipData {
+  ship: OwnedShip;
+  playerIndex: number;
+}
+
 /** Port marker info for rendering and interaction. */
 interface PortMarker {
   port: Port;
@@ -20,8 +26,13 @@ interface PortMarker {
 /** Ship marker for rendering on the map. */
 interface ShipMarker {
   ship: OwnedShip;
+  playerIndex: number;
   x: number;
   y: number;
+  /** Destination coordinates if ship has cargo destination. */
+  destX?: number;
+  destY?: number;
+  destPortName?: string;
 }
 
 /** Callback types for port interaction. */
@@ -36,10 +47,13 @@ export class WorldMapCanvas {
   private portMarkers: PortMarker[] = [];
   private shipMarkers: ShipMarker[] = [];
   private hoveredPort: Port | null = null;
+  private hoveredShip: ShipMarker | null = null;
+  private mouseX = 0;
+  private mouseY = 0;
   private selectedPortId: string | null = null;
   private callbacks: WorldMapCanvasCallbacks;
   private resizeObserver: ResizeObserver | null = null;
-  private ships: OwnedShip[] = [];
+  private shipDataList: MapShipData[] = [];
   private homePortId: string | null = null;
 
   // Map rendering constants
@@ -49,7 +63,24 @@ export class WorldMapCanvas {
   private readonly PORT_COLOR = "#d4a844";
   private readonly PORT_HOVER_COLOR = "#f0c860";
   private readonly PORT_SELECTED_COLOR = "#ff8844";
-  private readonly SHIP_COLOR = "#ff4444";
+  private readonly PLAYER_SHIP_COLORS = [
+    "#c87533", // Player 1: copper
+    "#33aa55", // Player 2: green
+    "#3377cc", // Player 3: blue
+    "#cc33aa", // Player 4: magenta
+    "#ccaa33", // Player 5: gold
+    "#33cccc", // Player 6: teal
+    "#cc5533", // Player 7: orange-red
+  ];
+  private readonly PLAYER_SHIP_BORDER_COLORS = [
+    "#8b4f1f",
+    "#1f7733",
+    "#1f4f8b",
+    "#8b1f77",
+    "#8b771f",
+    "#1f8b8b",
+    "#8b331f",
+  ];
   private readonly HOME_PORT_COLOR = "#44aaff";
   private readonly PORT_RADIUS = 4;
   private readonly PORT_HOVER_RADIUS = 7;
@@ -83,8 +114,8 @@ export class WorldMapCanvas {
   }
 
   /** Set the ships to display on the map. */
-  setShips(ships: OwnedShip[]): void {
-    this.ships = ships;
+  setShips(ships: MapShipData[]): void {
+    this.shipDataList = ships;
     this.updateShipMarkers();
     this.render();
   }
@@ -179,11 +210,15 @@ export class WorldMapCanvas {
     // Draw port markers
     this.drawPorts();
 
+    // Draw route lines (below ships, above ports)
+    this.drawRoutes();
+
     // Draw ship markers
     this.drawShips();
 
-    // Draw hover tooltip
+    // Draw hover tooltip (port or ship)
     this.drawTooltip();
+    this.drawShipTooltip();
   }
 
   /** Draw subtle grid lines for latitude/longitude reference. */
@@ -252,15 +287,29 @@ export class WorldMapCanvas {
   /** Update ship marker positions based on current canvas size. */
   private updateShipMarkers(): void {
     this.shipMarkers = [];
-    for (const ship of this.ships) {
+    for (const data of this.shipDataList) {
+      const { ship, playerIndex } = data;
       if (ship.currentPortId) {
         const port = PORTS.find((p) => p.id === ship.currentPortId);
         if (port) {
-          this.shipMarkers.push({
+          const marker: ShipMarker = {
             ship,
+            playerIndex,
             x: this.lngToX(port.lng),
             y: this.latToY(port.lat),
-          });
+          };
+
+          // If ship has a cargo destination, compute route endpoint
+          if (ship.cargoDestinationPortId) {
+            const destPort = PORTS.find((p) => p.id === ship.cargoDestinationPortId);
+            if (destPort) {
+              marker.destX = this.lngToX(destPort.lng);
+              marker.destY = this.latToY(destPort.lat);
+              marker.destPortName = destPort.name;
+            }
+          }
+
+          this.shipMarkers.push(marker);
         }
       }
     }
@@ -312,22 +361,108 @@ export class WorldMapCanvas {
     }
   }
 
-  /** Draw ship position markers. */
-  private drawShips(): void {
+  /** Draw dashed route lines from ship origin to cargo destination. */
+  private drawRoutes(): void {
     for (const marker of this.shipMarkers) {
-      // Draw a small triangle/diamond shape for ships
-      const size = 6;
+      if (marker.destX == null || marker.destY == null) continue;
+
+      const color = this.PLAYER_SHIP_COLORS[marker.playerIndex % this.PLAYER_SHIP_COLORS.length];
+
+      this.ctx.save();
+      this.ctx.setLineDash([6, 4]);
+      this.ctx.strokeStyle = color;
+      this.ctx.globalAlpha = 0.6;
+      this.ctx.lineWidth = 1.5;
       this.ctx.beginPath();
-      this.ctx.moveTo(marker.x, marker.y - size - 4);
-      this.ctx.lineTo(marker.x + size / 2, marker.y - size / 2 - 4);
-      this.ctx.lineTo(marker.x, marker.y - 4);
-      this.ctx.lineTo(marker.x - size / 2, marker.y - size / 2 - 4);
+      this.ctx.moveTo(marker.x, marker.y);
+      this.ctx.lineTo(marker.destX, marker.destY);
+      this.ctx.stroke();
+      this.ctx.restore();
+    }
+  }
+
+  /** Draw ship position markers as colored diamonds. */
+  private drawShips(): void {
+    // Stack offset: if multiple ships at same port, offset them
+    const positionCounts = new Map<string, number>();
+
+    for (const marker of this.shipMarkers) {
+      const key = `${Math.round(marker.x)},${Math.round(marker.y)}`;
+      const idx = positionCounts.get(key) ?? 0;
+      positionCounts.set(key, idx + 1);
+
+      const size = 8;
+      const offsetX = idx * (size + 2);
+      const drawX = marker.x + offsetX;
+      const drawY = marker.y - size - 4;
+
+      const fillColor = this.PLAYER_SHIP_COLORS[marker.playerIndex % this.PLAYER_SHIP_COLORS.length];
+      const borderColor = this.PLAYER_SHIP_BORDER_COLORS[marker.playerIndex % this.PLAYER_SHIP_BORDER_COLORS.length];
+
+      // Diamond shape
+      this.ctx.beginPath();
+      this.ctx.moveTo(drawX, drawY - size / 2);       // top
+      this.ctx.lineTo(drawX + size / 2, drawY);       // right
+      this.ctx.lineTo(drawX, drawY + size / 2);       // bottom
+      this.ctx.lineTo(drawX - size / 2, drawY);       // left
       this.ctx.closePath();
-      this.ctx.fillStyle = this.SHIP_COLOR;
+      this.ctx.fillStyle = fillColor;
       this.ctx.fill();
-      this.ctx.strokeStyle = "#aa0000";
+      this.ctx.strokeStyle = borderColor;
       this.ctx.lineWidth = 1;
       this.ctx.stroke();
+    }
+  }
+
+  /** Draw tooltip for hovered ship. */
+  private drawShipTooltip(): void {
+    if (!this.hoveredShip) return;
+
+    const { ship } = this.hoveredShip;
+    const lines = [
+      ship.name,
+      `Condition: ${ship.conditionPercent}%`,
+      `Fuel: ${ship.fuelTons}t`,
+    ];
+    if (ship.cargoType) {
+      lines.push(`Cargo: ${ship.cargoType}`);
+    }
+    if (ship.isLaidUp) {
+      lines.push("(Laid up)");
+    }
+
+    this.ctx.font = "bold 11px Inter, sans-serif";
+    const padding = 8;
+    const lineHeight = 15;
+    const maxWidth = Math.max(...lines.map((l) => this.ctx.measureText(l).width));
+    const tooltipWidth = maxWidth + padding * 2;
+    const tooltipHeight = lines.length * lineHeight + padding * 2;
+
+    // Position near the mouse cursor
+    let tx = this.mouseX + 12;
+    let ty = this.mouseY - tooltipHeight / 2;
+
+    // Keep within canvas bounds
+    tx = Math.max(4, Math.min(this.canvas.width - tooltipWidth - 4, tx));
+    ty = Math.max(4, Math.min(this.canvas.height - tooltipHeight - 4, ty));
+
+    // Background
+    this.ctx.fillStyle = "rgba(26, 26, 46, 0.94)";
+    this.ctx.strokeStyle = "rgba(200, 117, 51, 0.7)";
+    this.ctx.lineWidth = 1;
+    this.ctx.beginPath();
+    this.ctx.roundRect(tx, ty, tooltipWidth, tooltipHeight, 4);
+    this.ctx.fill();
+    this.ctx.stroke();
+
+    // Text
+    this.ctx.fillStyle = "#e8e4d9";
+    this.ctx.textAlign = "left";
+    this.ctx.textBaseline = "top";
+    for (let i = 0; i < lines.length; i++) {
+      // First line (name) is bold, rest are normal
+      this.ctx.font = i === 0 ? "bold 11px Inter, sans-serif" : "11px Inter, sans-serif";
+      this.ctx.fillText(lines[i], tx + padding, ty + padding + i * lineHeight);
     }
   }
 
@@ -390,12 +525,28 @@ export class WorldMapCanvas {
     const mx = (e.clientX - rect.left) * scaleX;
     const my = (e.clientY - rect.top) * scaleY;
 
+    this.mouseX = mx;
+    this.mouseY = my;
+
     const hitPort = this.findPortAt(mx, my);
+    const hitShip = this.findShipAt(mx, my);
+
+    let needsRender = false;
 
     if (hitPort !== this.hoveredPort) {
       this.hoveredPort = hitPort;
-      this.canvas.style.cursor = hitPort ? "pointer" : "default";
       this.callbacks.onPortHover?.(hitPort);
+      needsRender = true;
+    }
+
+    if (hitShip !== this.hoveredShip) {
+      this.hoveredShip = hitShip;
+      needsRender = true;
+    }
+
+    this.canvas.style.cursor = (hitPort || hitShip) ? "pointer" : "default";
+
+    if (needsRender || hitShip) {
       this.render();
     }
   }
@@ -416,8 +567,9 @@ export class WorldMapCanvas {
   }
 
   private handleMouseLeave(): void {
-    if (this.hoveredPort) {
+    if (this.hoveredPort || this.hoveredShip) {
       this.hoveredPort = null;
+      this.hoveredShip = null;
       this.canvas.style.cursor = "default";
       this.callbacks.onPortHover?.(null);
       this.render();
@@ -432,6 +584,30 @@ export class WorldMapCanvas {
       const dy = y - marker.y;
       if (dx * dx + dy * dy <= hitRadius * hitRadius) {
         return marker.port;
+      }
+    }
+    return null;
+  }
+
+  /** Find a ship marker at a given canvas coordinate, if any. */
+  private findShipAt(x: number, y: number): ShipMarker | null {
+    const hitRadius = 10;
+    const positionCounts = new Map<string, number>();
+
+    for (const marker of this.shipMarkers) {
+      const key = `${Math.round(marker.x)},${Math.round(marker.y)}`;
+      const idx = positionCounts.get(key) ?? 0;
+      positionCounts.set(key, idx + 1);
+
+      const size = 8;
+      const offsetX = idx * (size + 2);
+      const drawX = marker.x + offsetX;
+      const drawY = marker.y - size - 4;
+
+      const dx = x - drawX;
+      const dy = y - drawY;
+      if (dx * dx + dy * dy <= hitRadius * hitRadius) {
+        return marker;
       }
     }
     return null;

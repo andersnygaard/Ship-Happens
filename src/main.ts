@@ -17,6 +17,7 @@ import { ShipModel } from './scene/ShipModel';
 import { SkySystem } from './scene/SkySystem';
 import { AudioSystem } from './audio/AudioSystem';
 import { toast } from './ui/components/Toast';
+import { tutorialSystem } from './game/TutorialSystem';
 
 // Ship Happens - Main entry point
 // Sets up a Three.js scene with animated ocean, ship, and day/night cycle.
@@ -113,6 +114,8 @@ function onGameCreated(state: FullGameState): void {
     `Game started with ${state.players.length} player(s)!`,
     "success",
   );
+  // Reset tutorial for new game so first-time hints appear
+  tutorialSystem.reset();
 }
 
 // Register all screens
@@ -145,6 +148,9 @@ screenManager.showScreen = (id) => {
         toast.show(neglectResult.message, "error");
       }
     }
+
+    // Update tutorial progress based on current game state
+    tutorialSystem.checkAutoComplete(state);
 
     // Check for bankruptcy after any screen transition (except setup/gameover)
     if (checkBankruptcy(state)) {

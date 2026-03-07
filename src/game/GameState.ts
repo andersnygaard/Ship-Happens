@@ -25,6 +25,7 @@ import {
   credit,
   debit,
   canAfford,
+  makeMortgagePayment,
 } from "./FinancialSystem";
 
 import {
@@ -38,6 +39,7 @@ import {
   applyVoyageWear,
   consumeFuel,
   getDailyOperatingCost,
+  calculateShipValue,
   PurchaseResult,
   RepairResult,
   RefuelResult,
@@ -257,6 +259,63 @@ export function reactivatePlayerShip(state: FullGameState, shipIndex: number): {
   return { success: true, message: `${ship.name} has been reactivated.` };
 }
 
+/**
+ * Sell a ship at the broker. Credits sale proceeds minus any outstanding mortgage.
+ * Cannot sell a ship that has cargo loaded or is at sea.
+ */
+export function sellShip(
+  state: FullGameState,
+  shipIndex: number,
+): { success: boolean; salePrice: number; mortgageDeducted: number; netProceeds: number; message: string } {
+  const player = getActivePlayer(state);
+  const ship = player.ships[shipIndex];
+  if (!ship) {
+    return { success: false, salePrice: 0, mortgageDeducted: 0, netProceeds: 0, message: "Ship not found." };
+  }
+  if (!ship.currentPortId) {
+    return { success: false, salePrice: 0, mortgageDeducted: 0, netProceeds: 0, message: "Ship must be in port to sell." };
+  }
+  if (ship.cargoType !== null) {
+    return { success: false, salePrice: 0, mortgageDeducted: 0, netProceeds: 0, message: "Unload cargo before selling." };
+  }
+  if (player.ships.length <= 1 && getPlayerBalance(player) < BANKRUPTCY_BALANCE_THRESHOLD) {
+    return { success: false, salePrice: 0, mortgageDeducted: 0, netProceeds: 0, message: "Cannot sell your last ship while in debt." };
+  }
+
+  const time = getTimeSnapshot(state.time);
+  const valuation = calculateShipValue(ship, time.week, time.year);
+  const salePrice = valuation.salePrice;
+
+  // Deduct outstanding mortgage from sale proceeds
+  const mortgageDeducted = Math.min(ship.mortgageRemaining, salePrice);
+  const netProceeds = salePrice - mortgageDeducted;
+
+  // Credit net proceeds
+  if (netProceeds > 0) {
+    credit(player.finances, netProceeds, `Sale of ${ship.name}`, time);
+  }
+
+  // Clear mortgage from financial system
+  const shipKey = `${ship.specId}-${ship.name.replace("MS ", "")}`;
+  if (player.finances.mortgages[shipKey]) {
+    delete player.finances.mortgages[shipKey];
+  }
+
+  // Remove active charter if any
+  delete player.activeCharters[ship.name];
+
+  // Remove ship from fleet
+  player.ships.splice(shipIndex, 1);
+
+  return {
+    success: true,
+    salePrice,
+    mortgageDeducted,
+    netProceeds,
+    message: `Sold ${ship.name} for $${salePrice.toLocaleString()}.${mortgageDeducted > 0 ? ` Mortgage settled: $${mortgageDeducted.toLocaleString()}.` : ""} Net proceeds: $${netProceeds.toLocaleString()}.`,
+  };
+}
+
 // ─── Charter Actions ─────────────────────────────────────────────────────────
 
 /**
@@ -392,7 +451,7 @@ export function endTurn(state: FullGameState): { newRound: boolean; message: str
     // Advance time by one week
     advanceWeek(state.time);
 
-    // Apply weekly operating costs for all players
+    // Apply weekly operating costs and mortgage payments for all players
     const time = getTimeSnapshot(state.time);
     for (const player of state.players) {
       for (const ship of player.ships) {
@@ -400,6 +459,19 @@ export function endTurn(state: FullGameState): { newRound: boolean; message: str
         const weeklyCost = dailyCost * DAYS_PER_WEEK;
         if (weeklyCost > 0) {
           debit(player.finances, weeklyCost, `Weekly operating costs for ${ship.name}`, time);
+        }
+
+        // Deduct weekly mortgage payment if outstanding
+        if (ship.mortgageRemaining > 0 && ship.mortgagePayment > 0) {
+          const payment = Math.min(ship.mortgagePayment, ship.mortgageRemaining);
+          const shipKey = `${ship.specId}-${ship.name.replace("MS ", "")}`;
+          const mortgageResult = makeMortgagePayment(player.finances, shipKey, payment, time);
+          if (mortgageResult.success) {
+            ship.mortgageRemaining = Math.max(0, ship.mortgageRemaining - payment);
+            if (ship.mortgageRemaining <= 0) {
+              ship.mortgagePayment = 0;
+            }
+          }
         }
       }
     }

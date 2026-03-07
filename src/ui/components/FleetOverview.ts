@@ -38,7 +38,7 @@ export function renderFleetOverview(data: FleetOverviewData): HTMLElement {
   // Header row
   const thead = document.createElement("thead");
   const headerRow = document.createElement("tr");
-  const headers = ["Ship", "Type", "Condition", "Fuel", "Port", "Cargo", "Daily Cost"];
+  const headers = ["Ship", "Type", "Condition", "Fuel", "Port", "Cargo", "Daily Cost", "Mortgage"];
   for (const h of headers) {
     const th = document.createElement("th");
     th.textContent = h;
@@ -117,6 +117,18 @@ export function renderFleetOverview(data: FleetOverviewData): HTMLElement {
     tdCost.className = "data-display";
     tdCost.textContent = `$${dailyCost.toLocaleString()}`;
     row.appendChild(tdCost);
+
+    // Mortgage
+    const tdMortgage = document.createElement("td");
+    tdMortgage.className = "data-display";
+    if (ship.mortgageRemaining > 0) {
+      tdMortgage.textContent = `$${(ship.mortgageRemaining / 1_000_000).toFixed(2)}M`;
+      tdMortgage.title = `Weekly payment: $${ship.mortgagePayment.toLocaleString()}`;
+    } else {
+      tdMortgage.textContent = "Paid off";
+      tdMortgage.classList.add("office-text-muted");
+    }
+    row.appendChild(tdMortgage);
 
     tbody.appendChild(row);
   }

@@ -64,6 +64,14 @@ export interface OwnedShip {
   cargoDestinationPortId: string | null;
   isLaidUp: boolean;
   mortgagePercent: number;
+  /** Remaining mortgage balance in dollars. */
+  mortgageRemaining: number;
+  /** Weekly mortgage payment amount in dollars. */
+  mortgagePayment: number;
+  /** Week the ship was purchased (for age-based depreciation). */
+  purchaseWeek: number;
+  /** Year the ship was purchased (for age-based depreciation). */
+  purchaseYear: number;
 }
 
 // ─── Charter Contract ───────────────────────────────────────────────────────

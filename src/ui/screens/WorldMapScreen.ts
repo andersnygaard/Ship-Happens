@@ -17,6 +17,7 @@ import {
 } from "../../game/GameState";
 import type { FullGameState } from "../../game/GameState";
 import { WorldMapCanvas } from "../components/WorldMapCanvas";
+import type { MapShipData } from "../components/WorldMapCanvas";
 import { NewsTicker } from "../components/NewsTicker";
 import { TurnIndicator } from "../components/TurnIndicator";
 import { TurnTransition } from "../components/TurnTransition";
@@ -28,6 +29,9 @@ import { getShipSpecById } from "../../data/ships";
 import { calculateTravelDays } from "../../game/TimeSystem";
 import { AudioSystem } from "../../audio/AudioSystem";
 import { toast } from "../components/Toast";
+import { createShipSelector } from "../components/ShipSelector";
+import { helpPanel } from "../components/HelpPanel";
+import { tutorialSystem } from "../../game/TutorialSystem";
 
 export class WorldMapScreen implements GameScreen {
   private container: HTMLElement;
@@ -41,6 +45,9 @@ export class WorldMapScreen implements GameScreen {
   private newsTicker: NewsTicker | null = null;
   private turnIndicator: TurnIndicator | null = null;
   private turnTransition: TurnTransition | null = null;
+  /** Index of the active ship for travel. */
+  public activeShipIndex: number = 0;
+  private boundKeyHandler: ((e: KeyboardEvent) => void) | null = null;
 
   constructor(private screenManager: ScreenManager) {
     this.container = document.createElement("div");
@@ -65,6 +72,23 @@ export class WorldMapScreen implements GameScreen {
     this.newsTicker = new NewsTicker();
     this.newsTicker.attach(this.container);
 
+    // ── Ship selector (when player has multiple ships) ───────────────
+    if (state) {
+      const player = getActivePlayer(state);
+      if (this.activeShipIndex >= player.ships.length) {
+        this.activeShipIndex = 0;
+      }
+      const selector = createShipSelector(player.ships, this.activeShipIndex, {
+        onSelect: (index) => {
+          this.activeShipIndex = index;
+          this.screenManager.showScreen("worldmap");
+        },
+      });
+      if (selector) {
+        this.container.appendChild(selector);
+      }
+    }
+
     // ── Main content area (map + sidebar) ─────────────────────────────
     const mainArea = document.createElement("div");
     mainArea.className = "worldmap-main";
@@ -83,7 +107,14 @@ export class WorldMapScreen implements GameScreen {
     // Set ship data if game state exists
     if (state) {
       const player = getActivePlayer(state);
-      this.mapCanvas.setShips(player.ships);
+      // Collect ships from all players with their player index for color-coding
+      const allShipData: MapShipData[] = [];
+      for (let i = 0; i < state.players.length; i++) {
+        for (const ship of state.players[i].ships) {
+          allShipData.push({ ship, playerIndex: i });
+        }
+      }
+      this.mapCanvas.setShips(allShipData);
       this.mapCanvas.setHomePort(player.homePortId);
     }
 
@@ -133,6 +164,25 @@ export class WorldMapScreen implements GameScreen {
     const footer = this.buildFooter(state);
     this.container.appendChild(footer);
 
+    // ── Keyboard shortcut: H to toggle help ──────────────────────────
+    this.boundKeyHandler = (e: KeyboardEvent) => {
+      // Ignore if user is typing in an input
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+
+      if (e.key === "h" || e.key === "H") {
+        e.preventDefault();
+        helpPanel.toggle();
+      }
+    };
+    document.addEventListener("keydown", this.boundKeyHandler);
+
+    // ── Tutorial: show contextual hint for new players ───────────────
+    if (state) {
+      tutorialSystem.checkAutoComplete(state);
+      tutorialSystem.showContextualHint(state);
+    }
+
     return this.container;
   }
 
@@ -148,6 +198,14 @@ export class WorldMapScreen implements GameScreen {
     if (this.turnTransition) {
       this.turnTransition.dismiss();
       this.turnTransition = null;
+    }
+    if (this.boundKeyHandler) {
+      document.removeEventListener("keydown", this.boundKeyHandler);
+      this.boundKeyHandler = null;
+    }
+    // Close help panel if open when leaving screen
+    if (helpPanel.getIsOpen()) {
+      helpPanel.close();
     }
     this.turnIndicator = null;
     this.startActionBtn = null;
@@ -216,6 +274,13 @@ export class WorldMapScreen implements GameScreen {
         this.screenManager.showScreen("shipbroker");
       }),
     );
+
+    // Help button (? icon) at the bottom of the sidebar
+    const helpBtn = this.createSidebarBtn("Help", "help", () => {
+      helpPanel.toggle();
+    });
+    helpBtn.classList.add("help-btn");
+    sidebar.appendChild(helpBtn);
 
     return sidebar;
   }
@@ -329,7 +394,7 @@ export class WorldMapScreen implements GameScreen {
     const state = this.screenManager.getGameState();
     if (state) {
       const player = getActivePlayer(state);
-      const activeShip = player.ships.find(
+      const activeShip = player.ships[this.activeShipIndex] ?? player.ships.find(
         (s) => s.currentPortId !== null && !s.isLaidUp,
       );
       if (activeShip && activeShip.currentPortId) {
@@ -397,13 +462,24 @@ export class WorldMapScreen implements GameScreen {
       return;
     }
 
-    // Check if we can start travel
-    const shipIndex = player.ships.findIndex(
-      (s) => s.currentPortId !== null && !s.isLaidUp,
-    );
+    // Use the active ship index (from ship selector)
+    let shipIndex = this.activeShipIndex;
+    if (shipIndex >= player.ships.length) {
+      shipIndex = 0;
+      this.activeShipIndex = 0;
+    }
 
-    if (shipIndex === -1) {
-      this.showStatusMessage("No ships available in port.");
+    const selectedShip = player.ships[shipIndex];
+    if (!selectedShip) {
+      this.showStatusMessage("No ships available.");
+      return;
+    }
+    if (!selectedShip.currentPortId) {
+      this.showStatusMessage(`${selectedShip.name} is at sea. Select a different ship.`);
+      return;
+    }
+    if (selectedShip.isLaidUp) {
+      this.showStatusMessage(`${selectedShip.name} is laid up. Reactivate it at the port first.`);
       return;
     }
 
@@ -642,6 +718,13 @@ export class WorldMapScreen implements GameScreen {
           <path d="M4 18V8l8-4 8 4v10"/>
           <path d="M12 4v6"/>
           <rect x="8" y="14" width="8" height="4"/>
+        </svg>`;
+        break;
+      case "help":
+        icon.innerHTML = `<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+          <line x1="12" y1="17" x2="12.01" y2="17"/>
         </svg>`;
         break;
     }

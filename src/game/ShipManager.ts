@@ -11,6 +11,7 @@ import {
   FUEL_COST_MIN_MULTIPLIER,
   FUEL_COST_MAX_MULTIPLIER,
   CONDITION_LOSS_PER_VOYAGE_BASE,
+  WEEKS_PER_YEAR,
 } from "../data/constants";
 import {
   FinancialState,
@@ -131,6 +132,10 @@ export function purchaseShip(
 
   const mortgagePercent = 100 - depositPercent;
 
+  // Calculate weekly mortgage payment (spread over 5 years = 260 weeks)
+  const mortgageTermWeeks = 5 * WEEKS_PER_YEAR;
+  const weeklyPayment = mortgageAmount > 0 ? Math.round(mortgageAmount / mortgageTermWeeks) : 0;
+
   const ship: OwnedShip = {
     specId,
     name: `MS ${name}`,
@@ -142,6 +147,10 @@ export function purchaseShip(
     cargoDestinationPortId: null,
     isLaidUp: false,
     mortgagePercent,
+    mortgageRemaining: mortgageAmount,
+    mortgagePayment: weeklyPayment,
+    purchaseWeek: time.week,
+    purchaseYear: time.year,
   };
 
   return {
@@ -380,4 +389,46 @@ export function getDailyOperatingCost(ship: OwnedShip): number {
  */
 export function getShipSpec(ship: OwnedShip): ShipSpec | undefined {
   return getShipSpecById(ship.specId);
+}
+
+/** Result of a ship sale valuation. */
+export interface ShipValuation {
+  readonly originalPrice: number;
+  readonly conditionFactor: number;
+  readonly ageFactor: number;
+  readonly salePrice: number;
+}
+
+/**
+ * Calculate the current market value of a ship for selling.
+ * Sale price = originalPrice * conditionFactor * ageFactor
+ * - conditionFactor: conditionPercent / 100 (0.0 - 1.0)
+ * - ageFactor: depreciates from 0.8 down to 0.5 over time (about 0.02 per year)
+ * Overall sale returns 50-80% of original price depending on condition and age.
+ */
+export function calculateShipValue(
+  ship: OwnedShip,
+  currentWeek: number,
+  currentYear: number,
+): ShipValuation {
+  const spec = getShipSpecById(ship.specId);
+  if (!spec) {
+    return { originalPrice: 0, conditionFactor: 0, ageFactor: 0, salePrice: 0 };
+  }
+
+  const originalPrice = spec.priceMillions * 1_000_000;
+  const conditionFactor = ship.conditionPercent / 100;
+
+  // Calculate age in years (fractional)
+  const totalWeeksOwned =
+    (currentYear * WEEKS_PER_YEAR + currentWeek) -
+    (ship.purchaseYear * WEEKS_PER_YEAR + ship.purchaseWeek);
+  const ageYears = Math.max(0, totalWeeksOwned / WEEKS_PER_YEAR);
+
+  // Age depreciation: starts at 0.8 and drops by 0.02 per year, minimum 0.5
+  const ageFactor = Math.max(0.5, 0.8 - ageYears * 0.02);
+
+  const salePrice = Math.round(originalPrice * conditionFactor * ageFactor);
+
+  return { originalPrice, conditionFactor, ageFactor, salePrice };
 }
