@@ -413,6 +413,290 @@
   min-width: 200px;
 }
 
+/* ─── Office Screen ───────────────────────────────────────────────────── */
+
+.office-screen {
+  background: radial-gradient(
+    ellipse at center,
+    rgba(35, 35, 56, 0.98) 0%,
+    rgba(26, 26, 46, 0.99) 70%
+  );
+  flex-direction: column;
+  padding: 0;
+}
+
+/* Status bar at the top */
+.office-status-bar {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-md) var(--spacing-lg);
+  background: var(--color-bg-dark);
+  border-bottom: var(--border-copper);
+  flex-shrink: 0;
+}
+
+.office-company-name {
+  font-size: 24px;
+  letter-spacing: 0.04em;
+}
+
+.office-stats {
+  display: flex;
+  gap: var(--spacing-xl);
+  align-items: center;
+}
+
+.office-stat-item {
+  display: flex;
+  gap: var(--spacing-sm);
+  align-items: baseline;
+  font-family: var(--font-data);
+  font-size: 14px;
+}
+
+.office-stat-item .label {
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+}
+
+.office-stat-item .value {
+  color: var(--color-text-accent);
+  font-size: 18px;
+  font-weight: 600;
+}
+
+/* Main content area with two panels */
+.office-main {
+  flex: 1;
+  display: flex;
+  gap: var(--spacing-lg);
+  padding: var(--spacing-lg);
+  overflow: hidden;
+  min-height: 0;
+}
+
+.office-panel {
+  flex: 1;
+  min-width: 0;
+  overflow-y: auto;
+}
+
+.office-panel-title {
+  font-size: 18px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: var(--spacing-md);
+}
+
+.office-empty-msg {
+  color: var(--color-text-muted);
+  font-size: 14px;
+  font-style: italic;
+  padding: var(--spacing-md) 0;
+}
+
+/* Fleet overview table */
+.office-fleet-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.office-fleet-table th {
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  text-align: left;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-bottom: 1px solid var(--color-copper);
+}
+
+.office-fleet-table td {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-bottom: 1px solid rgba(74, 74, 96, 0.3);
+  color: var(--color-text-primary);
+  font-size: 13px;
+}
+
+.office-fleet-table tbody tr:hover {
+  background: rgba(74, 74, 96, 0.15);
+}
+
+.office-fleet-ship-name {
+  font-weight: 600;
+  color: var(--color-text-accent);
+  white-space: nowrap;
+}
+
+.office-ship-laid-up td {
+  opacity: 0.6;
+}
+
+.office-laid-up-badge {
+  display: inline-block;
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  background: var(--color-bg-light);
+  border: 1px solid rgba(74, 74, 96, 0.5);
+  border-radius: 2px;
+  padding: 1px 4px;
+  margin-left: var(--spacing-xs);
+  vertical-align: middle;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.office-condition-good {
+  color: var(--color-success);
+}
+
+.office-condition-warn {
+  color: var(--color-gold);
+}
+
+.office-condition-danger {
+  color: var(--color-danger);
+}
+
+.office-cargo-dest {
+  color: var(--color-text-secondary);
+  font-size: 12px;
+}
+
+.office-text-muted {
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
+/* Financial summary */
+.office-balance-display {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: var(--spacing-md);
+  background: var(--color-bg-dark);
+  border: 1px solid rgba(74, 74, 96, 0.5);
+  border-radius: var(--border-radius);
+  margin-bottom: var(--spacing-md);
+}
+
+.office-balance-label {
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.office-balance-value {
+  font-size: 20px;
+  color: var(--color-text-accent);
+}
+
+.office-tx-title {
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: var(--spacing-sm);
+  padding-bottom: var(--spacing-xs);
+  border-bottom: 1px solid rgba(74, 74, 96, 0.3);
+}
+
+.office-tx-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.office-tx-row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: 2px;
+  font-size: 13px;
+}
+
+.office-tx-row:hover {
+  background: rgba(74, 74, 96, 0.1);
+}
+
+.office-tx-desc {
+  flex: 1;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.office-tx-amount {
+  flex-shrink: 0;
+  font-size: 13px;
+}
+
+.office-tx-credit .office-tx-amount {
+  color: var(--color-success);
+}
+
+.office-tx-debit .office-tx-amount {
+  color: var(--color-danger);
+}
+
+.office-tx-time {
+  flex-shrink: 0;
+  font-family: var(--font-data);
+  font-size: 11px;
+  color: var(--color-text-muted);
+}
+
+/* Footer buttons */
+.office-footer {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md) var(--spacing-lg);
+  background: var(--color-bg-dark);
+  border-top: var(--border-rivet);
+  flex-shrink: 0;
+}
+
+.office-footer-btn {
+  min-width: 120px;
+}
+
+/* Office dialog (Info / Status) */
+.office-dialog {
+  max-width: 420px;
+  width: 90%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.office-dialog-content {
+  font-size: 14px;
+  line-height: 1.8;
+  color: var(--color-text-secondary);
+}
+
+.office-dialog-content strong {
+  color: var(--color-text-primary);
+}
+
 /* ─── Ship Broker Screen ───────────────────────────────────────────────── */
 
 .shipbroker-screen {
@@ -789,4 +1073,703 @@
   color: var(--color-text-primary);
   line-height: 1.6;
   padding: var(--spacing-md) 0;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Port Operations Screen
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.port-operations-screen {
+  background: radial-gradient(
+    ellipse at center,
+    rgba(45, 45, 68, 0.98) 0%,
+    rgba(26, 26, 46, 0.99) 70%
+  );
+  flex-direction: column;
+  padding: var(--spacing-md);
+  gap: var(--spacing-sm);
+}
+
+/* ─── Fallback screen ──────────────────────────────────────────────────── */
+
+.port-ops-fallback {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-lg);
+  padding: var(--spacing-2xl);
+}
+
+.port-ops-fallback p {
+  color: var(--color-text-secondary);
+  font-size: 16px;
+}
+
+/* ─── Ship Selector ────────────────────────────────────────────────────── */
+
+.port-ops-ship-selector {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  flex-shrink: 0;
+}
+
+.port-ops-ship-selector-label {
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-right: var(--spacing-sm);
+}
+
+.port-ops-ship-btn {
+  font-size: 12px;
+  padding: var(--spacing-xs) var(--spacing-md);
+}
+
+/* ─── Four-Quadrant Grid ───────────────────────────────────────────────── */
+
+.port-ops-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: var(--spacing-md);
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.port-ops-quadrant {
+  overflow: auto;
+  min-height: 0;
+}
+
+/* ─── Top-Left: Ship Status Panel ──────────────────────────────────────── */
+
+.port-ops-ship-status {
+  grid-column: 1;
+  grid-row: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.port-ops-panel-title {
+  font-size: 16px;
+  margin-bottom: var(--spacing-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.port-ops-status-table {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.port-ops-status-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 3px 0;
+  border-bottom: 1px solid rgba(74, 74, 96, 0.3);
+}
+
+.port-ops-status-row:last-child {
+  border-bottom: none;
+}
+
+.port-ops-status-label {
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  flex-shrink: 0;
+  margin-right: var(--spacing-sm);
+}
+
+.port-ops-status-value {
+  font-size: 13px;
+  color: var(--color-text-accent);
+  text-align: right;
+}
+
+/* ─── Top-Right: Port View Panel ───────────────────────────────────────── */
+
+.port-ops-port-view {
+  grid-column: 2;
+  grid-row: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.port-ops-porthole {
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  border: 6px solid var(--color-copper);
+  background: linear-gradient(135deg, #1a3a5c 0%, #0a1e3d 50%, #1a3a5c 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow:
+    inset 0 2px 8px rgba(0, 0, 0, 0.5),
+    0 4px 12px rgba(0, 0, 0, 0.4);
+  position: relative;
+  overflow: hidden;
+  margin-bottom: var(--spacing-md);
+}
+
+.port-ops-porthole::before,
+.port-ops-porthole::after {
+  content: '';
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background: radial-gradient(circle at 35% 35%, var(--color-copper-light), var(--color-copper-dark));
+  border-radius: 50%;
+  border: 1px solid var(--color-copper-dark);
+}
+
+.port-ops-porthole::before {
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.port-ops-porthole::after {
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.port-ops-skyline-placeholder {
+  font-family: var(--font-heading);
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.6);
+  text-align: center;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+  padding: var(--spacing-md);
+}
+
+.port-ops-port-name {
+  font-size: 18px;
+  text-align: center;
+}
+
+/* ─── Bottom-Left: Captain's Orders ────────────────────────────────────── */
+
+.port-ops-orders {
+  grid-column: 1;
+  grid-row: 2;
+  display: flex;
+  flex-direction: column;
+}
+
+.port-ops-menu {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  flex: 1;
+}
+
+.port-ops-order-btn {
+  width: 100%;
+  font-size: 14px;
+  padding: var(--spacing-sm) var(--spacing-md);
+  text-align: left;
+  letter-spacing: 0.1em;
+}
+
+/* ─── Bottom-Right: Port Info Panel ────────────────────────────────────── */
+
+.port-ops-port-info {
+  grid-column: 2;
+  grid-row: 2;
+  background: var(--color-bg-dark);
+  border: var(--border-rivet);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-md);
+  display: flex;
+  flex-direction: column;
+}
+
+.port-ops-port-info-title {
+  font-family: var(--font-body);
+  font-size: 14px;
+  color: var(--color-text-accent);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: var(--spacing-sm);
+  border-bottom: 1px solid rgba(212, 168, 68, 0.3);
+  padding-bottom: var(--spacing-xs);
+}
+
+.port-ops-port-info-data {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.port-ops-info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 2px 0;
+}
+
+.port-ops-info-label {
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--color-text-accent);
+  opacity: 0.8;
+}
+
+.port-ops-info-value {
+  font-family: var(--font-data);
+  font-size: 12px;
+  color: var(--color-text-accent);
+  text-align: right;
+}
+
+.port-ops-cargo-title {
+  margin-top: var(--spacing-sm);
+  padding-top: var(--spacing-xs);
+  border-top: 1px solid rgba(212, 168, 68, 0.2);
+}
+
+.port-ops-cargo-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-xs);
+  margin-top: var(--spacing-xs);
+}
+
+.port-ops-cargo-tag {
+  font-family: var(--font-data);
+  font-size: 11px;
+  color: var(--color-text-accent);
+  background: rgba(212, 168, 68, 0.1);
+  border: 1px solid rgba(212, 168, 68, 0.25);
+  border-radius: 3px;
+  padding: 2px 6px;
+}
+
+/* ─── Footer ───────────────────────────────────────────────────────────── */
+
+.port-ops-footer {
+  display: flex;
+  justify-content: center;
+  padding: var(--spacing-sm) 0;
+  flex-shrink: 0;
+}
+
+/* ─── Message Toast ────────────────────────────────────────────────────── */
+
+.port-ops-message {
+  position: fixed;
+  bottom: var(--spacing-xl);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--color-bg-panel);
+  border: 1px solid var(--color-copper);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-sm) var(--spacing-lg);
+  color: var(--color-text-primary);
+  font-family: var(--font-body);
+  font-size: 14px;
+  z-index: 300;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+  transition: opacity 0.5s ease;
+}
+
+.port-ops-message-fade {
+  opacity: 0;
+}
+
+/* ─── Dialog Styles (shared for Repair, Refuel, Charter) ───────────────── */
+
+.port-ops-dialog {
+  max-width: 420px;
+  width: 90%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.port-ops-dialog-title {
+  font-size: 20px;
+  text-align: center;
+  margin-bottom: var(--spacing-xs);
+}
+
+.port-ops-dialog-text {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  text-align: center;
+}
+
+.port-ops-dialog-info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.port-ops-dialog-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 3px 0;
+}
+
+.port-ops-dialog-label {
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+.port-ops-dialog-value {
+  font-size: 13px;
+  color: var(--color-text-accent);
+}
+
+.port-ops-dialog-input-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  align-items: center;
+  padding-top: var(--spacing-sm);
+  border-top: 1px solid rgba(74, 74, 96, 0.5);
+}
+
+.port-ops-dialog-input-row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  justify-content: center;
+}
+
+.port-ops-dialog-unit {
+  font-family: var(--font-data);
+  font-size: 14px;
+  color: var(--color-text-secondary);
+}
+
+.port-ops-dialog-cost-preview {
+  font-size: 14px;
+  color: var(--color-text-accent);
+  text-align: center;
+  margin-top: var(--spacing-xs);
+}
+
+.port-ops-dialog-buttons {
+  display: flex;
+  gap: var(--spacing-md);
+  justify-content: center;
+  padding-top: var(--spacing-sm);
+}
+
+/* ─── Charter Dialog ───────────────────────────────────────────────────── */
+
+.charter-dialog {
+  max-width: 600px;
+  width: 90%;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.charter-columns {
+  display: flex;
+  gap: var(--spacing-sm);
+  min-height: 0;
+}
+
+.charter-column {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.charter-column-header {
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-bottom: 1px solid var(--color-copper);
+  margin-bottom: var(--spacing-xs);
+}
+
+.charter-list {
+  overflow-y: auto;
+  max-height: 200px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.charter-item {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  background: var(--color-bg-light);
+  border: 1px solid transparent;
+  border-radius: 2px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--color-text-primary);
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.charter-item:hover {
+  background: var(--color-bg-medium);
+  border-color: var(--color-copper);
+}
+
+.charter-item.selected {
+  background: var(--color-danger);
+  border-color: var(--color-danger);
+  color: #fff;
+}
+
+.charter-details {
+  padding: var(--spacing-sm);
+  background: var(--color-bg-dark);
+  border: 1px solid var(--color-copper);
+  border-radius: var(--border-radius);
+  min-height: 80px;
+}
+
+.charter-details-title {
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin-bottom: var(--spacing-xs);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Travel Screen
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.travel-screen {
+  background: radial-gradient(
+    ellipse at center,
+    rgba(26, 58, 92, 0.95) 0%,
+    rgba(10, 30, 61, 0.98) 70%
+  );
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.travel-panel {
+  max-width: 520px;
+  width: 90%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.travel-title {
+  font-size: 24px;
+  text-align: center;
+  margin-bottom: var(--spacing-sm);
+}
+
+.travel-info-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.travel-info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 4px 0;
+  border-bottom: 1px solid rgba(74, 74, 96, 0.3);
+}
+
+.travel-info-row:last-child {
+  border-bottom: none;
+}
+
+.travel-info-label {
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+.travel-info-value {
+  font-size: 13px;
+  color: var(--color-text-accent);
+}
+
+.travel-progress-bar {
+  width: 100%;
+  height: 8px;
+  background: var(--color-bg-dark);
+  border: 1px solid #4a4a60;
+  border-radius: 4px;
+  overflow: hidden;
+  margin: var(--spacing-sm) 0;
+}
+
+.travel-progress-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, var(--color-copper) 0%, var(--color-gold) 100%);
+  border-radius: 4px;
+  transition: width 0.8s ease;
+}
+
+.travel-status {
+  font-family: var(--font-data);
+  font-size: 14px;
+  color: var(--color-text-primary);
+  text-align: center;
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Event Dialog
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.event-dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 300;
+}
+
+.event-dialog {
+  max-width: 460px;
+  width: 90%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.event-dialog-title {
+  font-size: 22px;
+  text-align: center;
+}
+
+.event-dialog-description {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+  text-align: center;
+}
+
+.event-dialog-buttons {
+  display: flex;
+  gap: var(--spacing-md);
+  justify-content: center;
+  padding-top: var(--spacing-sm);
+}
+
+.event-dialog-btn {
+  min-width: 140px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Port Departure Screen
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.port-departure-screen {
+  background: radial-gradient(
+    ellipse at center,
+    rgba(35, 35, 56, 0.98) 0%,
+    rgba(26, 26, 46, 0.99) 70%
+  );
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.port-departure-panel {
+  max-width: 480px;
+  width: 90%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  text-align: center;
+}
+
+.port-departure-title {
+  font-size: 24px;
+}
+
+.port-departure-port-name {
+  font-size: 20px;
+  color: var(--color-text-accent);
+}
+
+.port-departure-description {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+}
+
+.port-departure-buttons {
+  display: flex;
+  gap: var(--spacing-lg);
+  justify-content: center;
+  padding-top: var(--spacing-md);
+}
+
+.port-departure-btn {
+  min-width: 160px;
+  padding: var(--spacing-md) var(--spacing-lg);
+  line-height: 1.4;
+}
+
+.port-departure-cost {
+  font-family: var(--font-data);
+  font-size: 13px;
+  opacity: 0.8;
+}
+
+/* ─── Destination label on world map footer ─────────────────────────────── */
+
+.worldmap-screen .destination-label {
+  font-family: var(--font-data);
+  font-size: 13px;
+  color: var(--color-gold);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.worldmap-screen .destination-label.hidden {
+  display: none;
+}
+
+/* ─── Destination badge on port info panel ──────────────────────────────── */
+
+.worldmap-screen .port-info-destination {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 600;
+  color: #fff;
+  background: var(--color-copper);
+  border-radius: 2px;
+  padding: 2px 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
 }

@@ -18,6 +18,7 @@ import {
 import type { FullGameState } from "../../game/GameState";
 import { WorldMapCanvas } from "../components/WorldMapCanvas";
 import type { Port } from "../../data/types";
+import type { TravelScreen } from "./TravelScreen";
 
 export class WorldMapScreen implements GameScreen {
   private container: HTMLElement;
@@ -25,6 +26,8 @@ export class WorldMapScreen implements GameScreen {
   private startActionBtn: HTMLButtonElement | null = null;
   private timeDisplay: HTMLElement | null = null;
   private selectedPortInfo: HTMLElement | null = null;
+  private selectedDestination: Port | null = null;
+  private destinationLabel: HTMLElement | null = null;
 
   constructor(private screenManager: ScreenManager) {
     this.container = document.createElement("div");
@@ -90,6 +93,8 @@ export class WorldMapScreen implements GameScreen {
     this.startActionBtn = null;
     this.timeDisplay = null;
     this.selectedPortInfo = null;
+    this.destinationLabel = null;
+    this.selectedDestination = null;
     this.container.remove();
   }
 
@@ -178,6 +183,12 @@ export class WorldMapScreen implements GameScreen {
 
     footer.appendChild(this.timeDisplay);
 
+    // Destination label
+    this.destinationLabel = document.createElement("div");
+    this.destinationLabel.className = "destination-label hidden";
+    this.destinationLabel.textContent = "";
+    footer.appendChild(this.destinationLabel);
+
     // START ACTION / STOP ACTION button
     this.startActionBtn = document.createElement("button");
     const isRunning = state?.turns.isSimulationRunning ?? false;
@@ -201,6 +212,9 @@ export class WorldMapScreen implements GameScreen {
   private handlePortClick(port: Port): void {
     if (!this.selectedPortInfo) return;
 
+    // Set as destination for travel
+    this.selectedDestination = port;
+
     this.selectedPortInfo.className = "worldmap-port-info";
     this.selectedPortInfo.innerHTML = "";
 
@@ -220,10 +234,21 @@ export class WorldMapScreen implements GameScreen {
     cargo.className = "port-info-detail";
     cargo.textContent = `${(port.cargoCapacityTdw / 1_000_000).toFixed(1)}M tdw`;
 
+    const destBadge = document.createElement("span");
+    destBadge.className = "port-info-destination";
+    destBadge.textContent = "DESTINATION";
+
     this.selectedPortInfo.appendChild(name);
     this.selectedPortInfo.appendChild(country);
     this.selectedPortInfo.appendChild(ships);
     this.selectedPortInfo.appendChild(cargo);
+    this.selectedPortInfo.appendChild(destBadge);
+
+    // Update destination label in footer
+    if (this.destinationLabel) {
+      this.destinationLabel.textContent = `Destination: ${port.name}`;
+      this.destinationLabel.classList.remove("hidden");
+    }
   }
 
   private handleActionClick(): void {
@@ -234,29 +259,58 @@ export class WorldMapScreen implements GameScreen {
       // Stop simulation
       stopAction(state);
       this.updateActionButton(false);
-    } else {
-      // Start simulation: advance one turn
-      startAction(state);
-      this.updateActionButton(true);
-
-      // Advance the turn after a short delay to show the running state
-      setTimeout(() => {
-        const result = endTurn(state);
-        stopAction(state);
-        this.updateActionButton(false);
-        this.refreshTimeDisplay(state);
-        this.refreshHeader(state);
-
-        // Refresh ship positions on map
-        if (this.mapCanvas) {
-          const player = getActivePlayer(state);
-          this.mapCanvas.setShips(player.ships);
-          this.mapCanvas.setHomePort(player.homePortId);
-        }
-
-        console.log(result.message);
-      }, 500);
+      return;
     }
+
+    // Check if we can start travel
+    const player = getActivePlayer(state);
+    const shipIndex = player.ships.findIndex(
+      (s) => s.currentPortId !== null && !s.isLaidUp,
+    );
+
+    if (shipIndex === -1) {
+      console.log("No ships available in port.");
+      return;
+    }
+
+    if (this.selectedDestination) {
+      const ship = player.ships[shipIndex];
+      // Don't travel to the port the ship is already at
+      if (ship.currentPortId === this.selectedDestination.id) {
+        console.log("Ship is already at this port.");
+        return;
+      }
+
+      // Start travel to selected destination
+      startAction(state);
+      const travelScreen = this.screenManager.getScreen("travel") as TravelScreen | undefined;
+      if (travelScreen) {
+        travelScreen.shipIndex = shipIndex;
+        travelScreen.destinationPortId = this.selectedDestination.id;
+      }
+      this.screenManager.showScreen("travel");
+      return;
+    }
+
+    // No destination selected — fall back to advancing a turn
+    startAction(state);
+    this.updateActionButton(true);
+
+    setTimeout(() => {
+      const result = endTurn(state);
+      stopAction(state);
+      this.updateActionButton(false);
+      this.refreshTimeDisplay(state);
+      this.refreshHeader(state);
+
+      if (this.mapCanvas) {
+        const activePlayer = getActivePlayer(state);
+        this.mapCanvas.setShips(activePlayer.ships);
+        this.mapCanvas.setHomePort(activePlayer.homePortId);
+      }
+
+      console.log(result.message);
+    }, 500);
   }
 
   private updateActionButton(isRunning: boolean): void {

@@ -19,7 +19,9 @@ export type ScreenId =
   | "worldmap"
   | "office"
   | "shipbroker"
-  | "port-operations";
+  | "port-operations"
+  | "travel"
+  | "port-departure";
 
 export class ScreenManager {
   private screens: Map<ScreenId, GameScreen> = new Map();
@@ -79,5 +81,10 @@ export class ScreenManager {
   /** Retrieve the current game state. */
   getGameState(): FullGameState | null {
     return this.gameState;
+  }
+
+  /** Get a registered screen by id. */
+  getScreen(id: ScreenId): GameScreen | undefined {
+    return this.screens.get(id);
   }
 }
