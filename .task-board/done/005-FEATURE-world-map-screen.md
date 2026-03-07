@@ -61,15 +61,15 @@ A world map screen with:
 
 ## Acceptance Criteria
 
-- [ ] World map displays with recognizable landmasses (Mercator projection)
-- [ ] All 30 ports are plotted at correct approximate positions
-- [ ] Ports are interactive (hover shows name, click selects)
-- [ ] Sidebar has Globe, Office, Ship Broker buttons that navigate to respective screens
-- [ ] Bottom bar shows weeks and years counters
-- [ ] START ACTION button exists and advances game time when clicked
-- [ ] Current player's ship position is shown on the map
-- [ ] Player company name and balance displayed
-- [ ] TypeScript compiles without errors
+- [x] World map displays with recognizable landmasses (Mercator projection)
+- [x] All 30 ports are plotted at correct approximate positions
+- [x] Ports are interactive (hover shows name, click selects)
+- [x] Sidebar has Globe, Office, Ship Broker buttons that navigate to respective screens
+- [x] Bottom bar shows weeks and years counters
+- [x] START ACTION button exists and advances game time when clicked
+- [x] Current player's ship position is shown on the map
+- [x] Player company name and balance displayed
+- [x] TypeScript compiles without errors
 
 ---
 

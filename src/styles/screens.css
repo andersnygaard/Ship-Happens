@@ -161,10 +161,11 @@
 /* ─── World Map Screen ─────────────────────────────────────────────────── */
 
 .worldmap-screen {
-  background: rgba(26, 26, 46, 0.85);
+  background: #0a1e3d;
   flex-direction: column;
 }
 
+/* Header bar */
 .worldmap-screen .worldmap-header {
   width: 100%;
   display: flex;
@@ -173,6 +174,8 @@
   padding: var(--spacing-sm) var(--spacing-lg);
   background: var(--color-bg-dark);
   border-bottom: var(--border-copper);
+  z-index: 10;
+  flex-shrink: 0;
 }
 
 .worldmap-screen .worldmap-title {
@@ -203,52 +206,119 @@
   color: var(--color-text-accent);
 }
 
-.worldmap-screen .worldmap-body {
+/* Main content area (map + sidebar) */
+.worldmap-screen .worldmap-main {
   flex: 1;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
+  position: relative;
+  overflow: hidden;
+  min-height: 0;
 }
 
-.worldmap-screen .worldmap-placeholder {
-  text-align: center;
-  color: var(--color-text-muted);
-  font-size: 18px;
-  font-family: var(--font-body);
+/* Map container fills available space */
+.worldmap-screen .worldmap-map-container {
+  flex: 1;
+  position: relative;
+  min-height: 0;
+  min-width: 0;
 }
 
-.worldmap-screen .worldmap-placeholder .placeholder-icon {
-  font-size: 64px;
-  margin-bottom: var(--spacing-md);
+/* Canvas element fills its container */
+.worldmap-screen .worldmap-canvas {
   display: block;
 }
 
+/* Sidebar navigation */
 .worldmap-screen .worldmap-sidebar {
-  position: absolute;
-  right: var(--spacing-md);
-  top: 50%;
-  transform: translateY(-50%);
+  width: 72px;
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-xs);
+  background: var(--color-bg-dark);
+  border-left: var(--border-rivet);
+  flex-shrink: 0;
+  justify-content: center;
 }
 
 .worldmap-screen .sidebar-btn {
-  width: 64px;
-  height: 64px;
+  width: 60px;
+  height: 60px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   font-size: 11px;
-  gap: 4px;
+  gap: 2px;
+  padding: var(--spacing-xs);
 }
 
-.worldmap-screen .sidebar-btn .btn-icon {
-  font-size: 24px;
+.worldmap-screen .sidebar-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-copper-light);
 }
 
+.worldmap-screen .sidebar-icon svg {
+  width: 22px;
+  height: 22px;
+}
+
+.worldmap-screen .sidebar-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-secondary);
+}
+
+.worldmap-screen .sidebar-btn:hover .sidebar-icon {
+  color: var(--color-gold);
+}
+
+.worldmap-screen .sidebar-btn:hover .sidebar-label {
+  color: var(--color-text-primary);
+}
+
+/* Selected port info panel */
+.worldmap-screen .worldmap-port-info {
+  position: absolute;
+  bottom: 60px;
+  left: var(--spacing-lg);
+  display: flex;
+  gap: var(--spacing-md);
+  align-items: center;
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: rgba(26, 26, 46, 0.92);
+  border: 1px solid var(--color-copper);
+  border-radius: var(--border-radius);
+  font-family: var(--font-data);
+  font-size: 13px;
+  z-index: 10;
+  transition: opacity 0.2s ease;
+}
+
+.worldmap-screen .worldmap-port-info.hidden {
+  display: none;
+}
+
+.worldmap-screen .port-info-name {
+  color: var(--color-gold);
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.worldmap-screen .port-info-country {
+  color: var(--color-text-secondary);
+}
+
+.worldmap-screen .port-info-detail {
+  color: var(--color-text-muted);
+  font-size: 12px;
+}
+
+/* Footer bar */
 .worldmap-screen .worldmap-footer {
   width: 100%;
   display: flex;
@@ -257,6 +327,8 @@
   padding: var(--spacing-sm) var(--spacing-lg);
   background: var(--color-bg-dark);
   border-top: var(--border-rivet);
+  z-index: 10;
+  flex-shrink: 0;
 }
 
 .worldmap-screen .time-display {
@@ -264,6 +336,12 @@
   font-size: 14px;
   display: flex;
   gap: var(--spacing-lg);
+}
+
+.worldmap-screen .time-item {
+  display: inline-flex;
+  gap: var(--spacing-xs);
+  align-items: baseline;
 }
 
 .worldmap-screen .time-display .time-label {
@@ -275,6 +353,15 @@
 
 .worldmap-screen .time-display .time-value {
   color: var(--color-text-accent);
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.worldmap-screen .action-btn {
+  min-width: 140px;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
 }
 
 /* ─── Stub Screens (Office, Ship Broker, Port Operations) ─────────────── */
@@ -324,4 +411,382 @@
 
 .stub-screen .stub-back-btn {
   min-width: 200px;
+}
+
+/* ─── Ship Broker Screen ───────────────────────────────────────────────── */
+
+.shipbroker-screen {
+  background: radial-gradient(
+    ellipse at center,
+    rgba(26, 58, 92, 0.95) 0%,
+    rgba(26, 26, 46, 0.98) 70%
+  );
+  flex-direction: column;
+}
+
+/* Header */
+.shipbroker-header {
+  width: 100%;
+  text-align: center;
+  padding: var(--spacing-lg) var(--spacing-lg) var(--spacing-md);
+  background: var(--color-bg-dark);
+  border-bottom: var(--border-copper);
+  flex-shrink: 0;
+}
+
+.shipbroker-title {
+  font-size: 28px;
+  margin-bottom: var(--spacing-sm);
+  letter-spacing: 0.06em;
+}
+
+.shipbroker-capital {
+  font-size: 14px;
+  color: var(--color-text-accent);
+}
+
+/* Ship list area */
+.shipbroker-list-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  padding: var(--spacing-lg);
+  overflow-y: auto;
+  align-items: center;
+  min-height: 0;
+}
+
+/* Ship card */
+.ship-card {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-lg);
+  width: 100%;
+  max-width: 800px;
+  padding: var(--spacing-md);
+  background: linear-gradient(
+    135deg,
+    var(--color-bg-medium) 0%,
+    var(--color-bg-dark) 50%,
+    var(--color-bg-medium) 100%
+  );
+  border: var(--border-rivet);
+  border-radius: var(--border-radius);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+.ship-card-image {
+  width: 180px;
+  height: 100px;
+  border-radius: var(--border-radius);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.ship-card-silhouette {
+  font-family: var(--font-heading);
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.7);
+  text-align: center;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+  padding: var(--spacing-sm);
+}
+
+.ship-card-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.ship-card-type {
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.ship-card-price {
+  font-size: 16px;
+  color: var(--color-text-accent);
+}
+
+.ship-card-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  flex-shrink: 0;
+}
+
+.ship-card-btn {
+  min-width: 80px;
+  font-size: 13px;
+}
+
+/* Footer */
+.shipbroker-footer {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-md) var(--spacing-lg);
+  background: var(--color-bg-dark);
+  border-top: var(--border-rivet);
+  flex-shrink: 0;
+}
+
+/* Pagination */
+.shipbroker-pagination {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.shipbroker-page-btn {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+}
+
+.shipbroker-page-indicator {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  min-width: 50px;
+  text-align: center;
+}
+
+.shipbroker-elevator-dots {
+  display: flex;
+  gap: var(--spacing-xs);
+  align-items: center;
+}
+
+.shipbroker-elevator-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--color-bg-light);
+  border: 1px solid #4a4a60;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.shipbroker-elevator-dot:hover {
+  background: var(--color-copper);
+}
+
+.shipbroker-elevator-dot.active {
+  background: var(--color-gold);
+  border-color: var(--color-copper);
+}
+
+/* ─── Ship Info Panel (modal overlay) ──────────────────────────────────── */
+
+.ship-info-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+}
+
+.ship-info-panel {
+  max-width: 500px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.ship-info-title {
+  font-size: 22px;
+  text-align: center;
+  margin-bottom: var(--spacing-sm);
+}
+
+.ship-info-image {
+  width: 100%;
+  height: 120px;
+  background: #111;
+  border-radius: var(--border-radius);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ship-info-image-label {
+  font-family: var(--font-heading);
+  font-size: 18px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.ship-info-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.ship-info-table tr {
+  border-bottom: 1px solid rgba(74, 74, 96, 0.5);
+}
+
+.ship-info-table tr:last-child {
+  border-bottom: none;
+}
+
+.ship-info-label {
+  padding: var(--spacing-sm) var(--spacing-md);
+  color: var(--color-text-secondary);
+  font-weight: 500;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.ship-info-value {
+  padding: var(--spacing-sm) var(--spacing-md);
+  text-align: right;
+  color: var(--color-text-accent);
+}
+
+.ship-info-close-btn {
+  align-self: center;
+  min-width: 120px;
+  margin-top: var(--spacing-sm);
+}
+
+/* ─── Purchase Dialog ──────────────────────────────────────────────────── */
+
+.purchase-dialog {
+  max-width: 460px;
+  width: 90%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.purchase-dialog-title {
+  font-size: 22px;
+  text-align: center;
+}
+
+.purchase-dialog-summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-sm) 0;
+  border-bottom: 1px solid rgba(74, 74, 96, 0.5);
+}
+
+.purchase-ship-type {
+  font-size: 14px;
+  color: var(--color-text-primary);
+  font-weight: 500;
+}
+
+.purchase-ship-price {
+  font-size: 14px;
+  color: var(--color-text-accent);
+}
+
+.purchase-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.purchase-name-row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.purchase-name-prefix {
+  font-size: 16px;
+  color: var(--color-copper-light);
+  flex-shrink: 0;
+}
+
+.purchase-name-input {
+  flex: 1;
+}
+
+.purchase-deposit-slider {
+  width: 100%;
+  height: 6px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: var(--color-bg-light);
+  border-radius: 3px;
+  outline: none;
+  cursor: pointer;
+}
+
+.purchase-deposit-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  background: var(--color-copper);
+  border-radius: 50%;
+  border: 2px solid var(--color-copper-light);
+  cursor: pointer;
+}
+
+.purchase-deposit-slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  background: var(--color-copper);
+  border-radius: 50%;
+  border: 2px solid var(--color-copper-light);
+  cursor: pointer;
+}
+
+.purchase-deposit-info {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  text-align: center;
+}
+
+.purchase-balance {
+  font-size: 13px;
+  color: var(--color-text-muted);
+  text-align: center;
+  padding-top: var(--spacing-sm);
+  border-top: 1px solid rgba(74, 74, 96, 0.5);
+}
+
+.purchase-dialog-buttons {
+  display: flex;
+  gap: var(--spacing-md);
+  justify-content: center;
+  padding-top: var(--spacing-sm);
+}
+
+/* Message dialog */
+.message-dialog {
+  text-align: center;
+}
+
+.message-dialog-text {
+  font-size: 15px;
+  color: var(--color-text-primary);
+  line-height: 1.6;
+  padding: var(--spacing-md) 0;
 }

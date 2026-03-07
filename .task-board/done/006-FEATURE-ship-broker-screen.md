@@ -59,16 +59,16 @@ A Ship Broker screen with:
 
 ## Acceptance Criteria
 
-- [ ] Ship broker shows paginated list of available ships (2-3 per page)
-- [ ] Each ship shows: placeholder image, name/type, price, BUY and INFO buttons
-- [ ] INFO button shows full ship specification sheet with all stats
-- [ ] BUY button starts purchase flow: christening → deposit → confirmation
-- [ ] Player can name their ship (prefixed with "MS ")
-- [ ] Deposit slider/input with min/max constraints per ship
-- [ ] Successful purchase debits player account and adds ship to fleet
-- [ ] Insufficient funds shows sarcastic rejection dialog
-- [ ] Navigation back to world map works
-- [ ] TypeScript compiles without errors
+- [x] Ship broker shows paginated list of available ships (2-3 per page)
+- [x] Each ship shows: placeholder image, name/type, price, BUY and INFO buttons
+- [x] INFO button shows full ship specification sheet with all stats
+- [x] BUY button starts purchase flow: christening → deposit → confirmation
+- [x] Player can name their ship (prefixed with "MS ")
+- [x] Deposit slider/input with min/max constraints per ship
+- [x] Successful purchase debits player account and adds ship to fleet
+- [x] Insufficient funds shows sarcastic rejection dialog
+- [x] Navigation back to world map works
+- [x] TypeScript compiles without errors
 
 ---
 
