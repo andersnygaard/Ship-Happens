@@ -1,0 +1,3266 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   Ship Happens — Screen-Specific Styles
+   Styles for Setup, WorldMap, Office, ShipBroker, and PortOperations screens.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ─── Screen Transitions ──────────────────────────────────────────────── */
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+.screen-entering {
+  animation: fadeIn 300ms ease-out forwards;
+}
+
+.screen-leaving {
+  animation: fadeOut 300ms ease-out forwards;
+  pointer-events: none;
+}
+
+/* ─── Setup Screen ─────────────────────────────────────────────────────── */
+
+.setup-screen {
+  background: radial-gradient(
+    ellipse at center,
+    rgba(26, 58, 92, 0.95) 0%,
+    rgba(26, 26, 46, 0.98) 70%
+  );
+  flex-direction: column;
+  gap: var(--spacing-lg);
+  overflow-y: auto;
+  padding: var(--spacing-xl);
+}
+
+.setup-screen .setup-container {
+  max-width: 720px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-xl);
+}
+
+/* Title area */
+.setup-screen .title-area {
+  text-align: center;
+  margin-bottom: var(--spacing-md);
+}
+
+.setup-screen .game-title {
+  font-family: var(--font-heading);
+  font-size: 56px;
+  font-weight: 900;
+  color: var(--color-gold);
+  text-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.6),
+    0 0 40px rgba(212, 168, 68, 0.2);
+  margin-bottom: var(--spacing-sm);
+  letter-spacing: 0.04em;
+}
+
+.setup-screen .tagline {
+  font-family: var(--font-body);
+  font-size: 16px;
+  color: var(--color-text-secondary);
+  font-style: italic;
+  letter-spacing: 0.05em;
+}
+
+/* Form section */
+.setup-screen .form-section {
+  width: 100%;
+  padding: var(--spacing-lg);
+}
+
+.setup-screen .form-row {
+  display: flex;
+  gap: var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
+}
+
+.setup-screen .form-group {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Port selection */
+.setup-screen .port-section {
+  width: 100%;
+}
+
+.setup-screen .port-section-title {
+  font-family: var(--font-heading);
+  font-size: 18px;
+  color: var(--color-copper-light);
+  margin-bottom: var(--spacing-md);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.setup-screen .port-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--spacing-xs);
+  max-height: 340px;
+  overflow-y: auto;
+  padding: var(--spacing-sm);
+  background: var(--color-bg-dark);
+  border: 1px solid #4a4a60;
+  border-radius: var(--border-radius);
+}
+
+.setup-screen .port-item {
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--color-bg-medium);
+  border: 1px solid transparent;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: left;
+}
+
+.setup-screen .port-item:hover {
+  background: var(--color-bg-light);
+  border-color: var(--color-copper);
+}
+
+.setup-screen .port-item.selected {
+  background: linear-gradient(135deg, var(--color-copper-dark) 0%, var(--color-copper) 100%);
+  border-color: var(--color-copper-light);
+  color: #fff;
+}
+
+.setup-screen .port-item .port-name {
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  display: block;
+}
+
+.setup-screen .port-item .port-country {
+  font-family: var(--font-data);
+  font-size: 11px;
+  color: var(--color-text-muted);
+  display: block;
+  margin-top: 2px;
+}
+
+.setup-screen .port-item.selected .port-country {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* Start button area */
+.setup-screen .start-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-md);
+}
+
+.setup-screen .start-btn {
+  font-size: 18px;
+  padding: var(--spacing-md) var(--spacing-2xl);
+  min-width: 240px;
+}
+
+.setup-screen .validation-msg {
+  font-size: 13px;
+  color: var(--color-danger);
+  min-height: 20px;
+  text-align: center;
+}
+
+/* ─── World Map Screen ─────────────────────────────────────────────────── */
+
+.worldmap-screen {
+  background: #0a1e3d;
+  flex-direction: column;
+}
+
+/* Header bar */
+.worldmap-screen .worldmap-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-sm) var(--spacing-lg);
+  background: var(--color-bg-dark);
+  border-bottom: var(--border-copper);
+  z-index: 10;
+  flex-shrink: 0;
+}
+
+.worldmap-screen .worldmap-title {
+  font-family: var(--font-heading);
+  font-size: 20px;
+  color: var(--color-gold);
+}
+
+.worldmap-screen .worldmap-info {
+  display: flex;
+  gap: var(--spacing-lg);
+  font-family: var(--font-data);
+  font-size: 13px;
+}
+
+.worldmap-screen .worldmap-info .info-item {
+  display: flex;
+  gap: var(--spacing-xs);
+}
+
+.worldmap-screen .worldmap-info .info-label {
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  font-size: 11px;
+}
+
+.worldmap-screen .worldmap-info .info-value {
+  color: var(--color-text-accent);
+}
+
+/* Mute / volume toggle button */
+.worldmap-screen .mute-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--color-bg-light);
+  border: 1px solid #4a4a60;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.worldmap-screen .mute-btn:hover:not(:disabled) {
+  background: var(--color-bg-medium);
+  color: var(--color-text-primary);
+}
+
+.worldmap-screen .mute-btn svg {
+  display: block;
+}
+
+/* ─── News Ticker ─────────────────────────────────────────────────── */
+
+.news-ticker {
+  width: 100%;
+  overflow: hidden;
+  background: linear-gradient(
+    90deg,
+    rgba(10, 15, 28, 0.95) 0%,
+    rgba(20, 30, 50, 0.95) 50%,
+    rgba(10, 15, 28, 0.95) 100%
+  );
+  border-bottom: 1px solid rgba(212, 168, 68, 0.3);
+  border-top: 1px solid rgba(212, 168, 68, 0.15);
+  padding: 4px 0;
+  position: relative;
+  flex-shrink: 0;
+  z-index: 10;
+}
+
+.news-ticker-track {
+  display: flex;
+  white-space: nowrap;
+  animation: ticker-scroll 60s linear infinite;
+}
+
+.news-ticker-content {
+  font-family: var(--font-data, monospace);
+  font-size: 12px;
+  color: var(--color-gold, #d4a844);
+  letter-spacing: 0.03em;
+  padding-right: 2em;
+  flex-shrink: 0;
+}
+
+@keyframes ticker-scroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+/* Funny cargo description in charter dialog */
+.charter-funny-cargo {
+  font-style: italic;
+  font-size: 12px;
+  color: var(--color-gold, #d4a844);
+  margin: 4px 0 8px 0;
+  opacity: 0.85;
+}
+
+/* Main content area (map + sidebar) */
+.worldmap-screen .worldmap-main {
+  flex: 1;
+  display: flex;
+  position: relative;
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* Map container fills available space */
+.worldmap-screen .worldmap-map-container {
+  flex: 1;
+  position: relative;
+  min-height: 0;
+  min-width: 0;
+}
+
+/* Canvas element fills its container */
+.worldmap-screen .worldmap-canvas {
+  display: block;
+}
+
+/* Sidebar navigation */
+.worldmap-screen .worldmap-sidebar {
+  width: 72px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-xs);
+  background: var(--color-bg-dark);
+  border-left: var(--border-rivet);
+  flex-shrink: 0;
+  justify-content: center;
+}
+
+.worldmap-screen .sidebar-btn {
+  width: 60px;
+  height: 60px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  gap: 2px;
+  padding: var(--spacing-xs);
+}
+
+.worldmap-screen .sidebar-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-copper-light);
+}
+
+.worldmap-screen .sidebar-icon svg {
+  width: 22px;
+  height: 22px;
+}
+
+.worldmap-screen .sidebar-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-secondary);
+}
+
+.worldmap-screen .sidebar-btn:hover .sidebar-icon {
+  color: var(--color-gold);
+}
+
+.worldmap-screen .sidebar-btn:hover .sidebar-label {
+  color: var(--color-text-primary);
+}
+
+/* Selected port info panel */
+.worldmap-screen .worldmap-port-info {
+  position: absolute;
+  bottom: 60px;
+  left: var(--spacing-lg);
+  display: flex;
+  gap: var(--spacing-md);
+  align-items: center;
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: rgba(26, 26, 46, 0.92);
+  border: 1px solid var(--color-copper);
+  border-radius: var(--border-radius);
+  font-family: var(--font-data);
+  font-size: 13px;
+  z-index: 10;
+  transition: opacity 0.2s ease;
+}
+
+.worldmap-screen .worldmap-port-info.hidden {
+  display: none;
+}
+
+.worldmap-screen .port-info-name {
+  color: var(--color-gold);
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.worldmap-screen .port-info-country {
+  color: var(--color-text-secondary);
+}
+
+.worldmap-screen .port-info-detail {
+  color: var(--color-text-muted);
+  font-size: 12px;
+}
+
+/* Footer bar */
+.worldmap-screen .worldmap-footer {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-sm) var(--spacing-lg);
+  background: var(--color-bg-dark);
+  border-top: var(--border-rivet);
+  z-index: 10;
+  flex-shrink: 0;
+}
+
+.worldmap-screen .time-display {
+  font-family: var(--font-data);
+  font-size: 14px;
+  display: flex;
+  gap: var(--spacing-lg);
+}
+
+.worldmap-screen .time-item {
+  display: inline-flex;
+  gap: var(--spacing-xs);
+  align-items: baseline;
+}
+
+.worldmap-screen .time-display .time-label {
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  font-size: 11px;
+  margin-right: var(--spacing-xs);
+}
+
+.worldmap-screen .time-display .time-value {
+  color: var(--color-text-accent);
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.worldmap-screen .action-btn {
+  min-width: 140px;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* ─── Stub Screens (Office, Ship Broker, Port Operations) ─────────────── */
+
+.stub-screen {
+  background: rgba(26, 26, 46, 0.92);
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.stub-screen .stub-header {
+  padding: var(--spacing-lg);
+  text-align: center;
+}
+
+.stub-screen .stub-title {
+  font-family: var(--font-heading);
+  font-size: 32px;
+  color: var(--color-gold);
+  margin-bottom: var(--spacing-sm);
+}
+
+.stub-screen .stub-subtitle {
+  font-family: var(--font-body);
+  font-size: 14px;
+  color: var(--color-text-muted);
+}
+
+.stub-screen .stub-content {
+  text-align: center;
+  padding: var(--spacing-xl);
+  max-width: 500px;
+}
+
+.stub-screen .stub-icon {
+  font-size: 72px;
+  margin-bottom: var(--spacing-lg);
+  display: block;
+}
+
+.stub-screen .stub-description {
+  font-size: 15px;
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+  margin-bottom: var(--spacing-xl);
+}
+
+.stub-screen .stub-back-btn {
+  min-width: 200px;
+}
+
+/* ─── Office Screen ───────────────────────────────────────────────────── */
+
+.office-screen {
+  background: radial-gradient(
+    ellipse at center,
+    rgba(35, 35, 56, 0.98) 0%,
+    rgba(26, 26, 46, 0.99) 70%
+  );
+  flex-direction: column;
+  padding: 0;
+}
+
+/* Status bar at the top */
+.office-status-bar {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-md) var(--spacing-lg);
+  background: var(--color-bg-dark);
+  border-bottom: var(--border-copper);
+  flex-shrink: 0;
+}
+
+.office-company-name {
+  font-size: 24px;
+  letter-spacing: 0.04em;
+}
+
+.office-stats {
+  display: flex;
+  gap: var(--spacing-xl);
+  align-items: center;
+}
+
+.office-stat-item {
+  display: flex;
+  gap: var(--spacing-sm);
+  align-items: baseline;
+  font-family: var(--font-data);
+  font-size: 14px;
+}
+
+.office-stat-item .label {
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+}
+
+.office-stat-item .value {
+  color: var(--color-text-accent);
+  font-size: 18px;
+  font-weight: 600;
+}
+
+/* Main content area with two panels */
+.office-main {
+  flex: 1;
+  display: flex;
+  gap: var(--spacing-lg);
+  padding: var(--spacing-lg);
+  overflow: hidden;
+  min-height: 0;
+}
+
+.office-panel {
+  flex: 1;
+  min-width: 0;
+  overflow-y: auto;
+}
+
+.office-panel-title {
+  font-size: 18px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: var(--spacing-md);
+}
+
+.office-empty-msg {
+  color: var(--color-text-muted);
+  font-size: 14px;
+  font-style: italic;
+  padding: var(--spacing-md) 0;
+}
+
+/* Fleet overview table */
+.office-fleet-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.office-fleet-table th {
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  text-align: left;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-bottom: 1px solid var(--color-copper);
+}
+
+.office-fleet-table td {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-bottom: 1px solid rgba(74, 74, 96, 0.3);
+  color: var(--color-text-primary);
+  font-size: 13px;
+}
+
+.office-fleet-table tbody tr:hover {
+  background: rgba(74, 74, 96, 0.15);
+}
+
+.office-fleet-ship-name {
+  font-weight: 600;
+  color: var(--color-text-accent);
+  white-space: nowrap;
+}
+
+.office-ship-laid-up td {
+  opacity: 0.6;
+}
+
+.office-laid-up-badge {
+  display: inline-block;
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  background: var(--color-bg-light);
+  border: 1px solid rgba(74, 74, 96, 0.5);
+  border-radius: 2px;
+  padding: 1px 4px;
+  margin-left: var(--spacing-xs);
+  vertical-align: middle;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.office-condition-good {
+  color: var(--color-success);
+}
+
+.office-condition-warn {
+  color: var(--color-gold);
+}
+
+.office-condition-danger {
+  color: var(--color-danger);
+}
+
+.office-cargo-dest {
+  color: var(--color-text-secondary);
+  font-size: 12px;
+}
+
+.office-text-muted {
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
+/* Financial summary */
+.office-balance-display {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: var(--spacing-md);
+  background: var(--color-bg-dark);
+  border: 1px solid rgba(74, 74, 96, 0.5);
+  border-radius: var(--border-radius);
+  margin-bottom: var(--spacing-md);
+}
+
+.office-balance-label {
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.office-balance-value {
+  font-size: 20px;
+  color: var(--color-text-accent);
+}
+
+.office-tx-title {
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: var(--spacing-sm);
+  padding-bottom: var(--spacing-xs);
+  border-bottom: 1px solid rgba(74, 74, 96, 0.3);
+}
+
+.office-tx-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.office-tx-row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: 2px;
+  font-size: 13px;
+}
+
+.office-tx-row:hover {
+  background: rgba(74, 74, 96, 0.1);
+}
+
+.office-tx-desc {
+  flex: 1;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.office-tx-amount {
+  flex-shrink: 0;
+  font-size: 13px;
+}
+
+.office-tx-credit .office-tx-amount {
+  color: var(--color-success);
+}
+
+.office-tx-debit .office-tx-amount {
+  color: var(--color-danger);
+}
+
+.office-tx-time {
+  flex-shrink: 0;
+  font-family: var(--font-data);
+  font-size: 11px;
+  color: var(--color-text-muted);
+}
+
+/* Footer buttons */
+.office-footer {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md) var(--spacing-lg);
+  background: var(--color-bg-dark);
+  border-top: var(--border-rivet);
+  flex-shrink: 0;
+}
+
+.office-footer-btn {
+  min-width: 120px;
+}
+
+/* Office dialog (Info / Status) */
+.office-dialog {
+  max-width: 420px;
+  width: 90%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.office-dialog-content {
+  font-size: 14px;
+  line-height: 1.8;
+  color: var(--color-text-secondary);
+}
+
+.office-dialog-content strong {
+  color: var(--color-text-primary);
+}
+
+/* ─── Ship Broker Screen ───────────────────────────────────────────────── */
+
+.shipbroker-screen {
+  background: radial-gradient(
+    ellipse at center,
+    rgba(26, 58, 92, 0.95) 0%,
+    rgba(26, 26, 46, 0.98) 70%
+  );
+  flex-direction: column;
+}
+
+/* Header */
+.shipbroker-header {
+  width: 100%;
+  text-align: center;
+  padding: var(--spacing-lg) var(--spacing-lg) var(--spacing-md);
+  background: var(--color-bg-dark);
+  border-bottom: var(--border-copper);
+  flex-shrink: 0;
+}
+
+.shipbroker-title {
+  font-size: 28px;
+  margin-bottom: var(--spacing-sm);
+  letter-spacing: 0.06em;
+}
+
+.shipbroker-capital {
+  font-size: 14px;
+  color: var(--color-text-accent);
+}
+
+/* Ship list area */
+.shipbroker-list-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  padding: var(--spacing-lg);
+  overflow-y: auto;
+  align-items: center;
+  min-height: 0;
+}
+
+/* Ship card */
+.ship-card {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-lg);
+  width: 100%;
+  max-width: 800px;
+  padding: var(--spacing-md);
+  background: linear-gradient(
+    135deg,
+    var(--color-bg-medium) 0%,
+    var(--color-bg-dark) 50%,
+    var(--color-bg-medium) 100%
+  );
+  border: var(--border-rivet);
+  border-radius: var(--border-radius);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+.ship-card-image {
+  width: 180px;
+  height: 100px;
+  border-radius: var(--border-radius);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.ship-card-silhouette {
+  font-family: var(--font-heading);
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.7);
+  text-align: center;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+  padding: var(--spacing-sm);
+}
+
+.ship-card-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.ship-card-type {
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.ship-card-price {
+  font-size: 16px;
+  color: var(--color-text-accent);
+}
+
+.ship-card-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  flex-shrink: 0;
+}
+
+.ship-card-btn {
+  min-width: 80px;
+  font-size: 13px;
+}
+
+/* Footer */
+.shipbroker-footer {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-md) var(--spacing-lg);
+  background: var(--color-bg-dark);
+  border-top: var(--border-rivet);
+  flex-shrink: 0;
+}
+
+/* Pagination */
+.shipbroker-pagination {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.shipbroker-page-btn {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+}
+
+.shipbroker-page-indicator {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  min-width: 50px;
+  text-align: center;
+}
+
+.shipbroker-elevator-dots {
+  display: flex;
+  gap: var(--spacing-xs);
+  align-items: center;
+}
+
+.shipbroker-elevator-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--color-bg-light);
+  border: 1px solid #4a4a60;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.shipbroker-elevator-dot:hover {
+  background: var(--color-copper);
+}
+
+.shipbroker-elevator-dot.active {
+  background: var(--color-gold);
+  border-color: var(--color-copper);
+}
+
+/* ─── Ship Info Panel (modal overlay) ──────────────────────────────────── */
+
+.ship-info-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+}
+
+.ship-info-panel {
+  max-width: 500px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.ship-info-title {
+  font-size: 22px;
+  text-align: center;
+  margin-bottom: var(--spacing-sm);
+}
+
+.ship-info-image {
+  width: 100%;
+  height: 120px;
+  background: #111;
+  border-radius: var(--border-radius);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ship-info-image-label {
+  font-family: var(--font-heading);
+  font-size: 18px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.ship-info-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.ship-info-table tr {
+  border-bottom: 1px solid rgba(74, 74, 96, 0.5);
+}
+
+.ship-info-table tr:last-child {
+  border-bottom: none;
+}
+
+.ship-info-label {
+  padding: var(--spacing-sm) var(--spacing-md);
+  color: var(--color-text-secondary);
+  font-weight: 500;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.ship-info-value {
+  padding: var(--spacing-sm) var(--spacing-md);
+  text-align: right;
+  color: var(--color-text-accent);
+}
+
+.ship-info-close-btn {
+  align-self: center;
+  min-width: 120px;
+  margin-top: var(--spacing-sm);
+}
+
+/* ─── Purchase Dialog ──────────────────────────────────────────────────── */
+
+.purchase-dialog {
+  max-width: 460px;
+  width: 90%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.purchase-dialog-title {
+  font-size: 22px;
+  text-align: center;
+}
+
+.purchase-dialog-summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-sm) 0;
+  border-bottom: 1px solid rgba(74, 74, 96, 0.5);
+}
+
+.purchase-ship-type {
+  font-size: 14px;
+  color: var(--color-text-primary);
+  font-weight: 500;
+}
+
+.purchase-ship-price {
+  font-size: 14px;
+  color: var(--color-text-accent);
+}
+
+.purchase-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.purchase-name-row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.purchase-name-prefix {
+  font-size: 16px;
+  color: var(--color-copper-light);
+  flex-shrink: 0;
+}
+
+.purchase-name-input {
+  flex: 1;
+}
+
+.purchase-deposit-slider {
+  width: 100%;
+  height: 6px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: var(--color-bg-light);
+  border-radius: 3px;
+  outline: none;
+  cursor: pointer;
+}
+
+.purchase-deposit-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  background: var(--color-copper);
+  border-radius: 50%;
+  border: 2px solid var(--color-copper-light);
+  cursor: pointer;
+}
+
+.purchase-deposit-slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  background: var(--color-copper);
+  border-radius: 50%;
+  border: 2px solid var(--color-copper-light);
+  cursor: pointer;
+}
+
+.purchase-deposit-info {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  text-align: center;
+}
+
+.purchase-balance {
+  font-size: 13px;
+  color: var(--color-text-muted);
+  text-align: center;
+  padding-top: var(--spacing-sm);
+  border-top: 1px solid rgba(74, 74, 96, 0.5);
+}
+
+.purchase-dialog-buttons {
+  display: flex;
+  gap: var(--spacing-md);
+  justify-content: center;
+  padding-top: var(--spacing-sm);
+}
+
+/* Message dialog */
+.message-dialog {
+  text-align: center;
+}
+
+.message-dialog-text {
+  font-size: 15px;
+  color: var(--color-text-primary);
+  line-height: 1.6;
+  padding: var(--spacing-md) 0;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Port Operations Screen
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.port-operations-screen {
+  background: radial-gradient(
+    ellipse at center,
+    rgba(45, 45, 68, 0.98) 0%,
+    rgba(26, 26, 46, 0.99) 70%
+  );
+  flex-direction: column;
+  padding: var(--spacing-md);
+  gap: var(--spacing-sm);
+}
+
+/* ─── Fallback screen ──────────────────────────────────────────────────── */
+
+.port-ops-fallback {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-lg);
+  padding: var(--spacing-2xl);
+}
+
+.port-ops-fallback p {
+  color: var(--color-text-secondary);
+  font-size: 16px;
+}
+
+/* ─── Ship Selector ────────────────────────────────────────────────────── */
+
+.port-ops-ship-selector {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  flex-shrink: 0;
+}
+
+.port-ops-ship-selector-label {
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-right: var(--spacing-sm);
+}
+
+.port-ops-ship-btn {
+  font-size: 12px;
+  padding: var(--spacing-xs) var(--spacing-md);
+}
+
+/* ─── Four-Quadrant Grid ───────────────────────────────────────────────── */
+
+.port-ops-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: var(--spacing-md);
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.port-ops-quadrant {
+  overflow: auto;
+  min-height: 0;
+}
+
+/* ─── Top-Left: Ship Status Panel ──────────────────────────────────────── */
+
+.port-ops-ship-status {
+  grid-column: 1;
+  grid-row: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.port-ops-panel-title {
+  font-size: 16px;
+  margin-bottom: var(--spacing-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.port-ops-status-table {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.port-ops-status-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 3px 0;
+  border-bottom: 1px solid rgba(74, 74, 96, 0.3);
+}
+
+.port-ops-status-row:last-child {
+  border-bottom: none;
+}
+
+.port-ops-status-label {
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  flex-shrink: 0;
+  margin-right: var(--spacing-sm);
+}
+
+.port-ops-status-value {
+  font-size: 13px;
+  color: var(--color-text-accent);
+  text-align: right;
+}
+
+/* ─── Top-Right: Port View Panel ───────────────────────────────────────── */
+
+.port-ops-port-view {
+  grid-column: 2;
+  grid-row: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.port-ops-porthole {
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  border: 8px solid var(--color-copper);
+  background: linear-gradient(135deg, #1a3a5c 0%, #0a1e3d 50%, #1a3a5c 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow:
+    inset 0 3px 10px rgba(0, 0, 0, 0.6),
+    0 2px 4px rgba(0, 0, 0, 0.3),
+    0 6px 16px rgba(0, 0, 0, 0.5),
+    0 0 0 2px var(--color-copper-dark),
+    0 0 0 4px rgba(0, 0, 0, 0.3);
+  position: relative;
+  overflow: hidden;
+  margin-bottom: var(--spacing-md);
+}
+
+/* Rivet bolts around the porthole frame */
+.port-ops-porthole::before,
+.port-ops-porthole::after {
+  content: '';
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  background: radial-gradient(circle at 35% 35%, var(--color-copper-light), var(--color-copper-dark));
+  border-radius: 50%;
+  border: 1px solid var(--color-copper-dark);
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.3),
+    0 1px 2px rgba(0, 0, 0, 0.4);
+  z-index: 2;
+}
+
+.port-ops-porthole::before {
+  top: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.port-ops-porthole::after {
+  bottom: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+/* Additional rivets via inner wrapper */
+.port-ops-porthole-rivets {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* Canvas skyline inside porthole */
+.port-skyline-canvas {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  display: block;
+}
+
+.port-ops-skyline-placeholder {
+  font-family: var(--font-heading);
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.6);
+  text-align: center;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+  padding: var(--spacing-md);
+}
+
+.port-ops-port-name {
+  font-size: 18px;
+  text-align: center;
+}
+
+/* ─── Bottom-Left: Captain's Orders ────────────────────────────────────── */
+
+.port-ops-orders {
+  grid-column: 1;
+  grid-row: 2;
+  display: flex;
+  flex-direction: column;
+}
+
+.port-ops-menu {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  flex: 1;
+}
+
+.port-ops-order-btn {
+  width: 100%;
+  font-size: 14px;
+  padding: var(--spacing-sm) var(--spacing-md);
+  text-align: left;
+  letter-spacing: 0.1em;
+}
+
+/* ─── Bottom-Right: Port Info Panel ────────────────────────────────────── */
+
+.port-ops-port-info {
+  grid-column: 2;
+  grid-row: 2;
+  background: var(--color-bg-dark);
+  border: var(--border-rivet);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-md);
+  display: flex;
+  flex-direction: column;
+}
+
+.port-ops-port-info-title {
+  font-family: var(--font-body);
+  font-size: 14px;
+  color: var(--color-text-accent);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: var(--spacing-sm);
+  border-bottom: 1px solid rgba(212, 168, 68, 0.3);
+  padding-bottom: var(--spacing-xs);
+}
+
+.port-ops-port-info-data {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.port-ops-info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 2px 0;
+}
+
+.port-ops-info-label {
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--color-text-accent);
+  opacity: 0.8;
+}
+
+.port-ops-info-value {
+  font-family: var(--font-data);
+  font-size: 12px;
+  color: var(--color-text-accent);
+  text-align: right;
+}
+
+.port-ops-cargo-title {
+  margin-top: var(--spacing-sm);
+  padding-top: var(--spacing-xs);
+  border-top: 1px solid rgba(212, 168, 68, 0.2);
+}
+
+.port-ops-cargo-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-xs);
+  margin-top: var(--spacing-xs);
+}
+
+.port-ops-cargo-tag {
+  font-family: var(--font-data);
+  font-size: 11px;
+  color: var(--color-text-accent);
+  background: rgba(212, 168, 68, 0.1);
+  border: 1px solid rgba(212, 168, 68, 0.25);
+  border-radius: 3px;
+  padding: 2px 6px;
+}
+
+/* ─── Footer ───────────────────────────────────────────────────────────── */
+
+.port-ops-footer {
+  display: flex;
+  justify-content: center;
+  padding: var(--spacing-sm) 0;
+  flex-shrink: 0;
+}
+
+/* ─── Message Toast ────────────────────────────────────────────────────── */
+
+.port-ops-message {
+  position: fixed;
+  bottom: var(--spacing-xl);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--color-bg-panel);
+  border: 1px solid var(--color-copper);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-sm) var(--spacing-lg);
+  color: var(--color-text-primary);
+  font-family: var(--font-body);
+  font-size: 14px;
+  z-index: 300;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+  transition: opacity 0.5s ease;
+}
+
+.port-ops-message-fade {
+  opacity: 0;
+}
+
+/* ─── Dialog Styles (shared for Repair, Refuel, Charter) ───────────────── */
+
+.port-ops-dialog {
+  max-width: 420px;
+  width: 90%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.port-ops-dialog-title {
+  font-size: 20px;
+  text-align: center;
+  margin-bottom: var(--spacing-xs);
+}
+
+.port-ops-dialog-text {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  text-align: center;
+}
+
+.port-ops-dialog-info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.port-ops-dialog-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 3px 0;
+}
+
+.port-ops-dialog-label {
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+.port-ops-dialog-value {
+  font-size: 13px;
+  color: var(--color-text-accent);
+}
+
+.port-ops-dialog-input-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  align-items: center;
+  padding-top: var(--spacing-sm);
+  border-top: 1px solid rgba(74, 74, 96, 0.5);
+}
+
+.port-ops-dialog-input-row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  justify-content: center;
+}
+
+.port-ops-dialog-unit {
+  font-family: var(--font-data);
+  font-size: 14px;
+  color: var(--color-text-secondary);
+}
+
+.port-ops-dialog-cost-preview {
+  font-size: 14px;
+  color: var(--color-text-accent);
+  text-align: center;
+  margin-top: var(--spacing-xs);
+}
+
+.port-ops-dialog-buttons {
+  display: flex;
+  gap: var(--spacing-md);
+  justify-content: center;
+  padding-top: var(--spacing-sm);
+}
+
+/* ─── Charter Dialog ───────────────────────────────────────────────────── */
+
+.charter-dialog {
+  max-width: 600px;
+  width: 90%;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.charter-columns {
+  display: flex;
+  gap: var(--spacing-sm);
+  min-height: 0;
+}
+
+.charter-column {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.charter-column-header {
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-bottom: 1px solid var(--color-copper);
+  margin-bottom: var(--spacing-xs);
+}
+
+.charter-list {
+  overflow-y: auto;
+  max-height: 200px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.charter-item {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  background: var(--color-bg-light);
+  border: 1px solid transparent;
+  border-radius: 2px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--color-text-primary);
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.charter-item:hover {
+  background: var(--color-bg-medium);
+  border-color: var(--color-copper);
+}
+
+.charter-item.selected {
+  background: var(--color-danger);
+  border-color: var(--color-danger);
+  color: #fff;
+}
+
+.charter-details {
+  padding: var(--spacing-sm);
+  background: var(--color-bg-dark);
+  border: 1px solid var(--color-copper);
+  border-radius: var(--border-radius);
+  min-height: 80px;
+}
+
+.charter-details-title {
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin-bottom: var(--spacing-xs);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Travel Screen
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.travel-screen {
+  /* Semi-transparent so the Three.js ocean scene shows through */
+  background: transparent;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+  pointer-events: none;
+}
+
+.travel-screen > * {
+  pointer-events: auto;
+}
+
+/* ─── Travel HUD Overlay ─────────────────────────────────────────────── */
+
+.travel-hud {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  pointer-events: none;
+}
+
+.travel-hud > * {
+  pointer-events: auto;
+}
+
+/* Top bar: ship name + route */
+.travel-hud-top {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--spacing-md) var(--spacing-lg);
+  background: linear-gradient(
+    180deg,
+    rgba(10, 20, 40, 0.85) 0%,
+    rgba(10, 20, 40, 0.0) 100%
+  );
+}
+
+.travel-hud-ship-name {
+  font-family: var(--font-heading);
+  font-size: 22px;
+  color: var(--color-gold);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.travel-hud-route {
+  font-family: var(--font-body);
+  font-size: 15px;
+  color: var(--color-text-primary);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+  margin-top: 4px;
+}
+
+/* Info strip (distance, fuel, condition) */
+.travel-hud-info-strip {
+  display: flex;
+  justify-content: center;
+  gap: var(--spacing-lg);
+  padding: var(--spacing-sm) var(--spacing-lg);
+  flex-wrap: wrap;
+}
+
+.travel-hud-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.travel-hud-stat-label {
+  font-family: var(--font-body);
+  font-size: 11px;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+}
+
+.travel-hud-stat-value {
+  font-family: var(--font-data);
+  font-size: 14px;
+  color: var(--color-text-accent);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+}
+
+/* Bottom area: progress section */
+.travel-hud-progress-section {
+  position: absolute;
+  bottom: 60px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 70%;
+  max-width: 600px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.travel-hud-day-counter {
+  font-family: var(--font-heading);
+  font-size: 18px;
+  color: var(--color-gold);
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.8);
+  letter-spacing: 0.04em;
+}
+
+.travel-hud-progress-bar {
+  width: 100%;
+  height: 10px;
+  background: rgba(10, 20, 40, 0.6);
+  border: 1px solid rgba(212, 168, 68, 0.4);
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.travel-hud-progress-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, var(--color-copper) 0%, var(--color-gold) 100%);
+  border-radius: 5px;
+  transition: width 0.8s ease;
+}
+
+.travel-hud-progress-text {
+  font-family: var(--font-data);
+  font-size: 13px;
+  color: var(--color-text-primary);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+}
+
+/* Weather indicator */
+.travel-hud-weather {
+  position: absolute;
+  top: var(--spacing-lg);
+  right: var(--spacing-lg);
+  font-family: var(--font-data);
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+  padding: 4px 12px;
+  background: rgba(10, 20, 40, 0.5);
+  border-radius: var(--border-radius);
+  border: 1px solid rgba(74, 74, 96, 0.3);
+}
+
+.travel-hud-weather--storm {
+  color: #ff6644;
+  border-color: rgba(255, 100, 60, 0.5);
+  background: rgba(80, 20, 10, 0.6);
+  animation: storm-pulse 1s ease-in-out infinite alternate;
+}
+
+@keyframes storm-pulse {
+  from { opacity: 0.8; }
+  to { opacity: 1.0; }
+}
+
+/* Status message (event feedback) */
+.travel-hud-status {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--font-data);
+  font-size: 14px;
+  color: var(--color-text-primary);
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Event Dialog
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.event-dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 300;
+}
+
+.event-dialog {
+  max-width: 460px;
+  width: 90%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.event-dialog-title {
+  font-size: 22px;
+  text-align: center;
+}
+
+.event-dialog-description {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+  text-align: center;
+}
+
+.event-dialog-buttons {
+  display: flex;
+  gap: var(--spacing-md);
+  justify-content: center;
+  padding-top: var(--spacing-sm);
+}
+
+.event-dialog-btn {
+  min-width: 140px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Port Departure Screen
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.port-departure-screen {
+  background: radial-gradient(
+    ellipse at center,
+    rgba(35, 35, 56, 0.98) 0%,
+    rgba(26, 26, 46, 0.99) 70%
+  );
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.port-departure-panel {
+  max-width: 480px;
+  width: 90%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  text-align: center;
+}
+
+.port-departure-title {
+  font-size: 24px;
+}
+
+.port-departure-port-name {
+  font-size: 20px;
+  color: var(--color-text-accent);
+}
+
+.port-departure-description {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+}
+
+.port-departure-buttons {
+  display: flex;
+  gap: var(--spacing-lg);
+  justify-content: center;
+  padding-top: var(--spacing-md);
+}
+
+.port-departure-btn {
+  min-width: 160px;
+  padding: var(--spacing-md) var(--spacing-lg);
+  line-height: 1.4;
+}
+
+.port-departure-cost {
+  font-family: var(--font-data);
+  font-size: 13px;
+  opacity: 0.8;
+}
+
+/* ─── Destination label on world map footer ─────────────────────────────── */
+
+.worldmap-screen .destination-label {
+  font-family: var(--font-data);
+  font-size: 13px;
+  color: var(--color-gold);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.worldmap-screen .destination-label.hidden {
+  display: none;
+}
+
+/* ─── Destination badge on port info panel ──────────────────────────────── */
+
+.worldmap-screen .port-info-destination {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 600;
+  color: #fff;
+  background: var(--color-copper);
+  border-radius: 2px;
+  padding: 2px 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Maneuvering Minigame Screen
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.maneuvering-screen {
+  background: #0a0a1a;
+  flex-direction: column;
+  gap: 0;
+  padding: 0;
+}
+
+/* ─── Header ──────────────────────────────────────────────────────────── */
+
+.maneuvering-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-sm) var(--spacing-lg);
+  background: var(--color-bg-dark);
+  border-bottom: var(--border-copper);
+  flex-shrink: 0;
+  gap: var(--spacing-md);
+}
+
+.maneuvering-title {
+  font-family: var(--font-heading);
+  font-size: 16px;
+  color: var(--color-gold);
+  white-space: nowrap;
+}
+
+.maneuvering-timer-container {
+  flex: 1;
+  max-width: 400px;
+  position: relative;
+  height: 20px;
+  background: #1a1a2e;
+  border: 1px solid #4a4a60;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.maneuvering-timer-bar {
+  height: 100%;
+  width: 100%;
+  background: #00cc55;
+  transition: width 0.2s linear, background 0.3s ease;
+  border-radius: 2px;
+}
+
+.maneuvering-timer-label {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-data);
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+}
+
+.maneuvering-condition {
+  font-family: var(--font-data);
+  font-size: 14px;
+  font-weight: 600;
+  color: #00cc55;
+  white-space: nowrap;
+}
+
+/* ─── Canvas ──────────────────────────────────────────────────────────── */
+
+.maneuvering-canvas-wrapper {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+  padding: var(--spacing-sm);
+}
+
+.maneuvering-canvas {
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+  border: 2px solid var(--color-copper);
+  border-radius: var(--border-radius);
+  cursor: crosshair;
+}
+
+/* ─── Controls Hint ───────────────────────────────────────────────────── */
+
+.maneuvering-controls-hint {
+  width: 100%;
+  text-align: center;
+  padding: var(--spacing-sm) var(--spacing-lg);
+  background: var(--color-bg-dark);
+  border-top: 1px solid #4a4a60;
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+}
+
+.maneuvering-controls-hint strong {
+  color: var(--color-text-secondary);
+}
+
+/* ─── Result Overlay ──────────────────────────────────────────────────── */
+
+.maneuvering-result-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+}
+
+.maneuvering-result-panel {
+  max-width: 440px;
+  width: 90%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  text-align: center;
+}
+
+.maneuvering-result-title {
+  font-size: 24px;
+}
+
+.maneuvering-result-message {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+}
+
+.maneuvering-result-condition {
+  font-family: var(--font-data);
+  font-size: 16px;
+  color: var(--color-text-accent);
+  padding: var(--spacing-sm) 0;
+  border-top: 1px solid rgba(74, 74, 96, 0.5);
+  border-bottom: 1px solid rgba(74, 74, 96, 0.5);
+}
+
+.maneuvering-result-btn {
+  align-self: center;
+  min-width: 200px;
+  margin-top: var(--spacing-sm);
+}
+
+/* ─── Setup Screen — Save/Load Area ────────────────────────────────────── */
+
+.setup-save-load-area {
+  display: flex;
+  gap: var(--spacing-md);
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.setup-continue-btn,
+.setup-load-btn {
+  min-width: 180px;
+}
+
+/* ─── Save/Load Dialog ─────────────────────────────────────────────────── */
+
+.save-load-dialog {
+  width: 520px;
+  max-width: 90vw;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+  padding: var(--spacing-xl);
+}
+
+.save-load-title {
+  text-align: center;
+  margin: 0;
+  font-size: 24px;
+}
+
+.save-load-slots {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.save-slot {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md);
+  background: var(--color-bg-dark);
+  border: 1px solid #4a4a60;
+  border-radius: var(--border-radius);
+  transition: border-color 0.2s ease;
+}
+
+.save-slot-filled {
+  border-color: var(--color-copper-dark);
+}
+
+.save-slot-filled:hover {
+  border-color: var(--color-copper);
+}
+
+.save-slot-header {
+  font-family: var(--font-data);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-text-muted);
+}
+
+.save-slot-empty-label {
+  font-size: 14px;
+  color: var(--color-text-muted);
+  font-style: italic;
+  padding: var(--spacing-sm) 0;
+}
+
+.save-slot-info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.save-slot-company {
+  font-family: var(--font-heading);
+  font-size: 18px;
+  color: var(--color-text-accent);
+}
+
+.save-slot-details {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+.save-slot-date {
+  font-size: 11px;
+  color: var(--color-text-muted);
+}
+
+.save-slot-actions {
+  display: flex;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-xs);
+}
+
+.save-slot-btn {
+  font-size: 12px;
+  padding: var(--spacing-xs) var(--spacing-md);
+}
+
+.save-load-close-btn {
+  align-self: center;
+  min-width: 120px;
+}
+
+/* Save/Load Overwrite Confirmation */
+.save-load-confirm {
+  width: 360px;
+  max-width: 85vw;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  padding: var(--spacing-xl);
+}
+
+.save-load-confirm-msg {
+  font-size: 15px;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.save-load-confirm-btns {
+  display: flex;
+  gap: var(--spacing-md);
+  justify-content: center;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Setup Screen — Multi-Player Entries
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.player-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+  margin-bottom: var(--spacing-md);
+}
+
+.player-entry {
+  background: var(--color-bg-dark);
+  border: 1px solid #4a4a60;
+  border-radius: var(--border-radius);
+  padding: var(--spacing-md);
+}
+
+.player-entry-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-md);
+}
+
+.player-entry-label {
+  font-family: var(--font-heading);
+  font-size: 16px;
+  color: var(--color-gold);
+  font-weight: 700;
+}
+
+.player-remove-btn {
+  font-size: 12px;
+  padding: var(--spacing-xs) var(--spacing-sm);
+}
+
+.add-player-btn {
+  width: 100%;
+  margin-top: var(--spacing-sm);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Turn Indicator — Player circles in world map footer
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.turn-indicator {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.turn-indicator.hidden {
+  display: none;
+}
+
+.turn-indicator-circles {
+  display: flex;
+  gap: var(--spacing-sm);
+  align-items: center;
+}
+
+.turn-indicator-circle {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-data);
+  font-size: 13px;
+  font-weight: 700;
+  border: 2px solid #4a4a60;
+  background: var(--color-bg-dark);
+  color: var(--color-text-muted);
+  transition: all 0.3s ease;
+}
+
+.turn-indicator-circle.active {
+  border-color: var(--color-gold);
+  background: linear-gradient(135deg, var(--color-copper) 0%, var(--color-gold) 100%);
+  color: #fff;
+  box-shadow: 0 0 8px rgba(212, 168, 68, 0.4);
+}
+
+.turn-indicator-name {
+  font-family: var(--font-body);
+  font-size: 11px;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   End Turn Button
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.end-turn-btn {
+  white-space: nowrap;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Turn Transition Overlay
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.turn-transition-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(10, 10, 26, 0.92);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 500;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.turn-transition-overlay.visible {
+  opacity: 1;
+}
+
+.turn-transition-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-md);
+  text-align: center;
+}
+
+.turn-transition-badge {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-data);
+  font-size: 28px;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(135deg, var(--color-copper) 0%, var(--color-gold) 100%);
+  border: 3px solid var(--color-gold);
+  box-shadow: 0 0 20px rgba(212, 168, 68, 0.4);
+}
+
+.turn-transition-heading {
+  font-family: var(--font-heading);
+  font-size: 36px;
+  color: var(--color-gold);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
+  margin: 0;
+}
+
+.turn-transition-company {
+  font-family: var(--font-heading);
+  font-size: 20px;
+  color: var(--color-copper-light);
+}
+
+.turn-transition-name {
+  font-family: var(--font-body);
+  font-size: 16px;
+  color: var(--color-text-secondary);
+}
+
+.turn-transition-hint {
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--color-text-muted);
+  margin-top: var(--spacing-md);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Toast Notifications
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.toast-container {
+  position: fixed;
+  top: var(--spacing-lg);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-sm);
+  pointer-events: none;
+}
+
+.toast {
+  font-family: var(--font-body);
+  font-size: 14px;
+  padding: var(--spacing-sm) var(--spacing-lg);
+  border-radius: var(--border-radius);
+  border: 1px solid;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  pointer-events: auto;
+  cursor: pointer;
+  opacity: 0;
+  transform: translateY(-12px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  max-width: 420px;
+  text-align: center;
+  line-height: 1.4;
+}
+
+.toast-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.toast-dismissed {
+  opacity: 0;
+  transform: translateY(-12px);
+}
+
+.toast-info {
+  background: rgba(30, 60, 100, 0.95);
+  border-color: #3a7bd5;
+  color: #b8d4f0;
+}
+
+.toast-success {
+  background: rgba(20, 70, 40, 0.95);
+  border-color: #2ecc71;
+  color: #a8e6c3;
+}
+
+.toast-warning {
+  background: rgba(80, 60, 20, 0.95);
+  border-color: var(--color-gold);
+  color: #f0d88a;
+}
+
+.toast-error {
+  background: rgba(80, 20, 20, 0.95);
+  border-color: #e74c3c;
+  color: #f0a8a8;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Responsive — Tablet (max-width: 768px)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 768px) {
+  /* ─── Setup Screen ─────────────────────────────────────────────────── */
+
+  .setup-screen .game-title {
+    font-size: 36px;
+  }
+
+  .setup-screen .form-row {
+    flex-direction: column;
+    gap: var(--spacing-md);
+  }
+
+  .setup-screen .port-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .setup-screen .start-btn {
+    min-width: 200px;
+    font-size: 16px;
+  }
+
+  /* ─── World Map Screen ─────────────────────────────────────────────── */
+
+  .worldmap-screen .worldmap-header {
+    flex-wrap: wrap;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm);
+  }
+
+  .worldmap-screen .worldmap-title {
+    font-size: 16px;
+  }
+
+  .worldmap-screen .worldmap-info {
+    font-size: 11px;
+    gap: var(--spacing-sm);
+  }
+
+  .worldmap-screen .worldmap-sidebar {
+    width: 56px;
+    padding: var(--spacing-xs) 2px;
+  }
+
+  .worldmap-screen .sidebar-btn {
+    width: 48px;
+    height: 48px;
+    font-size: 10px;
+  }
+
+  .worldmap-screen .sidebar-icon svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .worldmap-screen .worldmap-footer {
+    flex-wrap: wrap;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm);
+    justify-content: center;
+  }
+
+  .worldmap-screen .time-display {
+    font-size: 12px;
+    gap: var(--spacing-sm);
+  }
+
+  .worldmap-screen .time-display .time-value {
+    font-size: 14px;
+  }
+
+  .worldmap-screen .worldmap-port-info {
+    left: var(--spacing-sm);
+    bottom: 50px;
+    font-size: 12px;
+  }
+
+  /* ─── Office Screen ────────────────────────────────────────────────── */
+
+  .office-status-bar {
+    flex-wrap: wrap;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm);
+  }
+
+  .office-company-name {
+    font-size: 18px;
+    width: 100%;
+  }
+
+  .office-stats {
+    gap: var(--spacing-md);
+  }
+
+  .office-main {
+    flex-direction: column;
+    overflow-y: auto;
+  }
+
+  .office-fleet-table {
+    font-size: 12px;
+  }
+
+  .office-balance-value {
+    font-size: 16px;
+  }
+
+  /* ─── Ship Broker Screen ───────────────────────────────────────────── */
+
+  .shipbroker-title {
+    font-size: 22px;
+  }
+
+  .ship-card {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--spacing-md);
+  }
+
+  .ship-card-image {
+    width: 100%;
+    height: 80px;
+  }
+
+  .ship-card-buttons {
+    flex-direction: row;
+    justify-content: flex-end;
+  }
+
+  /* ─── Port Operations Screen ───────────────────────────────────────── */
+
+  .port-ops-grid {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto;
+    overflow-y: auto;
+  }
+
+  .port-ops-ship-status {
+    grid-column: 1;
+    grid-row: auto;
+  }
+
+  .port-ops-port-view {
+    grid-column: 1;
+    grid-row: auto;
+  }
+
+  .port-ops-orders {
+    grid-column: 1;
+    grid-row: auto;
+  }
+
+  .port-ops-port-info {
+    grid-column: 1;
+    grid-row: auto;
+  }
+
+  .port-ops-porthole {
+    width: 160px;
+    height: 160px;
+    border-width: 6px;
+  }
+
+  /* ─── Maneuvering Screen ───────────────────────────────────────────── */
+
+  .maneuvering-header {
+    flex-wrap: wrap;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    gap: var(--spacing-xs);
+  }
+
+  .maneuvering-title {
+    font-size: 13px;
+  }
+
+  .maneuvering-condition {
+    font-size: 12px;
+  }
+
+  /* ─── Charter Dialog ───────────────────────────────────────────────── */
+
+  .charter-columns {
+    flex-direction: column;
+  }
+
+  .charter-list {
+    max-height: 140px;
+  }
+
+  /* ─── Port Departure ───────────────────────────────────────────────── */
+
+  .port-departure-buttons {
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-md);
+  }
+
+  .port-departure-btn {
+    width: 100%;
+    max-width: 280px;
+  }
+
+  /* ─── Turn Transition ──────────────────────────────────────────────── */
+
+  .turn-transition-heading {
+    font-size: 28px;
+  }
+
+  .turn-transition-badge {
+    width: 48px;
+    height: 48px;
+    font-size: 22px;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Responsive — Mobile (max-width: 480px)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 480px) {
+  /* ─── Setup Screen ─────────────────────────────────────────────────── */
+
+  .setup-screen {
+    padding: var(--spacing-md);
+  }
+
+  .setup-screen .game-title {
+    font-size: 28px;
+  }
+
+  .setup-screen .tagline {
+    font-size: 13px;
+  }
+
+  .setup-screen .port-grid {
+    grid-template-columns: 1fr;
+    max-height: 240px;
+  }
+
+  .setup-screen .start-btn {
+    min-width: 100%;
+    font-size: 15px;
+  }
+
+  .setup-screen .port-section-title {
+    font-size: 15px;
+  }
+
+  .setup-save-load-area {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .setup-continue-btn,
+  .setup-load-btn {
+    min-width: 100%;
+  }
+
+  /* ─── World Map Screen ─────────────────────────────────────────────── */
+
+  .worldmap-screen .worldmap-main {
+    flex-direction: column;
+  }
+
+  .worldmap-screen .worldmap-sidebar {
+    width: 100%;
+    flex-direction: row;
+    border-left: none;
+    border-top: var(--border-rivet);
+    justify-content: center;
+    padding: var(--spacing-xs);
+    overflow-x: auto;
+  }
+
+  .worldmap-screen .sidebar-btn {
+    width: 44px;
+    height: 44px;
+    font-size: 9px;
+  }
+
+  .worldmap-screen .sidebar-icon svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .worldmap-screen .sidebar-label {
+    font-size: 8px;
+  }
+
+  .worldmap-screen .worldmap-title {
+    font-size: 14px;
+  }
+
+  .worldmap-screen .worldmap-info {
+    font-size: 10px;
+    gap: var(--spacing-xs);
+  }
+
+  .worldmap-screen .worldmap-footer {
+    padding: var(--spacing-xs) var(--spacing-sm);
+  }
+
+  .worldmap-screen .time-display {
+    font-size: 11px;
+    gap: var(--spacing-xs);
+  }
+
+  .worldmap-screen .time-display .time-value {
+    font-size: 12px;
+  }
+
+  .worldmap-screen .action-btn {
+    min-width: 100px;
+    font-size: 11px;
+  }
+
+  .worldmap-screen .worldmap-port-info {
+    left: var(--spacing-xs);
+    right: var(--spacing-xs);
+    bottom: 44px;
+    font-size: 11px;
+    gap: var(--spacing-xs);
+    flex-wrap: wrap;
+  }
+
+  /* ─── Office Screen ────────────────────────────────────────────────── */
+
+  .office-company-name {
+    font-size: 16px;
+  }
+
+  .office-stats {
+    flex-wrap: wrap;
+    gap: var(--spacing-sm);
+  }
+
+  .office-stat-item {
+    font-size: 12px;
+  }
+
+  .office-stat-item .value {
+    font-size: 14px;
+  }
+
+  .office-main {
+    padding: var(--spacing-sm);
+    gap: var(--spacing-sm);
+  }
+
+  .office-panel-title {
+    font-size: 15px;
+  }
+
+  .office-fleet-table {
+    font-size: 11px;
+  }
+
+  .office-fleet-table th,
+  .office-fleet-table td {
+    padding: 3px var(--spacing-xs);
+  }
+
+  .office-balance-value {
+    font-size: 14px;
+  }
+
+  .office-footer {
+    flex-wrap: wrap;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm);
+  }
+
+  .office-footer-btn {
+    min-width: 100px;
+    font-size: 12px;
+  }
+
+  /* ─── Ship Broker Screen ───────────────────────────────────────────── */
+
+  .shipbroker-header {
+    padding: var(--spacing-sm);
+  }
+
+  .shipbroker-title {
+    font-size: 18px;
+  }
+
+  .shipbroker-list-area {
+    padding: var(--spacing-sm);
+  }
+
+  .ship-card {
+    padding: var(--spacing-sm);
+  }
+
+  .ship-card-image {
+    height: 60px;
+  }
+
+  .ship-card-type {
+    font-size: 13px;
+  }
+
+  .ship-card-price {
+    font-size: 14px;
+  }
+
+  .shipbroker-footer {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm);
+  }
+
+  /* ─── Port Operations Screen ───────────────────────────────────────── */
+
+  .port-operations-screen {
+    padding: var(--spacing-xs);
+    gap: var(--spacing-xs);
+  }
+
+  .port-ops-ship-selector {
+    flex-wrap: wrap;
+    padding: var(--spacing-xs);
+  }
+
+  .port-ops-panel-title {
+    font-size: 14px;
+  }
+
+  .port-ops-porthole {
+    width: 120px;
+    height: 120px;
+    border-width: 5px;
+  }
+
+  .port-ops-port-name {
+    font-size: 15px;
+  }
+
+  .port-ops-order-btn {
+    font-size: 13px;
+    padding: var(--spacing-xs) var(--spacing-sm);
+  }
+
+  /* ─── Maneuvering Screen ───────────────────────────────────────────── */
+
+  .maneuvering-header {
+    padding: var(--spacing-xs);
+  }
+
+  .maneuvering-title {
+    font-size: 12px;
+  }
+
+  .maneuvering-condition {
+    font-size: 11px;
+  }
+
+  .maneuvering-canvas-wrapper {
+    padding: 2px;
+  }
+
+  .maneuvering-controls-hint {
+    font-size: 11px;
+    padding: var(--spacing-xs) var(--spacing-sm);
+  }
+
+  /* ─── Dialogs — full width on mobile ───────────────────────────────── */
+
+  .port-ops-dialog,
+  .charter-dialog,
+  .purchase-dialog,
+  .ship-info-panel,
+  .office-dialog,
+  .event-dialog,
+  .maneuvering-result-panel,
+  .save-load-dialog,
+  .save-load-confirm,
+  .port-departure-panel {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  /* ─── Travel HUD responsive ─────────────────────────────────────────── */
+
+  .travel-hud-ship-name {
+    font-size: 18px;
+  }
+
+  .travel-hud-progress-section {
+    width: 90%;
+  }
+
+  /* ─── Turn Transition ──────────────────────────────────────────────── */
+
+  .turn-transition-heading {
+    font-size: 22px;
+  }
+
+  .turn-transition-badge {
+    width: 40px;
+    height: 40px;
+    font-size: 18px;
+  }
+
+  .turn-transition-company {
+    font-size: 16px;
+  }
+
+  .turn-transition-name {
+    font-size: 14px;
+  }
+
+  /* ─── Touch-friendly: Maneuvering on-screen controls ───────────────── */
+
+  .maneuvering-touch-controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    background: var(--color-bg-dark);
+    border-top: 1px solid #4a4a60;
+    flex-shrink: 0;
+    gap: var(--spacing-sm);
+  }
+
+  .maneuvering-touch-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: var(--color-bg-light);
+    border: 2px solid var(--color-copper);
+    color: var(--color-text-primary);
+    font-size: 22px;
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: manipulation;
+    flex-shrink: 0;
+  }
+
+  .maneuvering-touch-btn:active {
+    background: var(--color-copper);
+    color: #fff;
+  }
+
+  .maneuvering-touch-steer {
+    display: flex;
+    gap: var(--spacing-sm);
+    align-items: center;
+  }
+
+  .maneuvering-touch-throttle {
+    display: flex;
+    gap: var(--spacing-sm);
+    align-items: center;
+  }
+}
+
+/* Hide touch controls on non-mobile / wide screens */
+@media (min-width: 481px) {
+  .maneuvering-touch-controls {
+    display: none;
+  }
+}
+
+/* ─── Help Panel ──────────────────────────────────────────────────────── */
+
+/* Overlay backdrop */
+.help-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0);
+  z-index: 900;
+  transition: background 0.3s ease;
+}
+
+.help-overlay-visible {
+  background: rgba(0, 0, 0, 0.5);
+}
+
+/* Slide-in panel from right */
+.help-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 420px;
+  max-width: 90vw;
+  height: 100vh;
+  background: var(--color-bg-dark, #0e1a2b);
+  border-left: 2px solid var(--color-gold, #d4a844);
+  z-index: 901;
+  display: flex;
+  flex-direction: column;
+  transform: translateX(100%);
+  transition: transform 0.3s ease;
+  overflow: hidden;
+}
+
+.help-panel-visible {
+  transform: translateX(0);
+}
+
+/* Header */
+.help-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-md, 12px) var(--spacing-lg, 16px);
+  border-bottom: 1px solid rgba(212, 168, 68, 0.3);
+  flex-shrink: 0;
+}
+
+.help-panel-title {
+  font-family: var(--font-heading, serif);
+  font-size: 22px;
+  color: var(--color-gold, #d4a844);
+  margin: 0;
+  letter-spacing: 0.03em;
+}
+
+.help-close-btn {
+  font-size: 24px;
+  line-height: 1;
+  padding: 4px 10px;
+  cursor: pointer;
+}
+
+/* Scrollable content */
+.help-panel-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--spacing-md, 12px) var(--spacing-lg, 16px);
+}
+
+/* Sections */
+.help-section {
+  margin-bottom: var(--spacing-lg, 16px);
+}
+
+.help-section-title {
+  font-family: var(--font-heading, serif);
+  font-size: 16px;
+  color: var(--color-gold, #d4a844);
+  margin: 0 0 var(--spacing-sm, 8px) 0;
+  padding-bottom: var(--spacing-xs, 4px);
+  border-bottom: 1px solid rgba(212, 168, 68, 0.2);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.help-section-body {
+  font-family: var(--font-body, sans-serif);
+  font-size: 14px;
+  color: var(--color-text, #e0e0e0);
+  line-height: 1.6;
+}
+
+.help-section-body ol,
+.help-section-body ul {
+  margin: var(--spacing-xs, 4px) 0;
+  padding-left: var(--spacing-lg, 16px);
+}
+
+.help-section-body li {
+  margin-bottom: var(--spacing-xs, 4px);
+}
+
+.help-section-body p {
+  margin: var(--spacing-sm, 8px) 0;
+  color: var(--color-text-secondary, #a0b0c0);
+}
+
+/* Keyboard shortcuts table */
+.help-shortcuts-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: var(--spacing-sm, 8px) 0;
+}
+
+.help-shortcuts-table th {
+  text-align: left;
+  color: var(--color-gold, #d4a844);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: var(--spacing-xs, 4px) var(--spacing-sm, 8px);
+  border-bottom: 1px solid rgba(212, 168, 68, 0.2);
+}
+
+.help-shortcuts-table td {
+  padding: var(--spacing-xs, 4px) var(--spacing-sm, 8px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.help-shortcuts-table kbd {
+  display: inline-block;
+  padding: 2px 8px;
+  font-family: var(--font-mono, monospace);
+  font-size: 13px;
+  background: var(--color-bg-medium, #1a2a3a);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+  color: var(--color-gold, #d4a844);
+  min-width: 28px;
+  text-align: center;
+}
+
+/* Help button in sidebar */
+.sidebar-btn.help-btn {
+  margin-top: auto;
+  border-top: 1px solid rgba(212, 168, 68, 0.2);
+  padding-top: var(--spacing-sm, 8px);
+}
+
+@media (max-width: 600px) {
+  .help-panel {
+    width: 100vw;
+    max-width: 100vw;
+  }
+}

@@ -1,0 +1,317 @@
+/**
+ * World Events system for Ship Happens.
+ * Generates global events that affect gameplay — trade sanctions,
+ * canal blockages, piracy zones, and other disruptions.
+ * Events modify route costs, block ports temporarily, or add surcharges.
+ */
+
+import { pickRandom } from "../data/humorTexts";
+
+// ─── Types ───────────────────────────────────────────────────────────────────
+
+export type WorldEventType =
+  | "canal-blockage"
+  | "trade-sanctions"
+  | "piracy-zone"
+  | "port-strike"
+  | "fuel-crisis"
+  | "environmental-disaster"
+  | "diplomatic-incident"
+  | "tech-failure";
+
+export interface WorldEvent {
+  readonly id: string;
+  readonly type: WorldEventType;
+  readonly headline: string;
+  readonly description: string;
+  /** Port IDs affected (empty = global effect). */
+  readonly affectedPortIds: readonly string[];
+  /** Multiplier to route cost (1.0 = normal, 1.5 = 50% surcharge). */
+  readonly costMultiplier: number;
+  /** If true, affected ports are completely blocked. */
+  readonly blocksPort: boolean;
+  /** Duration in game weeks. */
+  readonly durationWeeks: number;
+  /** The game week this event started. */
+  startWeek: number;
+  /** The game year this event started. */
+  startYear: number;
+}
+
+// ─── Event Templates ─────────────────────────────────────────────────────────
+
+interface WorldEventTemplate {
+  readonly type: WorldEventType;
+  readonly headlines: readonly string[];
+  readonly descriptions: readonly string[];
+  readonly costMultiplier: number;
+  readonly blocksPort: boolean;
+  readonly durationWeeks: [number, number]; // [min, max]
+  /** Port IDs this event type can affect. Empty = random port selected. */
+  readonly targetPortIds?: readonly string[];
+}
+
+const EVENT_TEMPLATES: readonly WorldEventTemplate[] = [
+  {
+    type: "canal-blockage",
+    headlines: [
+      "Suez Canal blocked by container ship doing a U-turn",
+      "Panama Canal clogged by world record rubber duck convoy",
+      "Suez Canal closed after captain tries to parallel park sideways",
+    ],
+    descriptions: [
+      "A massive container ship has wedged itself across the canal. Engineers are trying to free it with a fleet of tugboats and one very optimistic excavator.",
+      "A convoy of ships carrying novelty rubber ducks has caused a catastrophic blockage. Quacking sounds reported from 50 miles away.",
+    ],
+    costMultiplier: 1.8,
+    blocksPort: false,
+    durationWeeks: [2, 6],
+  },
+  {
+    type: "trade-sanctions",
+    headlines: [
+      "New trade sanctions ban export of good vibes to major ports",
+      "Trade embargo declared — only sarcasm may pass freely",
+      "International sanctions imposed after diplomatic meme incident",
+    ],
+    descriptions: [
+      "New trade restrictions have been imposed, significantly increasing costs for all shipments to affected regions.",
+      "A diplomatic incident involving a misinterpreted emoji has led to severe trade restrictions.",
+    ],
+    costMultiplier: 1.5,
+    blocksPort: false,
+    durationWeeks: [4, 12],
+    targetPortIds: ["shanghai", "singapore", "rotterdam", "hamburg"],
+  },
+  {
+    type: "piracy-zone",
+    headlines: [
+      "Pirates spotted near Gulf of Aden — now accepting contactless payments",
+      "Maritime freelancers establish toll booth in Strait of Malacca",
+      "Pirate activity surges — now offering loyalty cards",
+    ],
+    descriptions: [
+      "Increased pirate activity has been reported in the region. Ships are advised to travel in convoys and hide their good silverware.",
+      "A new pirate syndicate is operating in the area. They've reportedly set up a drive-through robbery service.",
+    ],
+    costMultiplier: 1.4,
+    blocksPort: false,
+    durationWeeks: [3, 8],
+    targetPortIds: ["mumbai", "karachi", "singapore", "dubai"],
+  },
+  {
+    type: "port-strike",
+    headlines: [
+      "Port workers on strike — demand artisanal coffee in all break rooms",
+      "Dock workers walk out after crane WiFi password changed without notice",
+      "General strike at port — workers want 'Casual Friday' to include pajamas",
+    ],
+    descriptions: [
+      "Port workers have gone on strike over working conditions. The port is temporarily closed to all commercial traffic.",
+      "A labor dispute has shut down port operations. Union representatives say they will return 'when the vibes improve'.",
+    ],
+    costMultiplier: 1.0,
+    blocksPort: true,
+    durationWeeks: [1, 4],
+  },
+  {
+    type: "fuel-crisis",
+    headlines: [
+      "Global fuel prices spike after oil rig converts to wind power 'as a joke'",
+      "Fuel shortage — tankers stuck in traffic jam at Strait of Hormuz",
+      "Bunker fuel prices triple after refinery mistakenly produces artisanal olive oil",
+    ],
+    descriptions: [
+      "A global fuel supply disruption has caused bunker fuel prices to skyrocket. All refueling costs are significantly increased.",
+      "Fuel shortages are affecting ports worldwide. Ships are advised to conserve fuel and consider sailing in neutral.",
+    ],
+    costMultiplier: 2.0,
+    blocksPort: false,
+    durationWeeks: [2, 6],
+  },
+  {
+    type: "environmental-disaster",
+    headlines: [
+      "Massive algae bloom turns harbor bright green — tourists love it, ships don't",
+      "Oil spill cleanup attracts world's largest gathering of angry pelicans",
+      "Volcanic eruption near port creates new island — customs unsure who owns it",
+    ],
+    descriptions: [
+      "An environmental incident has disrupted port operations. Cleanup crews are on site but progress is slow.",
+      "A natural disaster has affected port infrastructure. Limited operations are available at increased cost.",
+    ],
+    costMultiplier: 1.3,
+    blocksPort: true,
+    durationWeeks: [2, 8],
+  },
+  {
+    type: "diplomatic-incident",
+    headlines: [
+      "Two countries dispute ownership of lighthouse — both claim it blinks in their language",
+      "International incident after ambassador's yacht cuts off cargo ship",
+      "Diplomatic crisis over who invented containerized shipping — historians baffled",
+    ],
+    descriptions: [
+      "A diplomatic incident has led to increased port security and inspection delays. All ships face additional processing time.",
+      "Relations between nations have soured after a maritime disagreement. Trade is affected but not halted.",
+    ],
+    costMultiplier: 1.3,
+    blocksPort: false,
+    durationWeeks: [2, 6],
+  },
+  {
+    type: "tech-failure",
+    headlines: [
+      "Port GPS system hacked — all ships directed to same parking spot",
+      "Automated port crane gains sentience, refuses to work on Mondays",
+      "Global shipping software update causes all manifests to display in Wingdings",
+    ],
+    descriptions: [
+      "A major technology failure has disrupted port operations. Manual operations are in effect, causing delays and surcharges.",
+      "A software glitch has brought the port's automated systems to a halt. Engineers are 'turning it off and on again'.",
+    ],
+    costMultiplier: 1.2,
+    blocksPort: false,
+    durationWeeks: [1, 3],
+  },
+] as const;
+
+// ─── Available port IDs for random targeting ─────────────────────────────────
+
+const ALL_PORT_IDS = [
+  "rotterdam", "hamburg", "london", "new-york", "shanghai",
+  "singapore", "dubai", "mumbai", "karachi", "tokyo",
+  "sydney", "rio-de-janeiro", "buenos-aires", "cape-town",
+  "hong-kong", "los-angeles",
+];
+
+// ─── World Events Manager ────────────────────────────────────────────────────
+
+let nextEventId = 1;
+
+/**
+ * Generate a unique event ID.
+ */
+function generateEventId(): string {
+  return `world-event-${nextEventId++}`;
+}
+
+/**
+ * Active world events list.
+ * In a full implementation this would be part of the game state,
+ * but for now we keep it as module-level state.
+ */
+let activeEvents: WorldEvent[] = [];
+
+/**
+ * Check if a world event should be generated this week.
+ * Roughly 15% chance per week if fewer than 2 events are active.
+ */
+export function maybeGenerateWorldEvent(
+  currentWeek: number,
+  currentYear: number,
+): WorldEvent | null {
+  // Don't stack too many events
+  if (activeEvents.length >= 3) return null;
+
+  // 15% chance per week
+  if (Math.random() > 0.15) return null;
+
+  const template = pickRandom(EVENT_TEMPLATES as unknown as readonly WorldEventTemplate[]);
+
+  // Pick affected port(s)
+  let affectedPortIds: string[];
+  if (template.targetPortIds && template.targetPortIds.length > 0) {
+    // Pick 1-2 ports from the template's target list
+    const shuffled = [...template.targetPortIds].sort(() => Math.random() - 0.5);
+    affectedPortIds = shuffled.slice(0, 1 + Math.floor(Math.random() * 2));
+  } else if (template.blocksPort) {
+    // For blocking events, pick a random port
+    affectedPortIds = [pickRandom(ALL_PORT_IDS)];
+  } else {
+    // Global effect
+    affectedPortIds = [];
+  }
+
+  const [minDuration, maxDuration] = template.durationWeeks;
+  const duration = minDuration + Math.floor(Math.random() * (maxDuration - minDuration + 1));
+
+  const event: WorldEvent = {
+    id: generateEventId(),
+    type: template.type,
+    headline: pickRandom(template.headlines),
+    description: pickRandom(template.descriptions),
+    affectedPortIds,
+    costMultiplier: template.costMultiplier,
+    blocksPort: template.blocksPort,
+    durationWeeks: duration,
+    startWeek: currentWeek,
+    startYear: currentYear,
+  };
+
+  activeEvents.push(event);
+  return event;
+}
+
+/**
+ * Expire events that have passed their duration.
+ */
+export function expireWorldEvents(currentWeek: number, currentYear: number): WorldEvent[] {
+  const expired: WorldEvent[] = [];
+  activeEvents = activeEvents.filter((event) => {
+    const elapsedWeeks = (currentYear - event.startYear) * 52 + (currentWeek - event.startWeek);
+    if (elapsedWeeks >= event.durationWeeks) {
+      expired.push(event);
+      return false;
+    }
+    return true;
+  });
+  return expired;
+}
+
+/**
+ * Get all currently active world events.
+ */
+export function getActiveWorldEvents(): readonly WorldEvent[] {
+  return activeEvents;
+}
+
+/**
+ * Check if a specific port is blocked by any active event.
+ */
+export function isPortBlocked(portId: string): boolean {
+  return activeEvents.some(
+    (e) => e.blocksPort && e.affectedPortIds.includes(portId),
+  );
+}
+
+/**
+ * Get the cost multiplier for a specific port based on active events.
+ * Returns the highest multiplier if multiple events affect the port.
+ */
+export function getPortCostMultiplier(portId: string): number {
+  let maxMultiplier = 1.0;
+  for (const event of activeEvents) {
+    // Global events (no specific ports) affect everyone
+    if (event.affectedPortIds.length === 0 || event.affectedPortIds.includes(portId)) {
+      maxMultiplier = Math.max(maxMultiplier, event.costMultiplier);
+    }
+  }
+  return maxMultiplier;
+}
+
+/**
+ * Get event headlines suitable for the news ticker.
+ * Returns headlines from active world events.
+ */
+export function getWorldEventHeadlines(): string[] {
+  return activeEvents.map((e) => e.headline);
+}
+
+/**
+ * Clear all active events (e.g., for a new game).
+ */
+export function clearWorldEvents(): void {
+  activeEvents = [];
+  nextEventId = 1;
+}

@@ -1,0 +1,367 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   Ship Happens — Main Stylesheet
+   Nautical/industrial theme: dark metallic colors, copper/bronze accents,
+   riveted look, monospace data displays, serif headings.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ─── Fonts ─────────────────────────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Share+Tech+Mono&family=Inter:wght@400;500;600&display=swap');
+
+:root {
+  /* Core palette */
+  --color-bg-dark: #1a1a2e;
+  --color-bg-medium: #2d2d44;
+  --color-bg-panel: #232338;
+  --color-bg-light: #3a3a55;
+
+  /* Accent colors */
+  --color-copper: #b87333;
+  --color-copper-light: #d4956b;
+  --color-copper-dark: #8b5a2b;
+  --color-bronze: #cd7f32;
+  --color-gold: #d4a844;
+
+  /* Text colors */
+  --color-text-primary: #e8e4d9;
+  --color-text-secondary: #a8a4a0;
+  --color-text-accent: #d4a844;
+  --color-text-muted: #6b6b80;
+
+  /* Functional colors */
+  --color-success: #4a9b5a;
+  --color-danger: #c04040;
+  --color-info: #4a7b9b;
+  --color-ocean: #1a3a5c;
+
+  /* Fonts */
+  --font-heading: 'Playfair Display', 'Georgia', serif;
+  --font-data: 'Share Tech Mono', 'Courier New', monospace;
+  --font-body: 'Inter', 'Segoe UI', system-ui, sans-serif;
+
+  /* Spacing */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  --spacing-2xl: 48px;
+
+  /* Borders */
+  --border-rivet: 2px solid #4a4a60;
+  --border-copper: 2px solid var(--color-copper);
+  --border-radius: 4px;
+}
+
+/* ─── UI Overlay ────────────────────────────────────────────────────────── */
+
+#ui-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 100;
+  pointer-events: none;
+}
+
+#ui-overlay > * {
+  pointer-events: auto;
+}
+
+/* ─── Screen base ───────────────────────────────────────────────────────── */
+
+.screen {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-body);
+  color: var(--color-text-primary);
+}
+
+/* ─── Common Components ─────────────────────────────────────────────────── */
+
+/* Panel with riveted metallic look */
+.panel {
+  background: linear-gradient(
+    135deg,
+    var(--color-bg-medium) 0%,
+    var(--color-bg-dark) 50%,
+    var(--color-bg-medium) 100%
+  );
+  border: var(--border-rivet);
+  border-radius: var(--border-radius);
+  position: relative;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+/* Rivet decorations (applied via ::before/::after on panels) */
+.panel-riveted {
+  padding: var(--spacing-lg);
+}
+
+.panel-riveted::before,
+.panel-riveted::after {
+  content: '';
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background: radial-gradient(circle at 35% 35%, #6a6a80, #3a3a55);
+  border-radius: 50%;
+  border: 1px solid #4a4a60;
+}
+
+.panel-riveted::before {
+  top: 8px;
+  left: 8px;
+}
+
+.panel-riveted::after {
+  top: 8px;
+  right: 8px;
+}
+
+/* Heading styles */
+.heading-display {
+  font-family: var(--font-heading);
+  color: var(--color-text-accent);
+  letter-spacing: 0.02em;
+}
+
+.heading-copper {
+  font-family: var(--font-heading);
+  color: var(--color-copper-light);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+/* Data display (monospace for numbers) */
+.data-display {
+  font-family: var(--font-data);
+  color: var(--color-text-primary);
+  letter-spacing: 0.05em;
+}
+
+/* ─── Buttons ───────────────────────────────────────────────────────────── */
+
+.btn {
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 600;
+  padding: var(--spacing-sm) var(--spacing-lg);
+  border: var(--border-rivet);
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.btn:active {
+  transform: translateY(0);
+}
+
+.btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.btn-primary {
+  background: linear-gradient(180deg, var(--color-copper) 0%, var(--color-copper-dark) 100%);
+  color: #fff;
+  border-color: var(--color-copper-dark);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: linear-gradient(180deg, var(--color-copper-light) 0%, var(--color-copper) 100%);
+}
+
+.btn-secondary {
+  background: linear-gradient(180deg, var(--color-bg-light) 0%, var(--color-bg-medium) 100%);
+  color: var(--color-text-primary);
+  border-color: #4a4a60;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: linear-gradient(180deg, #4a4a60 0%, var(--color-bg-light) 100%);
+}
+
+.btn-danger {
+  background: linear-gradient(180deg, var(--color-danger) 0%, #992020 100%);
+  color: #fff;
+  border-color: #992020;
+}
+
+.btn-large {
+  font-size: 16px;
+  padding: var(--spacing-md) var(--spacing-xl);
+}
+
+/* ─── Form Inputs ───────────────────────────────────────────────────────── */
+
+.input {
+  font-family: var(--font-body);
+  font-size: 14px;
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--color-bg-dark);
+  color: var(--color-text-primary);
+  border: 1px solid #4a4a60;
+  border-radius: var(--border-radius);
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  width: 100%;
+}
+
+.input:focus {
+  border-color: var(--color-copper);
+  box-shadow: 0 0 0 2px rgba(184, 115, 51, 0.2);
+}
+
+.input::placeholder {
+  color: var(--color-text-muted);
+}
+
+.input-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-text-secondary);
+  margin-bottom: var(--spacing-xs);
+}
+
+/* ─── Status bar ────────────────────────────────────────────────────────── */
+
+.status-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--color-bg-dark);
+  border-bottom: var(--border-rivet);
+  font-family: var(--font-data);
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+.status-bar .label {
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+}
+
+.status-bar .value {
+  color: var(--color-text-accent);
+}
+
+/* ─── Scrollbar styling ─────────────────────────────────────────────────── */
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-bg-dark);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-bg-light);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #5a5a70;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Responsive Design — Base Styles & Media Queries
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Prevent horizontal scroll at all widths */
+html, body {
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+/* ─── Tablet (max-width: 768px) ────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+  :root {
+    --spacing-lg: 16px;
+    --spacing-xl: 24px;
+    --spacing-2xl: 32px;
+  }
+
+  .btn-large {
+    font-size: 14px;
+    padding: var(--spacing-sm) var(--spacing-lg);
+  }
+
+  .status-bar {
+    flex-wrap: wrap;
+    gap: var(--spacing-sm);
+    font-size: 12px;
+  }
+}
+
+/* ─── Mobile (max-width: 480px) ────────────────────────────────────────── */
+
+@media (max-width: 480px) {
+  :root {
+    --spacing-lg: 12px;
+    --spacing-xl: 16px;
+    --spacing-2xl: 24px;
+  }
+
+  .btn {
+    font-size: 13px;
+    padding: var(--spacing-sm) var(--spacing-md);
+  }
+
+  .btn-large {
+    font-size: 14px;
+    padding: var(--spacing-sm) var(--spacing-md);
+  }
+
+  .status-bar {
+    font-size: 11px;
+    padding: var(--spacing-xs) var(--spacing-sm);
+  }
+
+  /* Ensure dialogs/modals go full-width on mobile */
+  .ship-info-overlay,
+  .event-dialog-overlay,
+  .maneuvering-result-overlay {
+    align-items: flex-start;
+    padding: var(--spacing-sm);
+  }
+
+  .ship-info-panel,
+  .event-dialog,
+  .purchase-dialog,
+  .port-ops-dialog,
+  .charter-dialog,
+  .office-dialog,
+  .maneuvering-result-panel,
+  .save-load-dialog,
+  .save-load-confirm {
+    width: 100%;
+    max-width: 100%;
+  }
+}
