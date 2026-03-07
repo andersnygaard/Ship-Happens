@@ -13,6 +13,8 @@ import { ManeuveringScreen } from './ui/screens/ManeuveringScreen';
 import { OceanScene } from './scene/OceanScene';
 import { ShipModel } from './scene/ShipModel';
 import { SkySystem } from './scene/SkySystem';
+import { AudioSystem } from './audio/AudioSystem';
+import { toast } from './ui/components/Toast';
 
 // Ship Happens - Main entry point
 // Sets up a Three.js scene with animated ocean, ship, and day/night cycle.
@@ -105,14 +107,10 @@ const screenManager = new ScreenManager();
 
 // Callback when a new game is created from the setup screen
 function onGameCreated(state: FullGameState): void {
-  console.log(
+  toast.show(
     `Game started with ${state.players.length} player(s)!`,
+    "success",
   );
-  for (const player of state.players) {
-    console.log(
-      `  Player: ${player.name}, Company: ${player.companyName}, Home port: ${player.homePortId}`,
-    );
-  }
 }
 
 // Register all screens
@@ -132,6 +130,11 @@ screenManager.showScreen = (id) => {
   if (state && id !== "setup") {
     autoSave(state);
   }
+
+  // Play UI click sound on screen transitions
+  const audio = AudioSystem.getInstance();
+  audio.play("uiClick");
+
   originalShowScreen(id);
 };
 

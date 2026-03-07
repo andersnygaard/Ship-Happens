@@ -206,6 +206,32 @@
   color: var(--color-text-accent);
 }
 
+/* Mute / volume toggle button */
+.worldmap-screen .mute-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--color-bg-light);
+  border: 1px solid #4a4a60;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.worldmap-screen .mute-btn:hover:not(:disabled) {
+  background: var(--color-bg-medium);
+  color: var(--color-text-primary);
+}
+
+.worldmap-screen .mute-btn svg {
+  display: block;
+}
+
 /* ─── News Ticker ─────────────────────────────────────────────────── */
 
 .news-ticker {
@@ -1259,43 +1285,68 @@
 }
 
 .port-ops-porthole {
-  width: 180px;
-  height: 180px;
+  width: 220px;
+  height: 220px;
   border-radius: 50%;
-  border: 6px solid var(--color-copper);
+  border: 8px solid var(--color-copper);
   background: linear-gradient(135deg, #1a3a5c 0%, #0a1e3d 50%, #1a3a5c 100%);
   display: flex;
   align-items: center;
   justify-content: center;
   box-shadow:
-    inset 0 2px 8px rgba(0, 0, 0, 0.5),
-    0 4px 12px rgba(0, 0, 0, 0.4);
+    inset 0 3px 10px rgba(0, 0, 0, 0.6),
+    0 2px 4px rgba(0, 0, 0, 0.3),
+    0 6px 16px rgba(0, 0, 0, 0.5),
+    0 0 0 2px var(--color-copper-dark),
+    0 0 0 4px rgba(0, 0, 0, 0.3);
   position: relative;
   overflow: hidden;
   margin-bottom: var(--spacing-md);
 }
 
+/* Rivet bolts around the porthole frame */
 .port-ops-porthole::before,
 .port-ops-porthole::after {
   content: '';
   position: absolute;
-  width: 10px;
-  height: 10px;
+  width: 12px;
+  height: 12px;
   background: radial-gradient(circle at 35% 35%, var(--color-copper-light), var(--color-copper-dark));
   border-radius: 50%;
   border: 1px solid var(--color-copper-dark);
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.3),
+    0 1px 2px rgba(0, 0, 0, 0.4);
+  z-index: 2;
 }
 
 .port-ops-porthole::before {
-  top: 8px;
+  top: 6px;
   left: 50%;
   transform: translateX(-50%);
 }
 
 .port-ops-porthole::after {
-  bottom: 8px;
+  bottom: 6px;
   left: 50%;
   transform: translateX(-50%);
+}
+
+/* Additional rivets via inner wrapper */
+.port-ops-porthole-rivets {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* Canvas skyline inside porthole */
+.port-skyline-canvas {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  display: block;
 }
 
 .port-ops-skyline-placeholder {
@@ -2298,4 +2349,72 @@
   margin-top: var(--spacing-md);
   letter-spacing: 0.06em;
   text-transform: uppercase;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Toast Notifications
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.toast-container {
+  position: fixed;
+  top: var(--spacing-lg);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-sm);
+  pointer-events: none;
+}
+
+.toast {
+  font-family: var(--font-body);
+  font-size: 14px;
+  padding: var(--spacing-sm) var(--spacing-lg);
+  border-radius: var(--border-radius);
+  border: 1px solid;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  pointer-events: auto;
+  cursor: pointer;
+  opacity: 0;
+  transform: translateY(-12px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  max-width: 420px;
+  text-align: center;
+  line-height: 1.4;
+}
+
+.toast-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.toast-dismissed {
+  opacity: 0;
+  transform: translateY(-12px);
+}
+
+.toast-info {
+  background: rgba(30, 60, 100, 0.95);
+  border-color: #3a7bd5;
+  color: #b8d4f0;
+}
+
+.toast-success {
+  background: rgba(20, 70, 40, 0.95);
+  border-color: #2ecc71;
+  color: #a8e6c3;
+}
+
+.toast-warning {
+  background: rgba(80, 60, 20, 0.95);
+  border-color: var(--color-gold);
+  color: #f0d88a;
+}
+
+.toast-error {
+  background: rgba(80, 20, 20, 0.95);
+  border-color: #e74c3c;
+  color: #f0a8a8;
 }

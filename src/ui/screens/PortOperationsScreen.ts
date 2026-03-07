@@ -27,6 +27,7 @@ import { getShipSpec } from "../../game/ShipManager";
 import { createRepairDialog } from "../components/RepairDialog";
 import { createRefuelDialog } from "../components/RefuelDialog";
 import { createCharterDialog } from "../components/CharterDialog";
+import { createPortSkylineCanvas } from "../components/PortSkyline";
 
 export class PortOperationsScreen implements GameScreen {
   private container: HTMLElement;
@@ -283,11 +284,9 @@ export class PortOperationsScreen implements GameScreen {
     const porthole = document.createElement("div");
     porthole.className = "port-ops-porthole";
 
-    // Placeholder for skyline image
-    const skylinePlaceholder = document.createElement("div");
-    skylinePlaceholder.className = "port-ops-skyline-placeholder";
-    skylinePlaceholder.textContent = port.name;
-    porthole.appendChild(skylinePlaceholder);
+    // Canvas-rendered skyline
+    const skylineCanvas = createPortSkylineCanvas(port.id, 220, port.lng);
+    porthole.appendChild(skylineCanvas);
 
     panel.appendChild(porthole);
 

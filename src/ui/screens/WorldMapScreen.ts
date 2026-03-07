@@ -26,6 +26,8 @@ import { calculateDistanceNm } from "../../game/CharterSystem";
 import { getPortById } from "../../data/ports";
 import { getShipSpecById } from "../../data/ships";
 import { calculateTravelDays } from "../../game/TimeSystem";
+import { AudioSystem } from "../../audio/AudioSystem";
+import { toast } from "../components/Toast";
 
 export class WorldMapScreen implements GameScreen {
   private container: HTMLElement;
@@ -49,6 +51,11 @@ export class WorldMapScreen implements GameScreen {
     this.container.innerHTML = "";
 
     const state = this.screenManager.getGameState();
+
+    // ── Initialize audio on first display (user already interacted) ──
+    const audio = AudioSystem.getInstance();
+    audio.init();
+    audio.startOceanAmbiance();
 
     // ── Header bar ────────────────────────────────────────────────────
     const header = this.buildHeader(state);
@@ -181,6 +188,9 @@ export class WorldMapScreen implements GameScreen {
 
       header.appendChild(info);
     }
+
+    // Mute / volume toggle button
+    header.appendChild(this.buildMuteButton());
 
     return header;
   }
@@ -460,7 +470,7 @@ export class WorldMapScreen implements GameScreen {
     });
 
     if (result.newRound) {
-      console.log(result.message);
+      toast.show(result.message, "info");
     }
   }
 
@@ -560,6 +570,43 @@ export class WorldMapScreen implements GameScreen {
     item.appendChild(labelEl);
     item.appendChild(valueEl);
     return item;
+  }
+
+  private buildMuteButton(): HTMLElement {
+    const audio = AudioSystem.getInstance();
+
+    const btn = document.createElement("button");
+    btn.className = "btn btn-secondary mute-btn";
+    btn.title = audio.isMuted() ? "Unmute" : "Mute";
+
+    const updateIcon = (muted: boolean): void => {
+      btn.title = muted ? "Unmute" : "Mute";
+      btn.innerHTML = muted
+        ? `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+            <line x1="23" y1="9" x2="17" y2="15"/>
+            <line x1="17" y1="9" x2="23" y2="15"/>
+          </svg>`
+        : `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+            <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+            <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+          </svg>`;
+    };
+
+    updateIcon(audio.isMuted());
+
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const muted = audio.toggleMute();
+      updateIcon(muted);
+      // Restart ocean ambiance if unmuted
+      if (!muted) {
+        audio.startOceanAmbiance();
+      }
+    });
+
+    return btn;
   }
 
   private createSidebarBtn(
