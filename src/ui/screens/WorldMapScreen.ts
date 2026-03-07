@@ -47,8 +47,6 @@ export class WorldMapScreen implements GameScreen {
   private turnTransition: TurnTransition | null = null;
   /** Index of the active ship for travel. */
   public activeShipIndex: number = 0;
-  private boundKeyHandler: ((e: KeyboardEvent) => void) | null = null;
-
   constructor(private screenManager: ScreenManager) {
     this.container = document.createElement("div");
     this.container.className = "screen worldmap-screen";
@@ -164,19 +162,6 @@ export class WorldMapScreen implements GameScreen {
     const footer = this.buildFooter(state);
     this.container.appendChild(footer);
 
-    // ── Keyboard shortcut: H to toggle help ──────────────────────────
-    this.boundKeyHandler = (e: KeyboardEvent) => {
-      // Ignore if user is typing in an input
-      const tag = (e.target as HTMLElement)?.tagName;
-      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
-
-      if (e.key === "h" || e.key === "H") {
-        e.preventDefault();
-        helpPanel.toggle();
-      }
-    };
-    document.addEventListener("keydown", this.boundKeyHandler);
-
     // ── Tutorial: show contextual hint for new players ───────────────
     if (state) {
       tutorialSystem.checkAutoComplete(state);
@@ -198,10 +183,6 @@ export class WorldMapScreen implements GameScreen {
     if (this.turnTransition) {
       this.turnTransition.dismiss();
       this.turnTransition = null;
-    }
-    if (this.boundKeyHandler) {
-      document.removeEventListener("keydown", this.boundKeyHandler);
-      this.boundKeyHandler = null;
     }
     // Close help panel if open when leaving screen
     if (helpPanel.getIsOpen()) {

@@ -3,6 +3,27 @@
    Styles for Setup, WorldMap, Office, ShipBroker, and PortOperations screens.
    ═══════════════════════════════════════════════════════════════════════════ */
 
+/* ─── Screen Transitions ──────────────────────────────────────────────── */
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+.screen-entering {
+  animation: fadeIn 300ms ease-out forwards;
+}
+
+.screen-leaving {
+  animation: fadeOut 300ms ease-out forwards;
+  pointer-events: none;
+}
+
 /* ─── Setup Screen ─────────────────────────────────────────────────────── */
 
 .setup-screen {

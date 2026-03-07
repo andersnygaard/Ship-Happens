@@ -19,6 +19,8 @@ import { AudioSystem } from './audio/AudioSystem';
 import { toast } from './ui/components/Toast';
 import { tutorialSystem } from './game/TutorialSystem';
 import { TravelSceneController } from './scene/TravelSceneController';
+import { KeyboardManager } from './ui/KeyboardManager';
+import { helpPanel } from './ui/components/HelpPanel';
 
 // Ship Happens - Main entry point
 // Sets up a Three.js scene with animated ocean, ship, and day/night cycle.
@@ -184,5 +186,105 @@ screenManager.showScreen = (id) => {
   originalShowScreen(id);
 };
 
-// Show the setup screen first
+// ─── Keyboard Shortcuts ──────────────────────────────────────────────────
+
+const keyboardManager = new KeyboardManager(screenManager);
+
+// Global: Escape — close dialog/modal or navigate back to world map
+keyboardManager.registerShortcut("Escape", "global", () => {
+  // Try to close any open dialog overlay first
+  const overlay = document.querySelector(".ship-info-overlay");
+  if (overlay) {
+    overlay.remove();
+    return;
+  }
+
+  // Close help panel if open
+  if (helpPanel.getIsOpen()) {
+    helpPanel.close();
+    return;
+  }
+
+  // Navigate back to world map if on a sub-screen
+  const active = screenManager.getActiveScreenId();
+  if (active && active !== "worldmap" && active !== "setup" && active !== "gameover") {
+    screenManager.showScreen("worldmap");
+  }
+});
+
+// Global: H — toggle help panel
+keyboardManager.registerShortcut("h", "global", () => {
+  helpPanel.toggle();
+});
+
+// Global: M — toggle mute
+keyboardManager.registerShortcut("m", "global", () => {
+  const audio = AudioSystem.getInstance();
+  const muted = audio.toggleMute();
+  // Restart ocean ambiance if unmuted
+  if (!muted) {
+    audio.startOceanAmbiance();
+  }
+  // Update the mute button icon if visible
+  const muteBtn = document.querySelector(".mute-btn") as HTMLButtonElement | null;
+  if (muteBtn) {
+    muteBtn.title = muted ? "Unmute" : "Mute";
+    muteBtn.innerHTML = muted
+      ? `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+          <line x1="23" y1="9" x2="17" y2="15"/>
+          <line x1="17" y1="9" x2="23" y2="15"/>
+        </svg>`
+      : `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+          <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+          <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+        </svg>`;
+  }
+  toast.show(muted ? "Audio muted" : "Audio unmuted", "info");
+});
+
+// World map: S — start/stop action
+keyboardManager.registerShortcut("s", "worldmap", () => {
+  const worldMap = screenManager.getScreen("worldmap") as WorldMapScreen | undefined;
+  if (worldMap) {
+    // Simulate clicking the start/stop action button
+    const actionBtn = document.querySelector(".action-btn") as HTMLButtonElement | null;
+    if (actionBtn) {
+      actionBtn.click();
+    }
+  }
+});
+
+// World map: B — go to ship broker
+keyboardManager.registerShortcut("b", "worldmap", () => {
+  screenManager.showScreen("shipbroker");
+});
+
+// World map: O — go to office
+keyboardManager.registerShortcut("o", "worldmap", () => {
+  screenManager.showScreen("office");
+});
+
+// Port operations: 1-5 for quick actions (Repair, Refuel, Charter, Lay Up, Load)
+for (let i = 1; i <= 5; i++) {
+  keyboardManager.registerShortcut(String(i), "port-operations", () => {
+    const buttons = document.querySelectorAll(".port-ops-order-btn") as NodeListOf<HTMLButtonElement>;
+    const btn = buttons[i - 1];
+    if (btn && !btn.disabled) {
+      btn.click();
+    }
+  });
+}
+
+keyboardManager.enable();
+
+// Remove the loading screen and show the setup screen
+const loadingScreen = document.getElementById("loading-screen");
+if (loadingScreen) {
+  loadingScreen.classList.add("fade-out");
+  loadingScreen.addEventListener("animationend", () => {
+    loadingScreen.remove();
+  });
+}
 screenManager.showScreen("setup");

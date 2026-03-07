@@ -54,25 +54,47 @@ export class ScreenManager {
     return this.activeScreenId;
   }
 
-  /** Navigate to a screen by id. Hides the current screen first. */
+  /** Navigate to a screen by id. Fades out the current screen, then fades in the new one. */
   showScreen(id: ScreenId): void {
-    // Hide current screen
-    if (this.activeScreen) {
-      this.activeScreen.hide();
-      this.overlay.innerHTML = "";
-    }
-
     const screen = this.screens.get(id);
     if (!screen) {
       console.error(`Screen not found: ${id}`);
       return;
     }
 
-    this.activeScreenId = id;
-    this.activeScreen = screen;
+    const TRANSITION_DURATION = 300;
 
-    const element = screen.show();
-    this.overlay.appendChild(element);
+    const showNext = (): void => {
+      this.overlay.innerHTML = "";
+      this.activeScreenId = id;
+      this.activeScreen = screen;
+
+      const element = screen.show();
+      element.classList.add("screen-entering");
+      this.overlay.appendChild(element);
+
+      // Remove the entering class after animation completes
+      setTimeout(() => {
+        element.classList.remove("screen-entering");
+      }, TRANSITION_DURATION);
+    };
+
+    // If there's a current screen, fade it out first
+    if (this.activeScreen) {
+      const currentElement = this.overlay.firstElementChild as HTMLElement | null;
+      if (currentElement) {
+        currentElement.classList.add("screen-leaving");
+        setTimeout(() => {
+          this.activeScreen?.hide();
+          showNext();
+        }, TRANSITION_DURATION);
+      } else {
+        this.activeScreen.hide();
+        showNext();
+      }
+    } else {
+      showNext();
+    }
   }
 
   /** Store the game state so screens can access it. */
