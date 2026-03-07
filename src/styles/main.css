@@ -288,3 +288,80 @@
 ::-webkit-scrollbar-thumb:hover {
   background: #5a5a70;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Responsive Design — Base Styles & Media Queries
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Prevent horizontal scroll at all widths */
+html, body {
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+/* ─── Tablet (max-width: 768px) ────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+  :root {
+    --spacing-lg: 16px;
+    --spacing-xl: 24px;
+    --spacing-2xl: 32px;
+  }
+
+  .btn-large {
+    font-size: 14px;
+    padding: var(--spacing-sm) var(--spacing-lg);
+  }
+
+  .status-bar {
+    flex-wrap: wrap;
+    gap: var(--spacing-sm);
+    font-size: 12px;
+  }
+}
+
+/* ─── Mobile (max-width: 480px) ────────────────────────────────────────── */
+
+@media (max-width: 480px) {
+  :root {
+    --spacing-lg: 12px;
+    --spacing-xl: 16px;
+    --spacing-2xl: 24px;
+  }
+
+  .btn {
+    font-size: 13px;
+    padding: var(--spacing-sm) var(--spacing-md);
+  }
+
+  .btn-large {
+    font-size: 14px;
+    padding: var(--spacing-sm) var(--spacing-md);
+  }
+
+  .status-bar {
+    font-size: 11px;
+    padding: var(--spacing-xs) var(--spacing-sm);
+  }
+
+  /* Ensure dialogs/modals go full-width on mobile */
+  .ship-info-overlay,
+  .event-dialog-overlay,
+  .maneuvering-result-overlay {
+    align-items: flex-start;
+    padding: var(--spacing-sm);
+  }
+
+  .ship-info-panel,
+  .event-dialog,
+  .purchase-dialog,
+  .port-ops-dialog,
+  .charter-dialog,
+  .office-dialog,
+  .maneuvering-result-panel,
+  .save-load-dialog,
+  .save-load-confirm {
+    width: 100%;
+    max-width: 100%;
+  }
+}

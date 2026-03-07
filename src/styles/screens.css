@@ -2418,3 +2418,573 @@
   border-color: #e74c3c;
   color: #f0a8a8;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Responsive — Tablet (max-width: 768px)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 768px) {
+  /* ─── Setup Screen ─────────────────────────────────────────────────── */
+
+  .setup-screen .game-title {
+    font-size: 36px;
+  }
+
+  .setup-screen .form-row {
+    flex-direction: column;
+    gap: var(--spacing-md);
+  }
+
+  .setup-screen .port-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .setup-screen .start-btn {
+    min-width: 200px;
+    font-size: 16px;
+  }
+
+  /* ─── World Map Screen ─────────────────────────────────────────────── */
+
+  .worldmap-screen .worldmap-header {
+    flex-wrap: wrap;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm);
+  }
+
+  .worldmap-screen .worldmap-title {
+    font-size: 16px;
+  }
+
+  .worldmap-screen .worldmap-info {
+    font-size: 11px;
+    gap: var(--spacing-sm);
+  }
+
+  .worldmap-screen .worldmap-sidebar {
+    width: 56px;
+    padding: var(--spacing-xs) 2px;
+  }
+
+  .worldmap-screen .sidebar-btn {
+    width: 48px;
+    height: 48px;
+    font-size: 10px;
+  }
+
+  .worldmap-screen .sidebar-icon svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .worldmap-screen .worldmap-footer {
+    flex-wrap: wrap;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm);
+    justify-content: center;
+  }
+
+  .worldmap-screen .time-display {
+    font-size: 12px;
+    gap: var(--spacing-sm);
+  }
+
+  .worldmap-screen .time-display .time-value {
+    font-size: 14px;
+  }
+
+  .worldmap-screen .worldmap-port-info {
+    left: var(--spacing-sm);
+    bottom: 50px;
+    font-size: 12px;
+  }
+
+  /* ─── Office Screen ────────────────────────────────────────────────── */
+
+  .office-status-bar {
+    flex-wrap: wrap;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm);
+  }
+
+  .office-company-name {
+    font-size: 18px;
+    width: 100%;
+  }
+
+  .office-stats {
+    gap: var(--spacing-md);
+  }
+
+  .office-main {
+    flex-direction: column;
+    overflow-y: auto;
+  }
+
+  .office-fleet-table {
+    font-size: 12px;
+  }
+
+  .office-balance-value {
+    font-size: 16px;
+  }
+
+  /* ─── Ship Broker Screen ───────────────────────────────────────────── */
+
+  .shipbroker-title {
+    font-size: 22px;
+  }
+
+  .ship-card {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--spacing-md);
+  }
+
+  .ship-card-image {
+    width: 100%;
+    height: 80px;
+  }
+
+  .ship-card-buttons {
+    flex-direction: row;
+    justify-content: flex-end;
+  }
+
+  /* ─── Port Operations Screen ───────────────────────────────────────── */
+
+  .port-ops-grid {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto;
+    overflow-y: auto;
+  }
+
+  .port-ops-ship-status {
+    grid-column: 1;
+    grid-row: auto;
+  }
+
+  .port-ops-port-view {
+    grid-column: 1;
+    grid-row: auto;
+  }
+
+  .port-ops-orders {
+    grid-column: 1;
+    grid-row: auto;
+  }
+
+  .port-ops-port-info {
+    grid-column: 1;
+    grid-row: auto;
+  }
+
+  .port-ops-porthole {
+    width: 160px;
+    height: 160px;
+    border-width: 6px;
+  }
+
+  /* ─── Maneuvering Screen ───────────────────────────────────────────── */
+
+  .maneuvering-header {
+    flex-wrap: wrap;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    gap: var(--spacing-xs);
+  }
+
+  .maneuvering-title {
+    font-size: 13px;
+  }
+
+  .maneuvering-condition {
+    font-size: 12px;
+  }
+
+  /* ─── Charter Dialog ───────────────────────────────────────────────── */
+
+  .charter-columns {
+    flex-direction: column;
+  }
+
+  .charter-list {
+    max-height: 140px;
+  }
+
+  /* ─── Port Departure ───────────────────────────────────────────────── */
+
+  .port-departure-buttons {
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-md);
+  }
+
+  .port-departure-btn {
+    width: 100%;
+    max-width: 280px;
+  }
+
+  /* ─── Turn Transition ──────────────────────────────────────────────── */
+
+  .turn-transition-heading {
+    font-size: 28px;
+  }
+
+  .turn-transition-badge {
+    width: 48px;
+    height: 48px;
+    font-size: 22px;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Responsive — Mobile (max-width: 480px)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 480px) {
+  /* ─── Setup Screen ─────────────────────────────────────────────────── */
+
+  .setup-screen {
+    padding: var(--spacing-md);
+  }
+
+  .setup-screen .game-title {
+    font-size: 28px;
+  }
+
+  .setup-screen .tagline {
+    font-size: 13px;
+  }
+
+  .setup-screen .port-grid {
+    grid-template-columns: 1fr;
+    max-height: 240px;
+  }
+
+  .setup-screen .start-btn {
+    min-width: 100%;
+    font-size: 15px;
+  }
+
+  .setup-screen .port-section-title {
+    font-size: 15px;
+  }
+
+  .setup-save-load-area {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .setup-continue-btn,
+  .setup-load-btn {
+    min-width: 100%;
+  }
+
+  /* ─── World Map Screen ─────────────────────────────────────────────── */
+
+  .worldmap-screen .worldmap-main {
+    flex-direction: column;
+  }
+
+  .worldmap-screen .worldmap-sidebar {
+    width: 100%;
+    flex-direction: row;
+    border-left: none;
+    border-top: var(--border-rivet);
+    justify-content: center;
+    padding: var(--spacing-xs);
+    overflow-x: auto;
+  }
+
+  .worldmap-screen .sidebar-btn {
+    width: 44px;
+    height: 44px;
+    font-size: 9px;
+  }
+
+  .worldmap-screen .sidebar-icon svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .worldmap-screen .sidebar-label {
+    font-size: 8px;
+  }
+
+  .worldmap-screen .worldmap-title {
+    font-size: 14px;
+  }
+
+  .worldmap-screen .worldmap-info {
+    font-size: 10px;
+    gap: var(--spacing-xs);
+  }
+
+  .worldmap-screen .worldmap-footer {
+    padding: var(--spacing-xs) var(--spacing-sm);
+  }
+
+  .worldmap-screen .time-display {
+    font-size: 11px;
+    gap: var(--spacing-xs);
+  }
+
+  .worldmap-screen .time-display .time-value {
+    font-size: 12px;
+  }
+
+  .worldmap-screen .action-btn {
+    min-width: 100px;
+    font-size: 11px;
+  }
+
+  .worldmap-screen .worldmap-port-info {
+    left: var(--spacing-xs);
+    right: var(--spacing-xs);
+    bottom: 44px;
+    font-size: 11px;
+    gap: var(--spacing-xs);
+    flex-wrap: wrap;
+  }
+
+  /* ─── Office Screen ────────────────────────────────────────────────── */
+
+  .office-company-name {
+    font-size: 16px;
+  }
+
+  .office-stats {
+    flex-wrap: wrap;
+    gap: var(--spacing-sm);
+  }
+
+  .office-stat-item {
+    font-size: 12px;
+  }
+
+  .office-stat-item .value {
+    font-size: 14px;
+  }
+
+  .office-main {
+    padding: var(--spacing-sm);
+    gap: var(--spacing-sm);
+  }
+
+  .office-panel-title {
+    font-size: 15px;
+  }
+
+  .office-fleet-table {
+    font-size: 11px;
+  }
+
+  .office-fleet-table th,
+  .office-fleet-table td {
+    padding: 3px var(--spacing-xs);
+  }
+
+  .office-balance-value {
+    font-size: 14px;
+  }
+
+  .office-footer {
+    flex-wrap: wrap;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm);
+  }
+
+  .office-footer-btn {
+    min-width: 100px;
+    font-size: 12px;
+  }
+
+  /* ─── Ship Broker Screen ───────────────────────────────────────────── */
+
+  .shipbroker-header {
+    padding: var(--spacing-sm);
+  }
+
+  .shipbroker-title {
+    font-size: 18px;
+  }
+
+  .shipbroker-list-area {
+    padding: var(--spacing-sm);
+  }
+
+  .ship-card {
+    padding: var(--spacing-sm);
+  }
+
+  .ship-card-image {
+    height: 60px;
+  }
+
+  .ship-card-type {
+    font-size: 13px;
+  }
+
+  .ship-card-price {
+    font-size: 14px;
+  }
+
+  .shipbroker-footer {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm);
+  }
+
+  /* ─── Port Operations Screen ───────────────────────────────────────── */
+
+  .port-operations-screen {
+    padding: var(--spacing-xs);
+    gap: var(--spacing-xs);
+  }
+
+  .port-ops-ship-selector {
+    flex-wrap: wrap;
+    padding: var(--spacing-xs);
+  }
+
+  .port-ops-panel-title {
+    font-size: 14px;
+  }
+
+  .port-ops-porthole {
+    width: 120px;
+    height: 120px;
+    border-width: 5px;
+  }
+
+  .port-ops-port-name {
+    font-size: 15px;
+  }
+
+  .port-ops-order-btn {
+    font-size: 13px;
+    padding: var(--spacing-xs) var(--spacing-sm);
+  }
+
+  /* ─── Maneuvering Screen ───────────────────────────────────────────── */
+
+  .maneuvering-header {
+    padding: var(--spacing-xs);
+  }
+
+  .maneuvering-title {
+    font-size: 12px;
+  }
+
+  .maneuvering-condition {
+    font-size: 11px;
+  }
+
+  .maneuvering-canvas-wrapper {
+    padding: 2px;
+  }
+
+  .maneuvering-controls-hint {
+    font-size: 11px;
+    padding: var(--spacing-xs) var(--spacing-sm);
+  }
+
+  /* ─── Dialogs — full width on mobile ───────────────────────────────── */
+
+  .port-ops-dialog,
+  .charter-dialog,
+  .purchase-dialog,
+  .ship-info-panel,
+  .office-dialog,
+  .event-dialog,
+  .maneuvering-result-panel,
+  .save-load-dialog,
+  .save-load-confirm,
+  .travel-panel,
+  .port-departure-panel {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  /* ─── Travel Screen ────────────────────────────────────────────────── */
+
+  .travel-title {
+    font-size: 20px;
+  }
+
+  /* ─── Turn Transition ──────────────────────────────────────────────── */
+
+  .turn-transition-heading {
+    font-size: 22px;
+  }
+
+  .turn-transition-badge {
+    width: 40px;
+    height: 40px;
+    font-size: 18px;
+  }
+
+  .turn-transition-company {
+    font-size: 16px;
+  }
+
+  .turn-transition-name {
+    font-size: 14px;
+  }
+
+  /* ─── Touch-friendly: Maneuvering on-screen controls ───────────────── */
+
+  .maneuvering-touch-controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    background: var(--color-bg-dark);
+    border-top: 1px solid #4a4a60;
+    flex-shrink: 0;
+    gap: var(--spacing-sm);
+  }
+
+  .maneuvering-touch-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: var(--color-bg-light);
+    border: 2px solid var(--color-copper);
+    color: var(--color-text-primary);
+    font-size: 22px;
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: manipulation;
+    flex-shrink: 0;
+  }
+
+  .maneuvering-touch-btn:active {
+    background: var(--color-copper);
+    color: #fff;
+  }
+
+  .maneuvering-touch-steer {
+    display: flex;
+    gap: var(--spacing-sm);
+    align-items: center;
+  }
+
+  .maneuvering-touch-throttle {
+    display: flex;
+    gap: var(--spacing-sm);
+    align-items: center;
+  }
+}
+
+/* Hide touch controls on non-mobile / wide screens */
+@media (min-width: 481px) {
+  .maneuvering-touch-controls {
+    display: none;
+  }
+}

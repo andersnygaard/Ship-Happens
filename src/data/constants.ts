@@ -11,7 +11,13 @@ export const STARTING_CAPITAL = 4_500_000;
 /** Cost of being towed when a ship runs out of fuel at sea. */
 export const TOWING_PENALTY = 1_000_000;
 
-/** Amount stolen when the player neglects the office (embezzlement event). */
+/** Minimum amount stolen when the player neglects the office (embezzlement event). */
+export const EMBEZZLEMENT_AMOUNT_MIN = 200_000;
+
+/** Maximum amount stolen when the player neglects the office (embezzlement event). */
+export const EMBEZZLEMENT_AMOUNT_MAX = 500_000;
+
+/** Legacy constant for backward compatibility. */
 export const EMBEZZLEMENT_AMOUNT = 503_000;
 
 /** Penalty percentage of charter rate for late delivery. */
@@ -60,8 +66,9 @@ export const CONDITION_LOSS_STORM = 8;
 
 // ─── Charter & Freight Constants ────────────────────────────────────────────
 
-/** Base rate per nautical mile per BRT for charter revenue calculation. */
-export const CHARTER_RATE_PER_NM_PER_BRT = 0.005;
+/** Base rate per nautical mile per BRT for charter revenue calculation.
+ * Tuned so that average charters yield ~20-30% profit after fuel + operating costs. */
+export const CHARTER_RATE_PER_NM_PER_BRT = 0.008;
 
 /** Minimum delivery deadline in days. */
 export const MIN_DELIVERY_DEADLINE_DAYS = 14;
@@ -93,3 +100,13 @@ export const MAX_CHARTER_OPTIONS = 6;
 
 /** Speed multiplier used for travel time calculation (distance / (speed * 24)). */
 export const TRAVEL_TIME_SPEED_FACTOR = 24;
+
+// ─── Office Neglect Constants ─────────────────────────────────────────────
+
+/** Number of weeks without visiting the office before embezzlement can trigger. */
+export const OFFICE_NEGLECT_THRESHOLD_WEEKS = 4;
+
+// ─── Bankruptcy Constants ─────────────────────────────────────────────────
+
+/** Player is bankrupt when balance is below zero AND they own no ships. */
+export const BANKRUPTCY_BALANCE_THRESHOLD = 0;

@@ -64,16 +64,34 @@ function generateSeed(portId: string, week: number, year: number): number {
 }
 
 /**
+ * Cargo type multipliers for charter rate calculation.
+ * Higher-value cargo pays more per unit distance.
+ */
+const CARGO_RATE_MULTIPLIERS: Record<CargoType, number> = {
+  [CargoType.AgriculturalProduce]: 0.85,
+  [CargoType.Chemicals]: 1.15,
+  [CargoType.Electronics]: 1.30,
+  [CargoType.Machinery]: 1.10,
+  [CargoType.Equipment]: 1.05,
+  [CargoType.Metalware]: 0.95,
+  [CargoType.PlasticsProducts]: 0.90,
+  [CargoType.Textiles]: 1.00,
+  [CargoType.Ballast]: 0.50,
+};
+
+/**
  * Calculate the charter rate for a contract.
- * Rate is based on distance, with some variance.
- * The rate correlates with distance (longer routes pay more).
+ * Formula: rate = distance_nm * rate_per_nm * cargo_multiplier * capacity_factor
+ * Tuned so that average routes yield ~20-30% profit after fuel + operating costs.
  * @param distanceNm - Distance in nautical miles
  * @param shipCapacityBrt - Ship capacity in BRT (affects rate)
- * @param randomFactor - Random variance (0.8-1.2)
+ * @param cargoType - Type of cargo (affects rate via multiplier)
+ * @param randomFactor - Random variance (0.85-1.15)
  */
-function calculateRate(distanceNm: number, shipCapacityBrt: number, randomFactor: number): number {
-  const baseRate = distanceNm * shipCapacityBrt * CHARTER_RATE_PER_NM_PER_BRT;
-  const variedRate = baseRate * (0.8 + randomFactor * 0.4);
+function calculateRate(distanceNm: number, shipCapacityBrt: number, cargoType: CargoType, randomFactor: number): number {
+  const cargoMultiplier = CARGO_RATE_MULTIPLIERS[cargoType] ?? 1.0;
+  const baseRate = distanceNm * shipCapacityBrt * CHARTER_RATE_PER_NM_PER_BRT * cargoMultiplier;
+  const variedRate = baseRate * (0.85 + randomFactor * 0.30);
   // Round to nearest dollar
   return Math.round(variedRate);
 }
@@ -158,7 +176,7 @@ export function generateCharterContracts(
     const rateFactor = rng();
     const deadlineFactor = rng();
 
-    const rate = calculateRate(distance, shipCapacityBrt, rateFactor);
+    const rate = calculateRate(distance, shipCapacityBrt, cargoType, rateFactor);
     const deadline = calculateDeadline(distance, deadlineFactor);
     const penalty = Math.round(rate * LATE_DELIVERY_PENALTY_RATE);
 

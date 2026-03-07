@@ -10,6 +10,8 @@ import { PortOperationsScreen } from './ui/screens/PortOperationsScreen';
 import { TravelScreen } from './ui/screens/TravelScreen';
 import { PortDepartureScreen } from './ui/screens/PortDepartureScreen';
 import { ManeuveringScreen } from './ui/screens/ManeuveringScreen';
+import { GameOverScreen } from './ui/screens/GameOverScreen';
+import { checkBankruptcy, checkOfficeNeglect, recordOfficeVisit } from './game/GameState';
 import { OceanScene } from './scene/OceanScene';
 import { ShipModel } from './scene/ShipModel';
 import { SkySystem } from './scene/SkySystem';
@@ -122,13 +124,36 @@ screenManager.register("port-operations", new PortOperationsScreen(screenManager
 screenManager.register("travel", new TravelScreen(screenManager));
 screenManager.register("port-departure", new PortDepartureScreen(screenManager));
 screenManager.register("maneuvering", new ManeuveringScreen(screenManager));
+screenManager.register("gameover", new GameOverScreen(screenManager));
 
 // Auto-save when transitioning between screens (except setup)
 const originalShowScreen = screenManager.showScreen.bind(screenManager);
 screenManager.showScreen = (id) => {
   const state = screenManager.getGameState();
-  if (state && id !== "setup") {
+  if (state && id !== "setup" && id !== "gameover") {
     autoSave(state);
+
+    // Record office visit when navigating to the office screen
+    if (id === "office") {
+      recordOfficeVisit(state);
+    }
+
+    // Check for office neglect when navigating away from non-office screens
+    if (id === "worldmap") {
+      const neglectResult = checkOfficeNeglect(state);
+      if (neglectResult && neglectResult.triggered) {
+        toast.show(neglectResult.message, "error");
+      }
+    }
+
+    // Check for bankruptcy after any screen transition (except setup/gameover)
+    if (checkBankruptcy(state)) {
+      // Play UI click sound before redirecting to game over
+      const audio = AudioSystem.getInstance();
+      audio.play("uiClick");
+      originalShowScreen("gameover");
+      return;
+    }
   }
 
   // Play UI click sound on screen transitions

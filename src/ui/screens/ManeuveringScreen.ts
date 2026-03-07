@@ -12,7 +12,7 @@ import type { GameScreen, ScreenManager } from "../ScreenManager";
 import { getActivePlayer } from "../../game/GameState";
 import type { PortOperationsScreen } from "./PortOperationsScreen";
 import { getLayoutForPort } from "../../data/harborLayouts";
-import type { HarborLayout } from "../../data/harborLayouts";
+import type { HarborLayout, EnvironmentTheme, ObstacleDecoration } from "../../data/harborLayouts";
 import {
   createShipState,
   updateShipPhysics,
@@ -34,7 +34,7 @@ const CANVAS_WIDTH = 800;
 const CANVAS_HEIGHT = 600;
 const TIMEOUT_DAMAGE = 10;
 
-// Colors
+// Colors — defaults (standard theme)
 const COLOR_WATER = "#0a1e3d";
 const COLOR_LAND = "#2d5a3d";
 const COLOR_WALL = "#cc3333";
@@ -46,6 +46,47 @@ const COLOR_TIMER_BG = "#1a1a2e";
 const COLOR_TIMER_FILL_GOOD = "#00cc55";
 const COLOR_TIMER_FILL_WARN = "#ccaa00";
 const COLOR_TIMER_FILL_DANGER = "#cc3333";
+
+/** Theme-specific color palettes for harbor rendering. */
+interface ThemeColors {
+  water: string;
+  land: string;
+  wall: string;
+  obstacleFill: string;
+}
+
+const THEME_COLORS: Record<EnvironmentTheme, ThemeColors> = {
+  standard: {
+    water: "#0a1e3d",
+    land: "#2d5a3d",
+    wall: "#cc3333",
+    obstacleFill: "#2d5a3d",
+  },
+  tropical: {
+    water: "#0e4d6e",
+    land: "#1a7a3a",
+    wall: "#cc5533",
+    obstacleFill: "#228b22",
+  },
+  arctic: {
+    water: "#1a3a5c",
+    land: "#8fa8b8",
+    wall: "#6688aa",
+    obstacleFill: "#c8dce8",
+  },
+  industrial: {
+    water: "#0a1a2a",
+    land: "#4a4a3a",
+    wall: "#aa4422",
+    obstacleFill: "#5a5a4a",
+  },
+  mediterranean: {
+    water: "#0c3866",
+    land: "#6b8e5a",
+    wall: "#b8860b",
+    obstacleFill: "#8b7355",
+  },
+};
 
 export class ManeuveringScreen implements GameScreen {
   private container: HTMLElement;
@@ -69,10 +110,17 @@ export class ManeuveringScreen implements GameScreen {
   private keysDown: Set<string> = new Set();
   private mouseTarget: { x: number; y: number } | null = null;
 
+  // Touch control state
+  private touchSteerDir: number = 0;
+  private touchThrottleDir: number = 0;
+
   // Bound event handlers (for cleanup)
   private boundKeyDown: ((e: KeyboardEvent) => void) | null = null;
   private boundKeyUp: ((e: KeyboardEvent) => void) | null = null;
   private boundMouseClick: ((e: MouseEvent) => void) | null = null;
+  private boundTouchStart: ((e: TouchEvent) => void) | null = null;
+  private boundTouchMove: ((e: TouchEvent) => void) | null = null;
+  private boundTouchEnd: ((e: TouchEvent) => void) | null = null;
 
   constructor(private screenManager: ScreenManager) {
     this.container = document.createElement("div");
@@ -85,6 +133,8 @@ export class ManeuveringScreen implements GameScreen {
     this.gameResult = null;
     this.keysDown.clear();
     this.mouseTarget = null;
+    this.touchSteerDir = 0;
+    this.touchThrottleDir = 0;
 
     const state = this.screenManager.getGameState();
     if (!state) {
@@ -184,8 +234,73 @@ export class ManeuveringScreen implements GameScreen {
     const controls = document.createElement("div");
     controls.className = "maneuvering-controls-hint";
     controls.innerHTML =
-      "<strong>Controls:</strong> Arrow keys / WASD to steer &amp; throttle &bull; Click to set heading";
+      "<strong>Controls:</strong> Arrow keys / WASD to steer &amp; throttle &bull; Click/Touch to set heading";
     this.container.appendChild(controls);
+
+    // Touch controls (visible only on mobile via CSS)
+    this.buildTouchControls();
+  }
+
+  private buildTouchControls(): void {
+    const touchBar = document.createElement("div");
+    touchBar.className = "maneuvering-touch-controls";
+
+    // Steering buttons (left side)
+    const steerGroup = document.createElement("div");
+    steerGroup.className = "maneuvering-touch-steer";
+
+    const leftBtn = document.createElement("button");
+    leftBtn.className = "maneuvering-touch-btn";
+    leftBtn.textContent = "\u25C0";
+    leftBtn.setAttribute("aria-label", "Steer Left");
+    this.addTouchHold(leftBtn, () => { this.touchSteerDir = -1; }, () => { this.touchSteerDir = 0; });
+    steerGroup.appendChild(leftBtn);
+
+    const rightBtn = document.createElement("button");
+    rightBtn.className = "maneuvering-touch-btn";
+    rightBtn.textContent = "\u25B6";
+    rightBtn.setAttribute("aria-label", "Steer Right");
+    this.addTouchHold(rightBtn, () => { this.touchSteerDir = 1; }, () => { this.touchSteerDir = 0; });
+    steerGroup.appendChild(rightBtn);
+
+    touchBar.appendChild(steerGroup);
+
+    // Throttle buttons (right side)
+    const throttleGroup = document.createElement("div");
+    throttleGroup.className = "maneuvering-touch-throttle";
+
+    const downBtn = document.createElement("button");
+    downBtn.className = "maneuvering-touch-btn";
+    downBtn.textContent = "\u25BC";
+    downBtn.setAttribute("aria-label", "Throttle Down");
+    this.addTouchHold(downBtn, () => { this.touchThrottleDir = -1; }, () => { this.touchThrottleDir = 0; });
+    throttleGroup.appendChild(downBtn);
+
+    const upBtn = document.createElement("button");
+    upBtn.className = "maneuvering-touch-btn";
+    upBtn.textContent = "\u25B2";
+    upBtn.setAttribute("aria-label", "Throttle Up");
+    this.addTouchHold(upBtn, () => { this.touchThrottleDir = 1; }, () => { this.touchThrottleDir = 0; });
+    throttleGroup.appendChild(upBtn);
+
+    touchBar.appendChild(throttleGroup);
+    this.container.appendChild(touchBar);
+  }
+
+  /** Attach press/release listeners for a touch-hold button. */
+  private addTouchHold(
+    el: HTMLElement,
+    onDown: () => void,
+    onUp: () => void
+  ): void {
+    const start = (e: Event) => { e.preventDefault(); onDown(); };
+    const end = (e: Event) => { e.preventDefault(); onUp(); };
+    el.addEventListener("touchstart", start, { passive: false });
+    el.addEventListener("touchend", end);
+    el.addEventListener("touchcancel", end);
+    el.addEventListener("mousedown", start);
+    el.addEventListener("mouseup", end);
+    el.addEventListener("mouseleave", end);
   }
 
   // ─── Input Handling ─────────────────────────────────────────────────────
@@ -215,9 +330,40 @@ export class ManeuveringScreen implements GameScreen {
       this.mouseTarget = { x, y };
     };
 
+    // Touch handlers on canvas for tap/drag to set heading
+    this.boundTouchStart = (e: TouchEvent) => {
+      if (this.gameOver || !this.canvas) return;
+      e.preventDefault();
+      this.handleCanvasTouch(e);
+    };
+
+    this.boundTouchMove = (e: TouchEvent) => {
+      if (this.gameOver || !this.canvas) return;
+      e.preventDefault();
+      this.handleCanvasTouch(e);
+    };
+
+    this.boundTouchEnd = (_e: TouchEvent) => {
+      // No-op: heading target remains until ship faces it
+    };
+
     document.addEventListener("keydown", this.boundKeyDown);
     document.addEventListener("keyup", this.boundKeyUp);
     this.canvas?.addEventListener("click", this.boundMouseClick);
+    this.canvas?.addEventListener("touchstart", this.boundTouchStart, { passive: false } as AddEventListenerOptions);
+    this.canvas?.addEventListener("touchmove", this.boundTouchMove, { passive: false } as AddEventListenerOptions);
+    this.canvas?.addEventListener("touchend", this.boundTouchEnd);
+  }
+
+  private handleCanvasTouch(e: TouchEvent): void {
+    if (!this.canvas || e.touches.length === 0) return;
+    const touch = e.touches[0];
+    const rect = this.canvas.getBoundingClientRect();
+    const scaleX = CANVAS_WIDTH / rect.width;
+    const scaleY = CANVAS_HEIGHT / rect.height;
+    const x = (touch.clientX - rect.left) * scaleX;
+    const y = (touch.clientY - rect.top) * scaleY;
+    this.mouseTarget = { x, y };
   }
 
   private detachInputHandlers(): void {
@@ -230,23 +376,35 @@ export class ManeuveringScreen implements GameScreen {
     if (this.boundMouseClick && this.canvas) {
       this.canvas.removeEventListener("click", this.boundMouseClick);
     }
+    if (this.boundTouchStart && this.canvas) {
+      this.canvas.removeEventListener("touchstart", this.boundTouchStart);
+    }
+    if (this.boundTouchMove && this.canvas) {
+      this.canvas.removeEventListener("touchmove", this.boundTouchMove);
+    }
+    if (this.boundTouchEnd && this.canvas) {
+      this.canvas.removeEventListener("touchend", this.boundTouchEnd);
+    }
     this.boundKeyDown = null;
     this.boundKeyUp = null;
     this.boundMouseClick = null;
+    this.boundTouchStart = null;
+    this.boundTouchMove = null;
+    this.boundTouchEnd = null;
   }
 
   private processInput(): void {
     if (!this.ship) return;
 
     // Keyboard throttle
-    if (this.keysDown.has("arrowup") || this.keysDown.has("w")) {
+    if (this.keysDown.has("arrowup") || this.keysDown.has("w") || this.touchThrottleDir > 0) {
       throttleUp(this.ship);
     }
-    if (this.keysDown.has("arrowdown") || this.keysDown.has("s")) {
+    if (this.keysDown.has("arrowdown") || this.keysDown.has("s") || this.touchThrottleDir < 0) {
       throttleDown(this.ship);
     }
 
-    // Keyboard turning
+    // Keyboard + touch button turning
     let turnDir = 0;
     if (this.keysDown.has("arrowleft") || this.keysDown.has("a")) {
       turnDir -= 1;
@@ -254,6 +412,8 @@ export class ManeuveringScreen implements GameScreen {
     if (this.keysDown.has("arrowright") || this.keysDown.has("d")) {
       turnDir += 1;
     }
+    // Touch steer buttons
+    turnDir += this.touchSteerDir;
 
     // Mouse target steering (overrides keyboard turning if active)
     if (this.mouseTarget && turnDir === 0) {
@@ -364,12 +524,14 @@ export class ManeuveringScreen implements GameScreen {
     const ctx = this.ctx;
     if (!ctx || !this.layout || !this.ship) return;
 
-    // Clear canvas
-    ctx.fillStyle = COLOR_WATER;
+    const theme = THEME_COLORS[this.layout.theme];
+
+    // Clear canvas with themed water color
+    ctx.fillStyle = theme.water;
     ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
-    // Draw land masses
-    ctx.fillStyle = COLOR_LAND;
+    // Draw land masses with themed color
+    ctx.fillStyle = theme.land;
     for (const land of this.layout.lands) {
       ctx.beginPath();
       ctx.moveTo(land.points[0].x, land.points[0].y);
@@ -380,8 +542,31 @@ export class ManeuveringScreen implements GameScreen {
       ctx.fill();
     }
 
-    // Draw walls
-    ctx.strokeStyle = COLOR_WALL;
+    // Draw obstacle land masses (islands, icebergs) with distinct fill
+    // For layouts with more than 2 land masses, the extras are obstacles
+    if (this.layout.lands.length > 2) {
+      ctx.fillStyle = theme.obstacleFill;
+      for (let i = 2; i < this.layout.lands.length; i++) {
+        const land = this.layout.lands[i];
+        ctx.beginPath();
+        ctx.moveTo(land.points[0].x, land.points[0].y);
+        for (let j = 1; j < land.points.length; j++) {
+          ctx.lineTo(land.points[j].x, land.points[j].y);
+        }
+        ctx.closePath();
+        ctx.fill();
+      }
+    }
+
+    // Draw decorations (palm trees, icebergs, cranes, etc.)
+    if (this.layout.decorations) {
+      for (const deco of this.layout.decorations) {
+        this.drawDecoration(ctx, deco);
+      }
+    }
+
+    // Draw walls with themed color
+    ctx.strokeStyle = theme.wall;
     ctx.lineWidth = 2;
     for (const wall of this.layout.walls) {
       ctx.beginPath();
@@ -486,6 +671,125 @@ export class ManeuveringScreen implements GameScreen {
     ctx.font = "10px monospace";
     ctx.textAlign = "center";
     ctx.fillText("THR", x + width / 2, y + height + 14);
+  }
+
+  private drawDecoration(ctx: CanvasRenderingContext2D, deco: ObstacleDecoration): void {
+    const scale = deco.scale ?? 1.0;
+    ctx.save();
+    ctx.translate(deco.x, deco.y);
+    ctx.scale(scale, scale);
+
+    switch (deco.type) {
+      case "palm-tree":
+        // Trunk
+        ctx.strokeStyle = "#8B5E3C";
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(-2, -18);
+        ctx.stroke();
+        // Fronds (leaf clusters)
+        ctx.fillStyle = "#228B22";
+        for (let angle = 0; angle < 6; angle++) {
+          const a = (angle * Math.PI) / 3;
+          ctx.beginPath();
+          ctx.ellipse(-2 + Math.cos(a) * 6, -18 + Math.sin(a) * 4, 8, 3, a, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        break;
+
+      case "iceberg":
+        // Irregular icy shape
+        ctx.fillStyle = "#c8dce8";
+        ctx.strokeStyle = "#a0b8cc";
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(-10, 5);
+        ctx.lineTo(-8, -8);
+        ctx.lineTo(-3, -14);
+        ctx.lineTo(4, -12);
+        ctx.lineTo(10, -6);
+        ctx.lineTo(12, 4);
+        ctx.lineTo(6, 10);
+        ctx.lineTo(-4, 8);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        // Highlight
+        ctx.fillStyle = "rgba(255, 255, 255, 0.4)";
+        ctx.beginPath();
+        ctx.moveTo(-5, -6);
+        ctx.lineTo(-2, -12);
+        ctx.lineTo(3, -10);
+        ctx.lineTo(0, -4);
+        ctx.closePath();
+        ctx.fill();
+        break;
+
+      case "crane":
+        // Base
+        ctx.fillStyle = "#666655";
+        ctx.fillRect(-4, -2, 8, 6);
+        // Tower
+        ctx.strokeStyle = "#888877";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(0, -2);
+        ctx.lineTo(0, -24);
+        ctx.stroke();
+        // Boom arm
+        ctx.strokeStyle = "#aa9955";
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(0, -22);
+        ctx.lineTo(18, -18);
+        ctx.stroke();
+        // Cable
+        ctx.strokeStyle = "#555544";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(14, -18);
+        ctx.lineTo(14, -6);
+        ctx.stroke();
+        break;
+
+      case "storage-tank":
+        // Cylindrical tank (top-down view = circle)
+        ctx.fillStyle = "#7a7a6a";
+        ctx.strokeStyle = "#5a5a4a";
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.arc(0, 0, 10, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        // Highlight ring
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.15)";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.arc(0, 0, 6, 0, Math.PI * 2);
+        ctx.stroke();
+        break;
+
+      case "rock":
+        // Irregular rocky shape
+        ctx.fillStyle = "#8b7355";
+        ctx.strokeStyle = "#6b5335";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(-7, 3);
+        ctx.lineTo(-5, -5);
+        ctx.lineTo(0, -8);
+        ctx.lineTo(6, -4);
+        ctx.lineTo(8, 3);
+        ctx.lineTo(3, 7);
+        ctx.lineTo(-3, 6);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        break;
+    }
+
+    ctx.restore();
   }
 
   // ─── End Game ───────────────────────────────────────────────────────────

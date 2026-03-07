@@ -7,7 +7,16 @@
 import { Player, OwnedShip, CharterContract, CargoType, Port } from "../data/types";
 import { getPortById } from "../data/ports";
 import { getShipSpecById } from "../data/ships";
-import { STARTING_CAPITAL, DAYS_PER_WEEK } from "../data/constants";
+import {
+  STARTING_CAPITAL,
+  DAYS_PER_WEEK,
+  WEEKS_PER_YEAR,
+  BANKRUPTCY_BALANCE_THRESHOLD,
+  OFFICE_NEGLECT_THRESHOLD_WEEKS,
+  EMBEZZLEMENT_AMOUNT_MIN,
+  EMBEZZLEMENT_AMOUNT_MAX,
+  EMBEZZLEMENT_PROBABILITY,
+} from "../data/constants";
 
 import {
   FinancialState,
@@ -72,6 +81,8 @@ export interface PlayerState {
   ships: OwnedShip[];
   /** Active charter contracts per ship (keyed by ship name). */
   activeCharters: Record<string, CharterContract & { acceptedDay: number }>;
+  /** The total elapsed week number when the player last visited the office. */
+  lastOfficeVisitWeek: number;
 }
 
 // ─── Full Game State ─────────────────────────────────────────────────────────
@@ -120,6 +131,7 @@ export function createNewGame(config: NewGameConfig): FullGameState {
     finances: createFinancialState(STARTING_CAPITAL),
     ships: [],
     activeCharters: {},
+    lastOfficeVisitWeek: 0,
   }));
 
   return {
@@ -483,6 +495,104 @@ export function simulateVoyage(
     ranOutOfFuel: fuelResult.ranOutOfFuel,
     message,
   };
+}
+
+// ─── Bankruptcy Detection ─────────────────────────────────────────────────
+
+/**
+ * Check if a player is bankrupt.
+ * A player is bankrupt when their balance is below the threshold AND they own no ships.
+ */
+export function isPlayerBankrupt(player: PlayerState): boolean {
+  const balance = getPlayerBalance(player);
+  return balance < BANKRUPTCY_BALANCE_THRESHOLD && player.ships.length === 0;
+}
+
+/**
+ * Check if the active player is bankrupt.
+ * Returns true if the player should see the game over screen.
+ */
+export function checkBankruptcy(state: FullGameState): boolean {
+  const player = getActivePlayer(state);
+  return isPlayerBankrupt(player);
+}
+
+// ─── Office Neglect ───────────────────────────────────────────────────────
+
+/**
+ * Record that the player has visited the office.
+ * Resets the neglect timer.
+ */
+export function recordOfficeVisit(state: FullGameState): void {
+  const player = getActivePlayer(state);
+  const totalWeeks = state.time.year * WEEKS_PER_YEAR + state.time.week;
+  player.lastOfficeVisitWeek = totalWeeks;
+}
+
+/**
+ * Check for office neglect and potentially trigger an embezzlement event.
+ * Should be called each turn/week to see if the player has been away too long.
+ *
+ * @returns An embezzlement result if triggered, or null if no event occurs.
+ */
+export function checkOfficeNeglect(state: FullGameState): {
+  triggered: boolean;
+  amount: number;
+  message: string;
+} | null {
+  const player = getActivePlayer(state);
+  const totalWeeks = state.time.year * WEEKS_PER_YEAR + state.time.week;
+  const weeksSinceVisit = totalWeeks - player.lastOfficeVisitWeek;
+
+  if (weeksSinceVisit < OFFICE_NEGLECT_THRESHOLD_WEEKS) {
+    return null;
+  }
+
+  // Roll for embezzlement probability
+  if (Math.random() > EMBEZZLEMENT_PROBABILITY) {
+    return null;
+  }
+
+  // Calculate embezzlement amount (random between min and max)
+  const amount = Math.round(
+    EMBEZZLEMENT_AMOUNT_MIN +
+    Math.random() * (EMBEZZLEMENT_AMOUNT_MAX - EMBEZZLEMENT_AMOUNT_MIN),
+  );
+
+  const time = getTimeSnapshot(state.time);
+  const result = debit(
+    player.finances,
+    amount,
+    "Embezzlement — an employee helped themselves while you were away",
+    time,
+  );
+
+  if (result.success) {
+    return {
+      triggered: true,
+      amount,
+      message: `While you were away from the office, an unscrupulous employee embezzled $${amount.toLocaleString()} from the company accounts!`,
+    };
+  }
+
+  // If player can't afford the full amount, take what they have
+  const balance = getPlayerBalance(player);
+  if (balance > 0) {
+    const partialAmount = Math.floor(balance);
+    debit(
+      player.finances,
+      partialAmount,
+      "Embezzlement — an employee helped themselves while you were away",
+      time,
+    );
+    return {
+      triggered: true,
+      amount: partialAmount,
+      message: `While you were away from the office, an unscrupulous employee embezzled $${partialAmount.toLocaleString()} from the company accounts!`,
+    };
+  }
+
+  return null;
 }
 
 // ─── Display Helpers ─────────────────────────────────────────────────────────
