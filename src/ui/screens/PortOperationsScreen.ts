@@ -280,9 +280,14 @@ export class PortOperationsScreen implements GameScreen {
     const panel = document.createElement("div");
     panel.className = "port-ops-quadrant port-ops-port-view panel panel-riveted";
 
-    // Porthole frame
+    // Porthole frame with rivets at all 4 cardinal points
     const porthole = document.createElement("div");
     porthole.className = "port-ops-porthole";
+
+    // Rivet wrapper for left/right rivets (top/bottom handled by ::before/::after)
+    const rivets = document.createElement("div");
+    rivets.className = "port-ops-porthole-rivets";
+    porthole.appendChild(rivets);
 
     // Canvas-rendered skyline
     const skylineCanvas = createPortSkylineCanvas(port.id, 220, port.lng);
@@ -308,11 +313,11 @@ export class PortOperationsScreen implements GameScreen {
     port: Port,
   ): HTMLElement {
     const panel = document.createElement("div");
-    panel.className = "port-ops-quadrant port-ops-orders panel panel-riveted";
+    panel.className = "port-ops-quadrant port-ops-orders";
 
     const title = document.createElement("h3");
     title.className = "port-ops-panel-title heading-copper";
-    title.textContent = "Captain's Orders";
+    title.textContent = "Captain\u2019s Orders";
     panel.appendChild(title);
 
     const menu = document.createElement("div");

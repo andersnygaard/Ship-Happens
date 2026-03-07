@@ -24,14 +24,35 @@
   pointer-events: none;
 }
 
-/* ─── Setup Screen ─────────────────────────────────────────────────────── */
+/* ─── Setup Screen — Nautical chart feel with compass rose ─────────────── */
 
 .setup-screen {
-  background: radial-gradient(
-    ellipse at center,
-    #1a3a5c 0%,
-    #1a1a2e 70%
-  );
+  background:
+    /* Compass rose watermark (center) */
+    radial-gradient(circle at 50% 45%, rgba(184, 115, 51, 0.04) 0%, transparent 40%),
+    /* Latitude/longitude grid lines */
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 79px,
+      rgba(74, 123, 155, 0.06) 79px,
+      rgba(74, 123, 155, 0.06) 80px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 79px,
+      rgba(74, 123, 155, 0.06) 79px,
+      rgba(74, 123, 155, 0.06) 80px
+    ),
+    /* Main nautical chart gradient */
+    radial-gradient(
+      ellipse at center,
+      #1a3a5c 0%,
+      #152e4a 40%,
+      #0f1f32 70%,
+      #0a1520 100%
+    );
   flex-direction: column;
   gap: var(--spacing-lg);
   overflow-y: auto;
@@ -119,23 +140,27 @@
 
 .setup-screen .port-item {
   padding: var(--spacing-sm) var(--spacing-md);
-  background: var(--color-bg-medium);
-  border: 1px solid transparent;
+  /* Blue = unselected (original game convention) */
+  background: linear-gradient(180deg, #3a5a8a 0%, #2a4a78 100%);
+  border: 1px solid #2a4a78;
   border-radius: var(--border-radius);
   cursor: pointer;
   transition: all 0.15s ease;
   text-align: left;
+  color: #c8d8f0;
 }
 
 .setup-screen .port-item:hover {
-  background: var(--color-bg-light);
-  border-color: var(--color-copper);
+  background: linear-gradient(180deg, #4a6a9a 0%, #3a5a88 100%);
+  border-color: #5a7aaa;
 }
 
+/* Red = active/selected (original game convention) */
 .setup-screen .port-item.selected {
-  background: linear-gradient(135deg, var(--color-copper-dark) 0%, var(--color-copper) 100%);
-  border-color: var(--color-copper-light);
+  background: linear-gradient(180deg, #c04040 0%, #a03030 100%);
+  border-color: #d05050;
   color: #fff;
+  box-shadow: 0 0 6px rgba(192, 64, 64, 0.3);
 }
 
 .setup-screen .port-item .port-name {
@@ -179,22 +204,46 @@
   text-align: center;
 }
 
-/* ─── World Map Screen ─────────────────────────────────────────────────── */
+/* ─── World Map Screen — Dark maritime chart ──────────────────────────── */
 
 .worldmap-screen {
-  background: #0a1e3d;
+  background:
+    /* Subtle grid overlay for chart feel */
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 99px,
+      rgba(74, 123, 155, 0.04) 99px,
+      rgba(74, 123, 155, 0.04) 100px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 99px,
+      rgba(74, 123, 155, 0.04) 99px,
+      rgba(74, 123, 155, 0.04) 100px
+    ),
+    /* Dark maritime blue-black */
+    linear-gradient(180deg, #08162a 0%, #0a1e3d 30%, #0c2240 60%, #06101e 100%);
   flex-direction: column;
 }
 
-/* Header bar */
+/* Header bar — metallic panel */
 .worldmap-screen .worldmap-header {
   width: 100%;
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: var(--spacing-sm) var(--spacing-lg);
-  background: var(--color-bg-dark);
-  border-bottom: var(--border-copper);
+  background:
+    linear-gradient(180deg,
+      rgba(255, 255, 255, 0.03) 0%,
+      transparent 2px,
+      transparent 100%
+    ),
+    linear-gradient(180deg, #1e1e34 0%, #1a1a2e 100%);
+  border-bottom: 2px solid var(--color-copper);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
   z-index: 10;
   flex-shrink: 0;
 }
@@ -258,18 +307,22 @@
 .news-ticker {
   width: 100%;
   overflow: hidden;
-  background: linear-gradient(
-    90deg,
-    rgba(10, 15, 28, 0.95) 0%,
-    rgba(20, 30, 50, 0.95) 50%,
-    rgba(10, 15, 28, 0.95) 100%
-  );
-  border-bottom: 1px solid rgba(212, 168, 68, 0.3);
-  border-top: 1px solid rgba(212, 168, 68, 0.15);
+  background:
+    linear-gradient(
+      90deg,
+      rgba(10, 15, 28, 0.97) 0%,
+      rgba(15, 22, 40, 0.97) 50%,
+      rgba(10, 15, 28, 0.97) 100%
+    );
+  border-bottom: 1px solid rgba(184, 115, 51, 0.4);
+  border-top: 1px solid rgba(184, 115, 51, 0.25);
   padding: 4px 0;
   position: relative;
   flex-shrink: 0;
   z-index: 10;
+  box-shadow:
+    inset 0 1px 0 rgba(212, 168, 68, 0.05),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.2);
 }
 
 .news-ticker-track {
@@ -327,7 +380,7 @@
   display: block;
 }
 
-/* Sidebar navigation */
+/* Sidebar navigation — metallic panel */
 .worldmap-screen .worldmap-sidebar {
   width: 72px;
   display: flex;
@@ -335,10 +388,17 @@
   align-items: center;
   gap: var(--spacing-sm);
   padding: var(--spacing-sm) var(--spacing-xs);
-  background: var(--color-bg-dark);
-  border-left: var(--border-rivet);
+  background:
+    linear-gradient(90deg,
+      rgba(255, 255, 255, 0.02) 0%,
+      transparent 2px,
+      transparent 100%
+    ),
+    linear-gradient(180deg, #1e1e34 0%, #1a1a2e 50%, #1e1e34 100%);
+  border-left: 2px solid #505068;
   flex-shrink: 0;
   justify-content: center;
+  box-shadow: -2px 0 8px rgba(0, 0, 0, 0.2);
 }
 
 .worldmap-screen .sidebar-btn {
@@ -417,15 +477,17 @@
   font-size: 12px;
 }
 
-/* Footer bar */
+/* Footer bar — metallic panel */
 .worldmap-screen .worldmap-footer {
   width: 100%;
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: var(--spacing-sm) var(--spacing-lg);
-  background: var(--color-bg-dark);
-  border-top: var(--border-rivet);
+  background:
+    linear-gradient(180deg, #1e1e34 0%, #1a1a2e 100%);
+  border-top: 2px solid #505068;
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.3);
   z-index: 10;
   flex-shrink: 0;
 }
@@ -466,7 +528,13 @@
 /* ─── Stub Screens (Office, Ship Broker, Port Operations) ─────────────── */
 
 .stub-screen {
-  background: rgba(26, 26, 46, 0.92);
+  background:
+    linear-gradient(
+      180deg,
+      rgba(26, 26, 46, 0.95) 0%,
+      rgba(20, 20, 38, 0.98) 50%,
+      rgba(26, 26, 46, 0.95) 100%
+    );
   flex-direction: column;
   gap: var(--spacing-lg);
 }
@@ -512,14 +580,36 @@
   min-width: 200px;
 }
 
-/* ─── Office Screen ───────────────────────────────────────────────────── */
+/* ─── Office Screen — Wood-paneled interior feel ─────────────────────── */
 
 .office-screen {
-  background: radial-gradient(
-    ellipse at center,
-    #232338 0%,
-    #1a1a2e 70%
-  );
+  background:
+    /* Subtle wood grain texture via repeating gradients */
+    repeating-linear-gradient(
+      90deg,
+      rgba(120, 80, 40, 0.03) 0px,
+      transparent 2px,
+      transparent 8px,
+      rgba(120, 80, 40, 0.02) 10px,
+      transparent 12px,
+      transparent 20px
+    ),
+    repeating-linear-gradient(
+      180deg,
+      transparent 0px,
+      transparent 3px,
+      rgba(100, 70, 35, 0.015) 3px,
+      rgba(100, 70, 35, 0.015) 6px
+    ),
+    /* Wood panel gradient — warm dark tones */
+    linear-gradient(
+      180deg,
+      #2a2438 0%,
+      #252030 20%,
+      #1e1a28 50%,
+      #1a1622 80%,
+      #161220 100%
+    );
   flex-direction: column;
   padding: 0;
 }
@@ -796,24 +886,87 @@
   color: var(--color-text-primary);
 }
 
-/* ─── Ship Broker Screen ───────────────────────────────────────────────── */
+/* ─── Ship Broker Screen — Brick lobby with red carpet ─────────────────── */
 
 .shipbroker-screen {
-  background: radial-gradient(
-    ellipse at center,
-    #1a3a5c 0%,
-    #1a1a2e 70%
-  );
+  background:
+    /* Red carpet glow at bottom */
+    linear-gradient(
+      0deg,
+      rgba(140, 20, 20, 0.12) 0%,
+      transparent 15%
+    ),
+    /* Brick texture — repeating rectangle pattern */
+    repeating-linear-gradient(
+      0deg,
+      transparent 0px,
+      transparent 24px,
+      rgba(80, 40, 30, 0.08) 24px,
+      rgba(80, 40, 30, 0.08) 26px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      transparent 0px,
+      transparent 49px,
+      rgba(60, 30, 20, 0.06) 49px,
+      rgba(60, 30, 20, 0.06) 50px
+    ),
+    /* Offset brick rows */
+    repeating-linear-gradient(
+      0deg,
+      transparent 0px,
+      transparent 49px,
+      rgba(70, 35, 25, 0.04) 49px,
+      rgba(70, 35, 25, 0.04) 50px
+    ),
+    /* Base warm dark gradient */
+    linear-gradient(
+      180deg,
+      #201820 0%,
+      #1e1628 30%,
+      #1a1422 60%,
+      #201018 100%
+    );
   flex-direction: column;
 }
 
-/* Header */
+/* Tab bar for buy/sell */
+.shipbroker-tab-bar {
+  display: flex;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-lg);
+  background: linear-gradient(180deg, rgba(30, 30, 50, 0.8) 0%, transparent 100%);
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.shipbroker-tab {
+  min-width: 120px;
+  font-size: 13px;
+}
+
+.shipbroker-tab-active {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.15),
+    0 0 12px rgba(184, 115, 51, 0.3);
+}
+
+/* Header — lobby entrance sign */
 .shipbroker-header {
   width: 100%;
   text-align: center;
   padding: var(--spacing-lg) var(--spacing-lg) var(--spacing-md);
-  background: var(--color-bg-dark);
-  border-bottom: var(--border-copper);
+  background:
+    linear-gradient(180deg,
+      rgba(255, 255, 255, 0.03) 0%,
+      transparent 2px,
+      transparent 100%
+    ),
+    linear-gradient(180deg, #1e1a2a 0%, #1a1628 100%);
+  border-bottom: 3px solid var(--color-copper);
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.3),
+    inset 0 -1px 0 var(--color-copper-dark);
   flex-shrink: 0;
 }
 
@@ -840,7 +993,7 @@
   min-height: 0;
 }
 
-/* Ship card */
+/* Ship card — metallic panel */
 .ship-card {
   display: flex;
   align-items: center;
@@ -848,16 +1001,35 @@
   width: 100%;
   max-width: 800px;
   padding: var(--spacing-md);
-  background: linear-gradient(
-    135deg,
-    var(--color-bg-medium) 0%,
-    var(--color-bg-dark) 50%,
-    var(--color-bg-medium) 100%
-  );
-  border: var(--border-rivet);
+  background:
+    linear-gradient(180deg,
+      rgba(255, 255, 255, 0.03) 0%,
+      transparent 2px,
+      transparent 100%
+    ),
+    linear-gradient(
+      135deg,
+      #2e2e48 0%,
+      #222238 25%,
+      #2a2a42 50%,
+      #1e1e34 75%,
+      #2e2e48 100%
+    );
+  border: 2px solid #505068;
   border-radius: var(--border-radius);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05),
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.2),
     0 4px 16px rgba(0, 0, 0, 0.4);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.ship-card:hover {
+  border-color: #6a6a80;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.2),
+    0 6px 20px rgba(0, 0, 0, 0.5);
 }
 
 .ship-card-image {
@@ -948,29 +1120,37 @@
   text-align: center;
 }
 
+/* Elevator indicator panel */
 .shipbroker-elevator-dots {
   display: flex;
-  gap: var(--spacing-xs);
+  gap: 6px;
   align-items: center;
+  padding: 4px 10px;
+  background: linear-gradient(180deg, #1a1a2e 0%, #141428 100%);
+  border: 1px solid #3a3a50;
+  border-radius: 12px;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.4);
 }
 
 .shipbroker-elevator-dot {
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  background: var(--color-bg-light);
+  background: #2a2a40;
   border: 1px solid #4a4a60;
   cursor: pointer;
-  transition: background 0.2s ease;
+  transition: all 0.3s ease;
 }
 
 .shipbroker-elevator-dot:hover {
   background: var(--color-copper);
+  box-shadow: 0 0 6px rgba(184, 115, 51, 0.4);
 }
 
 .shipbroker-elevator-dot.active {
   background: var(--color-gold);
   border-color: var(--color-copper);
+  box-shadow: 0 0 8px rgba(212, 168, 68, 0.5);
 }
 
 /* ─── Ship Info Panel (modal overlay) ──────────────────────────────────── */
@@ -1179,11 +1359,28 @@
    ═══════════════════════════════════════════════════════════════════════════ */
 
 .port-operations-screen {
-  background: radial-gradient(
-    ellipse at center,
-    #2d2d44 0%,
-    #1a1a2e 70%
-  );
+  background:
+    /* Riveted steel plate texture */
+    radial-gradient(circle at 20px 20px, rgba(100, 100, 120, 0.04) 3px, transparent 3px),
+    radial-gradient(circle at 60px 60px, rgba(100, 100, 120, 0.03) 3px, transparent 3px),
+    /* Brushed metal horizontal streaks */
+    repeating-linear-gradient(
+      0deg,
+      transparent 0px,
+      transparent 1px,
+      rgba(255, 255, 255, 0.008) 1px,
+      rgba(255, 255, 255, 0.008) 2px
+    ),
+    /* Dark metallic gradient */
+    linear-gradient(
+      135deg,
+      #22223a 0%,
+      #1e1e32 25%,
+      #2a2a44 50%,
+      #1a1a2e 75%,
+      #22223a 100%
+    );
+  background-size: 80px 80px, 80px 80px, auto, auto;
   flex-direction: column;
   padding: var(--spacing-md);
   gap: var(--spacing-sm);
@@ -1309,57 +1506,85 @@
   width: 220px;
   height: 220px;
   border-radius: 50%;
-  border: 8px solid var(--color-copper);
+  border: 10px solid;
+  border-color: #606078;
   background: linear-gradient(135deg, #1a3a5c 0%, #0a1e3d 50%, #1a3a5c 100%);
   display: flex;
   align-items: center;
   justify-content: center;
   box-shadow:
-    inset 0 3px 10px rgba(0, 0, 0, 0.6),
-    0 2px 4px rgba(0, 0, 0, 0.3),
-    0 6px 16px rgba(0, 0, 0, 0.5),
-    0 0 0 2px var(--color-copper-dark),
-    0 0 0 4px rgba(0, 0, 0, 0.3);
+    /* Outer metallic ring */
+    0 0 0 3px #3a3a50,
+    0 0 0 5px var(--color-copper-dark),
+    /* Inner shadow for glass depth */
+    inset 0 4px 14px rgba(0, 0, 0, 0.7),
+    inset 0 -3px 10px rgba(0, 0, 0, 0.4),
+    /* Outer glow */
+    0 6px 20px rgba(0, 0, 0, 0.5);
   position: relative;
   overflow: hidden;
   margin-bottom: var(--spacing-md);
 }
 
-/* Rivet bolts around the porthole frame */
+/* Rivet bolts around the porthole — 4 at cardinal points */
 .port-ops-porthole::before,
 .port-ops-porthole::after {
   content: '';
   position: absolute;
-  width: 12px;
-  height: 12px;
+  width: 14px;
+  height: 14px;
   background: radial-gradient(circle at 35% 35%, var(--color-copper-light), var(--color-copper-dark));
   border-radius: 50%;
   border: 1px solid var(--color-copper-dark);
   box-shadow:
-    inset 0 1px 1px rgba(255, 255, 255, 0.3),
-    0 1px 2px rgba(0, 0, 0, 0.4);
-  z-index: 2;
+    inset 0 1px 2px rgba(255, 255, 255, 0.35),
+    0 1px 3px rgba(0, 0, 0, 0.5);
+  z-index: 4;
 }
 
 .port-ops-porthole::before {
-  top: 6px;
+  top: 4px;
   left: 50%;
   transform: translateX(-50%);
 }
 
 .port-ops-porthole::after {
-  bottom: 6px;
+  bottom: 4px;
   left: 50%;
   transform: translateX(-50%);
 }
 
-/* Additional rivets via inner wrapper */
+/* Additional rivets via inner wrapper — left and right rivets */
 .port-ops-porthole-rivets {
   position: absolute;
   width: 100%;
   height: 100%;
   pointer-events: none;
-  z-index: 2;
+  z-index: 4;
+}
+
+.port-ops-porthole-rivets::before,
+.port-ops-porthole-rivets::after {
+  content: '';
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  background: radial-gradient(circle at 35% 35%, var(--color-copper-light), var(--color-copper-dark));
+  border-radius: 50%;
+  border: 1px solid var(--color-copper-dark);
+  box-shadow:
+    inset 0 1px 2px rgba(255, 255, 255, 0.35),
+    0 1px 3px rgba(0, 0, 0, 0.5);
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.port-ops-porthole-rivets::before {
+  left: 4px;
+}
+
+.port-ops-porthole-rivets::after {
+  right: 4px;
 }
 
 /* Canvas skyline inside porthole */
@@ -1384,13 +1609,79 @@
   text-align: center;
 }
 
-/* ─── Bottom-Left: Captain's Orders ────────────────────────────────────── */
+/* ─── Bottom-Left: Captain's Orders — Clipboard style ─────────────────── */
 
 .port-ops-orders {
   grid-column: 1;
   grid-row: 2;
   display: flex;
   flex-direction: column;
+  /* Clipboard paper style */
+  background: #f5f0e0;
+  border-radius: 4px;
+  padding: var(--spacing-lg);
+  padding-top: calc(var(--spacing-lg) + 12px);
+  position: relative;
+  box-shadow:
+    2px 3px 10px rgba(0, 0, 0, 0.4),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.05);
+  /* Lined paper texture */
+  background-image:
+    repeating-linear-gradient(
+      transparent,
+      transparent 27px,
+      rgba(150, 140, 120, 0.12) 27px,
+      rgba(150, 140, 120, 0.12) 28px
+    );
+  background-size: 100% 28px;
+  background-position: 0 8px;
+  overflow: visible;
+}
+
+/* Metal clip at top of clipboard */
+.port-ops-orders::before {
+  content: '';
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 56px;
+  height: 20px;
+  background:
+    linear-gradient(180deg,
+      #8a8aa0 0%,
+      #6a6a80 40%,
+      #8a8aa0 100%
+    );
+  border-radius: 4px 4px 0 0;
+  border: 2px solid #505068;
+  border-bottom: none;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    0 -2px 4px rgba(0, 0, 0, 0.3);
+  z-index: 2;
+}
+
+/* Clip hole detail */
+.port-ops-orders::after {
+  content: '';
+  position: absolute;
+  top: 0px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 18px;
+  height: 6px;
+  background: var(--color-bg-dark);
+  border-radius: 0 0 3px 3px;
+  border: 1px solid #505068;
+  border-top: none;
+  z-index: 3;
+}
+
+.port-ops-orders .port-ops-panel-title {
+  color: #3a3a3a;
+  border-bottom: 2px solid #c0b89a;
+  padding-bottom: var(--spacing-xs);
 }
 
 .port-ops-menu {
@@ -1406,19 +1697,38 @@
   padding: var(--spacing-sm) var(--spacing-md);
   text-align: left;
   letter-spacing: 0.1em;
+  /* Override button colors for clipboard context - dark buttons on paper */
+  background:
+    linear-gradient(180deg,
+      #4a5a75 0%,
+      #3a4a60 30%,
+      #2a3a4e 100%
+    );
+  border-color: #2a3a4e;
+  color: #e0e8f0;
 }
 
-/* ─── Bottom-Right: Port Info Panel ────────────────────────────────────── */
+/* ─── Bottom-Right: Port Info Panel — Dark panel, yellow text (original) ── */
 
 .port-ops-port-info {
   grid-column: 2;
   grid-row: 2;
-  background: var(--color-bg-dark);
-  border: var(--border-rivet);
+  background:
+    linear-gradient(180deg,
+      rgba(255, 255, 255, 0.02) 0%,
+      transparent 2px,
+      transparent 100%
+    ),
+    linear-gradient(135deg, #141428 0%, #0e0e20 50%, #141428 100%);
+  border: 2px solid #505068;
   border-radius: var(--border-radius);
   padding: var(--spacing-md);
   display: flex;
   flex-direction: column;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.3),
+    0 3px 10px rgba(0, 0, 0, 0.4);
 }
 
 .port-ops-port-info-title {
@@ -1642,25 +1952,28 @@
 
 .charter-item {
   padding: var(--spacing-xs) var(--spacing-sm);
-  background: var(--color-bg-light);
-  border: 1px solid transparent;
+  /* Blue = unselected (original game convention) */
+  background: linear-gradient(180deg, #3a5a8a 0%, #2a4a78 100%);
+  border: 1px solid #2a4a78;
   border-radius: 2px;
   font-family: var(--font-body);
   font-size: 13px;
-  color: var(--color-text-primary);
+  color: #c8d8f0;
   cursor: pointer;
-  transition: background 0.15s ease, border-color 0.15s ease;
+  transition: all 0.15s ease;
 }
 
 .charter-item:hover {
-  background: var(--color-bg-medium);
-  border-color: var(--color-copper);
+  background: linear-gradient(180deg, #4a6a9a 0%, #3a5a88 100%);
+  border-color: #5a7aaa;
 }
 
+/* Red = active/selected (original game convention) */
 .charter-item.selected {
-  background: var(--color-danger);
-  border-color: var(--color-danger);
+  background: linear-gradient(180deg, #c04040 0%, #a03030 100%);
+  border-color: #d05050;
   color: #fff;
+  box-shadow: 0 0 6px rgba(192, 64, 64, 0.3);
 }
 
 .charter-details {
@@ -1684,8 +1997,16 @@
    ═══════════════════════════════════════════════════════════════════════════ */
 
 .travel-screen {
-  /* Semi-transparent so the Three.js ocean scene shows through */
-  background: transparent;
+  /* Atmospheric sky-to-ocean gradient behind the 3D scene — semi-transparent */
+  background:
+    linear-gradient(
+      180deg,
+      rgba(40, 60, 100, 0.15) 0%,
+      rgba(20, 40, 80, 0.08) 30%,
+      transparent 50%,
+      rgba(10, 30, 60, 0.1) 80%,
+      rgba(5, 15, 35, 0.2) 100%
+    );
   flex-direction: column;
   gap: var(--spacing-lg);
   pointer-events: none;
@@ -1914,11 +2235,15 @@
    ═══════════════════════════════════════════════════════════════════════════ */
 
 .port-departure-screen {
-  background: radial-gradient(
-    ellipse at center,
-    #232338 0%,
-    #1a1a2e 70%
-  );
+  background:
+    /* Dock/harbor atmosphere */
+    linear-gradient(
+      180deg,
+      #1a2a44 0%,
+      #16223a 40%,
+      #121a30 70%,
+      #0e1424 100%
+    );
   flex-direction: column;
   gap: var(--spacing-lg);
 }
@@ -1999,7 +2324,9 @@
    ═══════════════════════════════════════════════════════════════════════════ */
 
 .maneuvering-screen {
-  background: #0a0a1a;
+  background:
+    /* Water texture hint */
+    radial-gradient(ellipse at center, #0e1a30 0%, #0a0a1a 70%);
   flex-direction: column;
   gap: 0;
   padding: 0;

@@ -1,6 +1,6 @@
 # Epic: Visual Aesthetics Overhaul — Nautical Industrial Theme
 
-**Status**: Backlog
+**Status**: Done
 **Created**: 2026-03-07
 **Priority**: High
 **Labels**: aesthetics, ui, visual-design, epic
@@ -95,16 +95,16 @@ Each screen should have a distinct, themed visual identity that evokes the nauti
 
 ## Acceptance Criteria
 
-- [ ] All panels have a visible riveted metallic border effect (corner rivets + metallic gradient)
-- [ ] Port skyline views appear inside a porthole frame (circular with thick metallic border)
-- [ ] Port operations screen has a four-quadrant layout matching the spec (clipboard + porthole + info panel + orders)
-- [ ] Ship broker screen evokes a lobby atmosphere (brick texture, elevator visual)
-- [ ] World map feels like a nautical chart (dark maritime background)
-- [ ] Buttons look and feel like metallic ship controls (not flat web buttons)
-- [ ] Each screen has a distinct atmospheric background (not identical gradients)
-- [ ] Typography is consistent: serif headings, monospace data, sans-serif body text
-- [ ] Color coding follows original: blue=unselected, red=active, yellow=data
-- [ ] The overall aesthetic feels like "1986 Amiga game reimagined for the web"
+- [x] All panels have a visible riveted metallic border effect (corner rivets + metallic gradient)
+- [x] Port skyline views appear inside a porthole frame (circular with thick metallic border)
+- [x] Port operations screen has a four-quadrant layout matching the spec (clipboard + porthole + info panel + orders)
+- [x] Ship broker screen evokes a lobby atmosphere (brick texture, elevator visual)
+- [x] World map feels like a nautical chart (dark maritime background)
+- [x] Buttons look and feel like metallic ship controls (not flat web buttons)
+- [x] Each screen has a distinct atmospheric background (not identical gradients)
+- [x] Typography is consistent: serif headings, monospace data, sans-serif body text
+- [x] Color coding follows original: blue=unselected, red=active, yellow=data
+- [x] The overall aesthetic feels like "1986 Amiga game reimagined for the web"
 
 ---
 
