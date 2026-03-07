@@ -1,0 +1,327 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   Ship Happens — Screen-Specific Styles
+   Styles for Setup, WorldMap, Office, ShipBroker, and PortOperations screens.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ─── Setup Screen ─────────────────────────────────────────────────────── */
+
+.setup-screen {
+  background: radial-gradient(
+    ellipse at center,
+    rgba(26, 58, 92, 0.95) 0%,
+    rgba(26, 26, 46, 0.98) 70%
+  );
+  flex-direction: column;
+  gap: var(--spacing-lg);
+  overflow-y: auto;
+  padding: var(--spacing-xl);
+}
+
+.setup-screen .setup-container {
+  max-width: 720px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-xl);
+}
+
+/* Title area */
+.setup-screen .title-area {
+  text-align: center;
+  margin-bottom: var(--spacing-md);
+}
+
+.setup-screen .game-title {
+  font-family: var(--font-heading);
+  font-size: 56px;
+  font-weight: 900;
+  color: var(--color-gold);
+  text-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.6),
+    0 0 40px rgba(212, 168, 68, 0.2);
+  margin-bottom: var(--spacing-sm);
+  letter-spacing: 0.04em;
+}
+
+.setup-screen .tagline {
+  font-family: var(--font-body);
+  font-size: 16px;
+  color: var(--color-text-secondary);
+  font-style: italic;
+  letter-spacing: 0.05em;
+}
+
+/* Form section */
+.setup-screen .form-section {
+  width: 100%;
+  padding: var(--spacing-lg);
+}
+
+.setup-screen .form-row {
+  display: flex;
+  gap: var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
+}
+
+.setup-screen .form-group {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Port selection */
+.setup-screen .port-section {
+  width: 100%;
+}
+
+.setup-screen .port-section-title {
+  font-family: var(--font-heading);
+  font-size: 18px;
+  color: var(--color-copper-light);
+  margin-bottom: var(--spacing-md);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.setup-screen .port-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--spacing-xs);
+  max-height: 340px;
+  overflow-y: auto;
+  padding: var(--spacing-sm);
+  background: var(--color-bg-dark);
+  border: 1px solid #4a4a60;
+  border-radius: var(--border-radius);
+}
+
+.setup-screen .port-item {
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--color-bg-medium);
+  border: 1px solid transparent;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: left;
+}
+
+.setup-screen .port-item:hover {
+  background: var(--color-bg-light);
+  border-color: var(--color-copper);
+}
+
+.setup-screen .port-item.selected {
+  background: linear-gradient(135deg, var(--color-copper-dark) 0%, var(--color-copper) 100%);
+  border-color: var(--color-copper-light);
+  color: #fff;
+}
+
+.setup-screen .port-item .port-name {
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  display: block;
+}
+
+.setup-screen .port-item .port-country {
+  font-family: var(--font-data);
+  font-size: 11px;
+  color: var(--color-text-muted);
+  display: block;
+  margin-top: 2px;
+}
+
+.setup-screen .port-item.selected .port-country {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* Start button area */
+.setup-screen .start-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-md);
+}
+
+.setup-screen .start-btn {
+  font-size: 18px;
+  padding: var(--spacing-md) var(--spacing-2xl);
+  min-width: 240px;
+}
+
+.setup-screen .validation-msg {
+  font-size: 13px;
+  color: var(--color-danger);
+  min-height: 20px;
+  text-align: center;
+}
+
+/* ─── World Map Screen ─────────────────────────────────────────────────── */
+
+.worldmap-screen {
+  background: rgba(26, 26, 46, 0.85);
+  flex-direction: column;
+}
+
+.worldmap-screen .worldmap-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-sm) var(--spacing-lg);
+  background: var(--color-bg-dark);
+  border-bottom: var(--border-copper);
+}
+
+.worldmap-screen .worldmap-title {
+  font-family: var(--font-heading);
+  font-size: 20px;
+  color: var(--color-gold);
+}
+
+.worldmap-screen .worldmap-info {
+  display: flex;
+  gap: var(--spacing-lg);
+  font-family: var(--font-data);
+  font-size: 13px;
+}
+
+.worldmap-screen .worldmap-info .info-item {
+  display: flex;
+  gap: var(--spacing-xs);
+}
+
+.worldmap-screen .worldmap-info .info-label {
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  font-size: 11px;
+}
+
+.worldmap-screen .worldmap-info .info-value {
+  color: var(--color-text-accent);
+}
+
+.worldmap-screen .worldmap-body {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+.worldmap-screen .worldmap-placeholder {
+  text-align: center;
+  color: var(--color-text-muted);
+  font-size: 18px;
+  font-family: var(--font-body);
+}
+
+.worldmap-screen .worldmap-placeholder .placeholder-icon {
+  font-size: 64px;
+  margin-bottom: var(--spacing-md);
+  display: block;
+}
+
+.worldmap-screen .worldmap-sidebar {
+  position: absolute;
+  right: var(--spacing-md);
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.worldmap-screen .sidebar-btn {
+  width: 64px;
+  height: 64px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  gap: 4px;
+}
+
+.worldmap-screen .sidebar-btn .btn-icon {
+  font-size: 24px;
+}
+
+.worldmap-screen .worldmap-footer {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-sm) var(--spacing-lg);
+  background: var(--color-bg-dark);
+  border-top: var(--border-rivet);
+}
+
+.worldmap-screen .time-display {
+  font-family: var(--font-data);
+  font-size: 14px;
+  display: flex;
+  gap: var(--spacing-lg);
+}
+
+.worldmap-screen .time-display .time-label {
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  font-size: 11px;
+  margin-right: var(--spacing-xs);
+}
+
+.worldmap-screen .time-display .time-value {
+  color: var(--color-text-accent);
+}
+
+/* ─── Stub Screens (Office, Ship Broker, Port Operations) ─────────────── */
+
+.stub-screen {
+  background: rgba(26, 26, 46, 0.92);
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.stub-screen .stub-header {
+  padding: var(--spacing-lg);
+  text-align: center;
+}
+
+.stub-screen .stub-title {
+  font-family: var(--font-heading);
+  font-size: 32px;
+  color: var(--color-gold);
+  margin-bottom: var(--spacing-sm);
+}
+
+.stub-screen .stub-subtitle {
+  font-family: var(--font-body);
+  font-size: 14px;
+  color: var(--color-text-muted);
+}
+
+.stub-screen .stub-content {
+  text-align: center;
+  padding: var(--spacing-xl);
+  max-width: 500px;
+}
+
+.stub-screen .stub-icon {
+  font-size: 72px;
+  margin-bottom: var(--spacing-lg);
+  display: block;
+}
+
+.stub-screen .stub-description {
+  font-size: 15px;
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+  margin-bottom: var(--spacing-xl);
+}
+
+.stub-screen .stub-back-btn {
+  min-width: 200px;
+}
