@@ -86,14 +86,14 @@ The architecture uses a Three.js canvas (full-screen) with an HTML `#ui-overlay`
 
 ## Acceptance Criteria
 
-- [ ] Game loads and the setup screen is fully visible and interactive
-- [ ] Player can enter name, company name, select home port, and click "Set Sail!"
-- [ ] World map screen renders with the map, sidebar buttons, and action button
-- [ ] All 9 screens can be navigated to and are fully visible
-- [ ] Screen transitions (fade in/out) animate smoothly
-- [ ] No JavaScript errors in the browser console during normal gameplay flow
-- [ ] The 3D ocean scene is visible as a background on the world map and travel screens
-- [ ] Dialogs and modals (repair, refuel, charter, purchase) appear on top of screens
+- [x] Game loads and the setup screen is fully visible and interactive
+- [x] Player can enter name, company name, select home port, and click "Set Sail!"
+- [x] World map screen renders with the map, sidebar buttons, and action button
+- [x] All 9 screens can be navigated to and are fully visible
+- [x] Screen transitions (fade in/out) animate smoothly
+- [x] No JavaScript errors in the browser console during normal gameplay flow
+- [x] The 3D ocean scene is visible as a background on the world map and travel screens
+- [x] Dialogs and modals (repair, refuel, charter, purchase) appear on top of screens
 
 ---
 

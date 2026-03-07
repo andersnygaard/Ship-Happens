@@ -38,10 +38,20 @@ export class ScreenManager {
     if (existing) {
       this.overlay = existing;
     } else {
+      console.warn("[ScreenManager] #ui-overlay not found in DOM, creating dynamically");
       this.overlay = document.createElement("div");
       this.overlay.id = "ui-overlay";
       document.body.appendChild(this.overlay);
     }
+
+    // Ensure the overlay has the correct stacking context to appear above the canvas
+    this.overlay.style.position = "fixed";
+    this.overlay.style.top = "0";
+    this.overlay.style.left = "0";
+    this.overlay.style.width = "100%";
+    this.overlay.style.height = "100%";
+    this.overlay.style.zIndex = "100";
+    this.overlay.style.pointerEvents = "none";
   }
 
   /** Register a screen with a given identifier. */
@@ -58,9 +68,11 @@ export class ScreenManager {
   showScreen(id: ScreenId): void {
     const screen = this.screens.get(id);
     if (!screen) {
-      console.error(`Screen not found: ${id}`);
+      console.error(`[ScreenManager] Screen not found: ${id}`);
       return;
     }
+
+    console.log(`[ScreenManager] Showing screen: ${id}`);
 
     const TRANSITION_DURATION = 300;
 
@@ -69,14 +81,25 @@ export class ScreenManager {
       this.activeScreenId = id;
       this.activeScreen = screen;
 
-      const element = screen.show();
-      element.classList.add("screen-entering");
-      this.overlay.appendChild(element);
+      try {
+        const element = screen.show();
+        element.classList.add("screen-entering");
+        this.overlay.appendChild(element);
 
-      // Remove the entering class after animation completes
-      setTimeout(() => {
-        element.classList.remove("screen-entering");
-      }, TRANSITION_DURATION);
+        // Remove the entering class after animation completes
+        setTimeout(() => {
+          element.classList.remove("screen-entering");
+        }, TRANSITION_DURATION);
+      } catch (err) {
+        console.error(`[ScreenManager] Failed to render screen "${id}":`, err);
+        // Show a fallback error message in the overlay so the user isn't stuck
+        const errorDiv = document.createElement("div");
+        errorDiv.className = "screen";
+        errorDiv.style.cssText =
+          "background: #1a1a2e; color: #e8e4d9; flex-direction: column; gap: 16px; pointer-events: auto;";
+        errorDiv.innerHTML = `<h2>Screen Error</h2><p>Failed to load screen: ${id}</p><p>${String(err)}</p>`;
+        this.overlay.appendChild(errorDiv);
+      }
     };
 
     // If there's a current screen, fade it out first

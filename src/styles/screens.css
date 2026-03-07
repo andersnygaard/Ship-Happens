@@ -29,8 +29,8 @@
 .setup-screen {
   background: radial-gradient(
     ellipse at center,
-    rgba(26, 58, 92, 0.95) 0%,
-    rgba(26, 26, 46, 0.98) 70%
+    #1a3a5c 0%,
+    #1a1a2e 70%
   );
   flex-direction: column;
   gap: var(--spacing-lg);
@@ -517,8 +517,8 @@
 .office-screen {
   background: radial-gradient(
     ellipse at center,
-    rgba(35, 35, 56, 0.98) 0%,
-    rgba(26, 26, 46, 0.99) 70%
+    #232338 0%,
+    #1a1a2e 70%
   );
   flex-direction: column;
   padding: 0;
@@ -801,8 +801,8 @@
 .shipbroker-screen {
   background: radial-gradient(
     ellipse at center,
-    rgba(26, 58, 92, 0.95) 0%,
-    rgba(26, 26, 46, 0.98) 70%
+    #1a3a5c 0%,
+    #1a1a2e 70%
   );
   flex-direction: column;
 }
@@ -1181,8 +1181,8 @@
 .port-operations-screen {
   background: radial-gradient(
     ellipse at center,
-    rgba(45, 45, 68, 0.98) 0%,
-    rgba(26, 26, 46, 0.99) 70%
+    #2d2d44 0%,
+    #1a1a2e 70%
   );
   flex-direction: column;
   padding: var(--spacing-md);
@@ -1916,8 +1916,8 @@
 .port-departure-screen {
   background: radial-gradient(
     ellipse at center,
-    rgba(35, 35, 56, 0.98) 0%,
-    rgba(26, 26, 46, 0.99) 70%
+    #232338 0%,
+    #1a1a2e 70%
   );
   flex-direction: column;
   gap: var(--spacing-lg);
@@ -2534,6 +2534,72 @@
   background: rgba(80, 20, 20, 0.95);
   border-color: #e74c3c;
   color: #f0a8a8;
+}
+
+/* ─── Game Over Screen ─────────────────────────────────────────────────── */
+
+.gameover-screen {
+  background: radial-gradient(
+    ellipse at center,
+    #2a1a1a 0%,
+    #1a1a2e 70%
+  );
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.gameover-panel {
+  max-width: 560px;
+  width: 90%;
+  padding: var(--spacing-2xl);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-lg);
+}
+
+.gameover-title {
+  font-size: 48px;
+  color: var(--color-danger);
+  text-shadow: 0 2px 8px rgba(192, 64, 64, 0.4);
+}
+
+.gameover-subtitle {
+  font-size: 20px;
+  margin-bottom: var(--spacing-md);
+}
+
+.gameover-details {
+  text-align: left;
+  width: 100%;
+  font-size: 14px;
+  line-height: 1.8;
+}
+
+.gameover-details hr {
+  border: none;
+  border-top: 1px solid var(--color-bg-light);
+  margin: var(--spacing-md) 0;
+}
+
+.gameover-negative {
+  color: var(--color-danger);
+  font-weight: 600;
+}
+
+.gameover-message {
+  color: var(--color-text-secondary);
+  font-style: italic;
+}
+
+.gameover-buttons {
+  margin-top: var(--spacing-md);
+}
+
+.gameover-btn {
+  font-size: 16px;
+  padding: var(--spacing-md) var(--spacing-2xl);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════

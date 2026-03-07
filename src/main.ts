@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { type FullGameState } from './game/GameState';
 import { autoSave } from './game/SaveSystem';
-import { ScreenManager } from './ui/ScreenManager';
+import { ScreenManager, type GameScreen } from './ui/ScreenManager';
 import { SetupScreen } from './ui/screens/SetupScreen';
 import { WorldMapScreen } from './ui/screens/WorldMapScreen';
 import { OfficeScreen } from './ui/screens/OfficeScreen';
@@ -25,6 +25,16 @@ import { helpPanel } from './ui/components/HelpPanel';
 // Ship Happens - Main entry point
 // Sets up a Three.js scene with animated ocean, ship, and day/night cycle.
 
+// ─── Global Error Handler ─────────────────────────────────────────────────
+
+window.addEventListener("error", (event) => {
+  console.error("[Ship Happens] Uncaught error:", event.error);
+});
+
+window.addEventListener("unhandledrejection", (event) => {
+  console.error("[Ship Happens] Unhandled promise rejection:", event.reason);
+});
+
 // ─── Three.js Scene ────────────────────────────────────────────────────────
 
 const scene = new THREE.Scene();
@@ -42,7 +52,22 @@ camera.lookAt(0, 0, 0);
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(window.devicePixelRatio);
-document.body.appendChild(renderer.domElement);
+
+// Insert the canvas BEFORE the ui-overlay so it's behind it in DOM order.
+// Also set explicit positioning and z-index to ensure the canvas stays behind
+// the UI overlay regardless of DOM order.
+const canvasEl = renderer.domElement;
+canvasEl.style.position = "fixed";
+canvasEl.style.top = "0";
+canvasEl.style.left = "0";
+canvasEl.style.zIndex = "1";
+
+const uiOverlay = document.getElementById("ui-overlay");
+if (uiOverlay) {
+  document.body.insertBefore(canvasEl, uiOverlay);
+} else {
+  document.body.appendChild(canvasEl);
+}
 
 // ─── Animated Ocean ────────────────────────────────────────────────────────
 
@@ -135,16 +160,26 @@ function onGameCreated(state: FullGameState): void {
   tutorialSystem.reset();
 }
 
-// Register all screens
-screenManager.register("setup", new SetupScreen(screenManager, onGameCreated));
-screenManager.register("worldmap", new WorldMapScreen(screenManager));
-screenManager.register("office", new OfficeScreen(screenManager));
-screenManager.register("shipbroker", new ShipBrokerScreen(screenManager));
-screenManager.register("port-operations", new PortOperationsScreen(screenManager));
-screenManager.register("travel", new TravelScreen(screenManager));
-screenManager.register("port-departure", new PortDepartureScreen(screenManager));
-screenManager.register("maneuvering", new ManeuveringScreen(screenManager));
-screenManager.register("gameover", new GameOverScreen(screenManager));
+// Register all screens with error handling so one broken screen doesn't prevent others
+const screenRegistrations: [string, () => GameScreen][] = [
+  ["setup", () => new SetupScreen(screenManager, onGameCreated)],
+  ["worldmap", () => new WorldMapScreen(screenManager)],
+  ["office", () => new OfficeScreen(screenManager)],
+  ["shipbroker", () => new ShipBrokerScreen(screenManager)],
+  ["port-operations", () => new PortOperationsScreen(screenManager)],
+  ["travel", () => new TravelScreen(screenManager)],
+  ["port-departure", () => new PortDepartureScreen(screenManager)],
+  ["maneuvering", () => new ManeuveringScreen(screenManager)],
+  ["gameover", () => new GameOverScreen(screenManager)],
+];
+
+for (const [id, factory] of screenRegistrations) {
+  try {
+    screenManager.register(id as import('./ui/ScreenManager').ScreenId, factory());
+  } catch (err) {
+    console.error(`[Ship Happens] Failed to register screen "${id}":`, err);
+  }
+}
 
 // Auto-save when transitioning between screens (except setup)
 const originalShowScreen = screenManager.showScreen.bind(screenManager);
@@ -279,12 +314,40 @@ for (let i = 1; i <= 5; i++) {
 
 keyboardManager.enable();
 
-// Remove the loading screen and show the setup screen
+// Remove the loading screen and show the setup screen.
+// The setup screen is shown first so it's ready behind the loading overlay,
+// then the loading screen fades out to reveal it.
+try {
+  screenManager.showScreen("setup");
+  console.log("[Ship Happens] Setup screen shown successfully");
+} catch (err) {
+  console.error("[Ship Happens] Failed to show setup screen:", err);
+}
+
 const loadingScreen = document.getElementById("loading-screen");
 if (loadingScreen) {
   loadingScreen.classList.add("fade-out");
-  loadingScreen.addEventListener("animationend", () => {
+
+  let loadingRemoved = false;
+  const removeLoading = (): void => {
+    if (loadingRemoved) return;
+    loadingRemoved = true;
     loadingScreen.remove();
-  });
+    console.log("[Ship Happens] Loading screen removed");
+  };
+
+  loadingScreen.addEventListener("animationend", removeLoading);
+  // Fallback: remove loading screen after 1s even if animationend doesn't fire
+  setTimeout(removeLoading, 1000);
+} else {
+  console.warn("[Ship Happens] Loading screen element not found");
 }
-screenManager.showScreen("setup");
+
+// Final safety check: ensure the loading screen is always removed
+setTimeout(() => {
+  const fallbackLoading = document.getElementById("loading-screen");
+  if (fallbackLoading) {
+    console.warn("[Ship Happens] Forcing loading screen removal (safety fallback)");
+    fallbackLoading.remove();
+  }
+}, 3000);
