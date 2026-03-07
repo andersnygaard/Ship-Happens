@@ -11,10 +11,11 @@ import {
   RESCUE_EVENT_PROBABILITY,
   TOWING_PENALTY,
 } from "../data/constants";
+import { getRandomCrewComplaint, getRandomPortEvent } from "../data/humorTexts";
 
 // ─── Event Types ──────────────────────────────────────────────────────────────
 
-export type TravelEventType = "storm" | "emergency" | "out-of-fuel";
+export type TravelEventType = "storm" | "emergency" | "out-of-fuel" | "crew-complaint" | "port-event";
 
 export interface StormChoice {
   readonly type: "pass-through" | "go-around";
@@ -113,7 +114,37 @@ export function generateTravelEvents(
     });
   }
 
+  // Crew complaint (~25% for longer voyages, scaled by travel days)
+  const crewComplaintChance = Math.min(0.25 * (travelDays / 7), 0.5);
+  if (Math.random() < crewComplaintChance) {
+    const complaint = getRandomCrewComplaint();
+    events.push({
+      type: "crew-complaint",
+      title: "Crew Report",
+      description: complaint,
+      choices: [{ label: "Noted", id: "acknowledge" }],
+    });
+  }
+
   return events;
+}
+
+// ─── Port Arrival Events ──────────────────────────────────────────────────────
+
+/**
+ * Generate a random humor event when arriving at a port.
+ * ~40% chance of a funny port event on arrival.
+ */
+export function generatePortArrivalEvent(): TravelEvent | null {
+  if (Math.random() > 0.4) return null;
+
+  const portEvent = getRandomPortEvent();
+  return {
+    type: "port-event",
+    title: "Port News",
+    description: portEvent,
+    choices: [{ label: "Interesting...", id: "acknowledge" }],
+  };
 }
 
 // ─── Event Consequence Resolution ─────────────────────────────────────────────

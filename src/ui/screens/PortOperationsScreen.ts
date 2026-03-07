@@ -20,6 +20,7 @@ import {
   loadShipCargo,
   layUpPlayerShip,
   reactivatePlayerShip,
+  deliverCargo,
 } from "../../game/GameState";
 import { getPortById } from "../../data/ports";
 import { getShipSpec } from "../../game/ShipManager";
@@ -29,7 +30,8 @@ import { createCharterDialog } from "../components/CharterDialog";
 
 export class PortOperationsScreen implements GameScreen {
   private container: HTMLElement;
-  private activeShipIndex: number = 0;
+  /** Index of the active ship. Set externally when transitioning from travel/departure. */
+  public activeShipIndex: number = 0;
 
   constructor(private screenManager: ScreenManager) {
     this.container = document.createElement("div");
@@ -62,6 +64,16 @@ export class PortOperationsScreen implements GameScreen {
     if (!port) {
       this.renderShipAtSea(ship);
       return this.container;
+    }
+
+    // Auto-deliver cargo if ship arrived at charter destination
+    const charter = player.activeCharters[ship.name];
+    if (charter && ship.currentPortId === ship.cargoDestinationPortId) {
+      const deliveryResult = deliverCargo(state, this.activeShipIndex);
+      if (deliveryResult.success) {
+        // Show delivery message after rendering
+        setTimeout(() => this.showMessage(deliveryResult.message), 300);
+      }
     }
 
     this.renderFullLayout(state, player, ship, port);
@@ -138,7 +150,7 @@ export class PortOperationsScreen implements GameScreen {
 
     this.container.appendChild(grid);
 
-    // Back button
+    // Footer with navigation buttons
     const footer = document.createElement("div");
     footer.className = "port-ops-footer";
 
@@ -149,6 +161,15 @@ export class PortOperationsScreen implements GameScreen {
       this.screenManager.showScreen("worldmap");
     });
     footer.appendChild(backBtn);
+
+    // "Set Sail" button — prominent button to leave port and return to world map
+    const setSailBtn = document.createElement("button");
+    setSailBtn.className = "btn btn-primary";
+    setSailBtn.textContent = "Set Sail";
+    setSailBtn.addEventListener("click", () => {
+      this.screenManager.showScreen("worldmap");
+    });
+    footer.appendChild(setSailBtn);
 
     this.container.appendChild(footer);
   }

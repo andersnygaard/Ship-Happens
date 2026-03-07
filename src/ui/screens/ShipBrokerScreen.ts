@@ -195,10 +195,10 @@ export class ShipBrokerScreen implements GameScreen {
     if (result.success) {
       const dialog = createMessageDialog(
         "Welcome, Shipowner!",
-        result.message,
+        result.message + "\n\nReturn to the World Map to plan your first voyage!",
         () => {
           dialog.remove();
-          this.renderScreen(); // Re-render to update capital display
+          this.screenManager.showScreen("worldmap");
         },
       );
       this.container.appendChild(dialog);

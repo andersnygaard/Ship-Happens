@@ -206,6 +206,58 @@
   color: var(--color-text-accent);
 }
 
+/* ─── News Ticker ─────────────────────────────────────────────────── */
+
+.news-ticker {
+  width: 100%;
+  overflow: hidden;
+  background: linear-gradient(
+    90deg,
+    rgba(10, 15, 28, 0.95) 0%,
+    rgba(20, 30, 50, 0.95) 50%,
+    rgba(10, 15, 28, 0.95) 100%
+  );
+  border-bottom: 1px solid rgba(212, 168, 68, 0.3);
+  border-top: 1px solid rgba(212, 168, 68, 0.15);
+  padding: 4px 0;
+  position: relative;
+  flex-shrink: 0;
+  z-index: 10;
+}
+
+.news-ticker-track {
+  display: flex;
+  white-space: nowrap;
+  animation: ticker-scroll 60s linear infinite;
+}
+
+.news-ticker-content {
+  font-family: var(--font-data, monospace);
+  font-size: 12px;
+  color: var(--color-gold, #d4a844);
+  letter-spacing: 0.03em;
+  padding-right: 2em;
+  flex-shrink: 0;
+}
+
+@keyframes ticker-scroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+/* Funny cargo description in charter dialog */
+.charter-funny-cargo {
+  font-style: italic;
+  font-size: 12px;
+  color: var(--color-gold, #d4a844);
+  margin: 4px 0 8px 0;
+  opacity: 0.85;
+}
+
 /* Main content area (map + sidebar) */
 .worldmap-screen .worldmap-main {
   flex: 1;
@@ -1772,4 +1824,167 @@
   padding: 2px 6px;
   text-transform: uppercase;
   letter-spacing: 0.06em;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Maneuvering Minigame Screen
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.maneuvering-screen {
+  background: #0a0a1a;
+  flex-direction: column;
+  gap: 0;
+  padding: 0;
+}
+
+/* ─── Header ──────────────────────────────────────────────────────────── */
+
+.maneuvering-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-sm) var(--spacing-lg);
+  background: var(--color-bg-dark);
+  border-bottom: var(--border-copper);
+  flex-shrink: 0;
+  gap: var(--spacing-md);
+}
+
+.maneuvering-title {
+  font-family: var(--font-heading);
+  font-size: 16px;
+  color: var(--color-gold);
+  white-space: nowrap;
+}
+
+.maneuvering-timer-container {
+  flex: 1;
+  max-width: 400px;
+  position: relative;
+  height: 20px;
+  background: #1a1a2e;
+  border: 1px solid #4a4a60;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.maneuvering-timer-bar {
+  height: 100%;
+  width: 100%;
+  background: #00cc55;
+  transition: width 0.2s linear, background 0.3s ease;
+  border-radius: 2px;
+}
+
+.maneuvering-timer-label {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-data);
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+}
+
+.maneuvering-condition {
+  font-family: var(--font-data);
+  font-size: 14px;
+  font-weight: 600;
+  color: #00cc55;
+  white-space: nowrap;
+}
+
+/* ─── Canvas ──────────────────────────────────────────────────────────── */
+
+.maneuvering-canvas-wrapper {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+  padding: var(--spacing-sm);
+}
+
+.maneuvering-canvas {
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+  border: 2px solid var(--color-copper);
+  border-radius: var(--border-radius);
+  cursor: crosshair;
+}
+
+/* ─── Controls Hint ───────────────────────────────────────────────────── */
+
+.maneuvering-controls-hint {
+  width: 100%;
+  text-align: center;
+  padding: var(--spacing-sm) var(--spacing-lg);
+  background: var(--color-bg-dark);
+  border-top: 1px solid #4a4a60;
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+}
+
+.maneuvering-controls-hint strong {
+  color: var(--color-text-secondary);
+}
+
+/* ─── Result Overlay ──────────────────────────────────────────────────── */
+
+.maneuvering-result-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+}
+
+.maneuvering-result-panel {
+  max-width: 440px;
+  width: 90%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  text-align: center;
+}
+
+.maneuvering-result-title {
+  font-size: 24px;
+}
+
+.maneuvering-result-message {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+}
+
+.maneuvering-result-condition {
+  font-family: var(--font-data);
+  font-size: 16px;
+  color: var(--color-text-accent);
+  padding: var(--spacing-sm) 0;
+  border-top: 1px solid rgba(74, 74, 96, 0.5);
+  border-bottom: 1px solid rgba(74, 74, 96, 0.5);
+}
+
+.maneuvering-result-btn {
+  align-self: center;
+  min-width: 200px;
+  margin-top: var(--spacing-sm);
 }

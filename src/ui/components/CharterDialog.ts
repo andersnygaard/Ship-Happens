@@ -108,8 +108,13 @@ export function createCharterDialog(
     const destPort = getPortById(contract.destinationPortId);
     const destName = destPort ? destPort.name : contract.destinationPortId;
 
+    const funnyLine = contract.funnyDescription
+      ? `<div class="charter-funny-cargo">"${contract.funnyDescription}"</div>`
+      : "";
+
     detailsContent.innerHTML = `
       <div class="charter-details-title">${contract.cargoType} to ${destName}</div>
+      ${funnyLine}
       <div class="port-ops-dialog-row">
         <span class="port-ops-dialog-label">Rate:</span>
         <span class="port-ops-dialog-value data-display">$${contract.rate.toLocaleString()}</span>

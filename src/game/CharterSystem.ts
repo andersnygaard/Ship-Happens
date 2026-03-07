@@ -13,6 +13,7 @@ import {
   MAX_DELIVERY_DEADLINE_DAYS,
   MAX_CHARTER_OPTIONS,
 } from "../data/constants";
+import { getRandomFunnyCargoDescription } from "../data/humorTexts";
 
 /**
  * Calculate the great-circle distance between two ports in nautical miles.
@@ -161,6 +162,9 @@ export function generateCharterContracts(
     const deadline = calculateDeadline(distance, deadlineFactor);
     const penalty = Math.round(rate * LATE_DELIVERY_PENALTY_RATE);
 
+    // ~30% chance of a funny cargo description for flavor
+    const funnyDescription = rng() < 0.3 ? getRandomFunnyCargoDescription() : undefined;
+
     contracts.push({
       destinationPortId: destPort.id,
       cargoType,
@@ -168,6 +172,7 @@ export function generateCharterContracts(
       deliveryDeadlineDays: deadline,
       penalty,
       distanceNm: distance,
+      funnyDescription,
     });
   }
 

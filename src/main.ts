@@ -8,6 +8,7 @@ import { ShipBrokerScreen } from './ui/screens/ShipBrokerScreen';
 import { PortOperationsScreen } from './ui/screens/PortOperationsScreen';
 import { TravelScreen } from './ui/screens/TravelScreen';
 import { PortDepartureScreen } from './ui/screens/PortDepartureScreen';
+import { ManeuveringScreen } from './ui/screens/ManeuveringScreen';
 
 // Ship Happens - Main entry point
 // Sets up a basic Three.js scene and initializes the UI screen system.
@@ -87,6 +88,7 @@ screenManager.register("shipbroker", new ShipBrokerScreen(screenManager));
 screenManager.register("port-operations", new PortOperationsScreen(screenManager));
 screenManager.register("travel", new TravelScreen(screenManager));
 screenManager.register("port-departure", new PortDepartureScreen(screenManager));
+screenManager.register("maneuvering", new ManeuveringScreen(screenManager));
 
 // Show the setup screen first
 screenManager.showScreen("setup");

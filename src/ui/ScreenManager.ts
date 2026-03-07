@@ -21,7 +21,8 @@ export type ScreenId =
   | "shipbroker"
   | "port-operations"
   | "travel"
-  | "port-departure";
+  | "port-departure"
+  | "maneuvering";
 
 export class ScreenManager {
   private screens: Map<ScreenId, GameScreen> = new Map();

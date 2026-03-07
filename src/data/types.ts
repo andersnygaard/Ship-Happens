@@ -75,6 +75,8 @@ export interface CharterContract {
   readonly deliveryDeadlineDays: number;
   readonly penalty: number;
   readonly distanceNm: number;
+  /** Optional humorous cargo description for flavor text. */
+  readonly funnyDescription?: string;
 }
 
 // ─── Player & Company ───────────────────────────────────────────────────────

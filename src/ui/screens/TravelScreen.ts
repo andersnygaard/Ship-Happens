@@ -26,6 +26,7 @@ import { EventDialog } from "../components/EventDialog";
 import { debit } from "../../game/FinancialSystem";
 import { getTimeSnapshot } from "../../game/TimeSystem";
 import { TOWING_PENALTY } from "../../data/constants";
+import type { PortDepartureScreen } from "./PortDepartureScreen";
 
 export class TravelScreen implements GameScreen {
   private container: HTMLElement;
@@ -243,6 +244,10 @@ export class TravelScreen implements GameScreen {
 
     // After a delay, transition to port departure
     setTimeout(() => {
+      const portDeparture = this.screenManager.getScreen("port-departure") as PortDepartureScreen | undefined;
+      if (portDeparture) {
+        portDeparture.shipIndex = this.shipIndex;
+      }
       this.screenManager.showScreen("port-departure");
     }, 2000);
   }

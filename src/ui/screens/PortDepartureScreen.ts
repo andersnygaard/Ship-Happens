@@ -10,11 +10,16 @@ import { getActivePlayer } from "../../game/GameState";
 import { getPortById } from "../../data/ports";
 import { debit } from "../../game/FinancialSystem";
 import { getTimeSnapshot } from "../../game/TimeSystem";
+import type { PortOperationsScreen } from "./PortOperationsScreen";
+import type { ManeuveringScreen } from "./ManeuveringScreen";
 
 const TUG_COST = 50_000;
 
 export class PortDepartureScreen implements GameScreen {
   private container: HTMLElement;
+
+  /** Ship index that just arrived. Set externally before showing. */
+  public shipIndex: number = 0;
 
   constructor(private screenManager: ScreenManager) {
     this.container = document.createElement("div");
@@ -68,7 +73,7 @@ export class PortDepartureScreen implements GameScreen {
     steerBtn.className = "btn btn-primary port-departure-btn";
     steerBtn.innerHTML = "<strong>Steer by Hand</strong><br><span class='port-departure-cost'>Free</span>";
     steerBtn.addEventListener("click", () => {
-      this.screenManager.showScreen("port-operations");
+      this.goToManeuvering();
     });
     btnContainer.appendChild(steerBtn);
 
@@ -79,7 +84,7 @@ export class PortDepartureScreen implements GameScreen {
     tugBtn.addEventListener("click", () => {
       const time = getTimeSnapshot(state.time);
       debit(player.finances, TUG_COST, "Tug assistance at port", time);
-      this.screenManager.showScreen("port-operations");
+      this.goToPortOperations();
     });
     btnContainer.appendChild(tugBtn);
 
@@ -91,5 +96,23 @@ export class PortDepartureScreen implements GameScreen {
 
   hide(): void {
     this.container.remove();
+  }
+
+  /** Navigate to port operations, passing along the ship index. */
+  private goToPortOperations(): void {
+    const portOps = this.screenManager.getScreen("port-operations") as PortOperationsScreen | undefined;
+    if (portOps) {
+      portOps.activeShipIndex = this.shipIndex;
+    }
+    this.screenManager.showScreen("port-operations");
+  }
+
+  /** Navigate to the maneuvering minigame, passing along the ship index. */
+  private goToManeuvering(): void {
+    const maneuvering = this.screenManager.getScreen("maneuvering") as ManeuveringScreen | undefined;
+    if (maneuvering) {
+      maneuvering.shipIndex = this.shipIndex;
+    }
+    this.screenManager.showScreen("maneuvering");
   }
 }

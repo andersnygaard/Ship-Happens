@@ -17,8 +17,13 @@ import {
 } from "../../game/GameState";
 import type { FullGameState } from "../../game/GameState";
 import { WorldMapCanvas } from "../components/WorldMapCanvas";
+import { NewsTicker } from "../components/NewsTicker";
 import type { Port } from "../../data/types";
 import type { TravelScreen } from "./TravelScreen";
+import { calculateDistanceNm } from "../../game/CharterSystem";
+import { getPortById } from "../../data/ports";
+import { getShipSpecById } from "../../data/ships";
+import { calculateTravelDays } from "../../game/TimeSystem";
 
 export class WorldMapScreen implements GameScreen {
   private container: HTMLElement;
@@ -28,6 +33,8 @@ export class WorldMapScreen implements GameScreen {
   private selectedPortInfo: HTMLElement | null = null;
   private selectedDestination: Port | null = null;
   private destinationLabel: HTMLElement | null = null;
+  private statusMessage: HTMLElement | null = null;
+  private newsTicker: NewsTicker | null = null;
 
   constructor(private screenManager: ScreenManager) {
     this.container = document.createElement("div");
@@ -42,6 +49,10 @@ export class WorldMapScreen implements GameScreen {
     // ── Header bar ────────────────────────────────────────────────────
     const header = this.buildHeader(state);
     this.container.appendChild(header);
+
+    // ── News ticker ─────────────────────────────────────────────────
+    this.newsTicker = new NewsTicker();
+    this.newsTicker.attach(this.container);
 
     // ── Main content area (map + sidebar) ─────────────────────────────
     const mainArea = document.createElement("div");
@@ -73,6 +84,35 @@ export class WorldMapScreen implements GameScreen {
 
     this.container.appendChild(mainArea);
 
+    // ── No ships prompt ───────────────────────────────────────────────
+    if (state) {
+      const player = getActivePlayer(state);
+      if (player.ships.length === 0) {
+        const noShipsBanner = document.createElement("div");
+        noShipsBanner.className = "worldmap-no-ships-banner";
+        noShipsBanner.innerHTML = "";
+
+        const msg = document.createElement("span");
+        msg.textContent = "You have no ships! Visit the Ship Broker to purchase your first vessel.";
+        noShipsBanner.appendChild(msg);
+
+        const brokerBtn = document.createElement("button");
+        brokerBtn.className = "btn btn-primary";
+        brokerBtn.textContent = "Visit Ship Broker";
+        brokerBtn.addEventListener("click", () => {
+          this.screenManager.showScreen("shipbroker");
+        });
+        noShipsBanner.appendChild(brokerBtn);
+
+        this.container.appendChild(noShipsBanner);
+      }
+    }
+
+    // ── Status message area ───────────────────────────────────────────
+    this.statusMessage = document.createElement("div");
+    this.statusMessage.className = "worldmap-status-message hidden";
+    this.container.appendChild(this.statusMessage);
+
     // ── Selected port info panel ──────────────────────────────────────
     this.selectedPortInfo = document.createElement("div");
     this.selectedPortInfo.className = "worldmap-port-info hidden";
@@ -90,11 +130,16 @@ export class WorldMapScreen implements GameScreen {
       this.mapCanvas.destroy();
       this.mapCanvas = null;
     }
+    if (this.newsTicker) {
+      this.newsTicker.destroy();
+      this.newsTicker = null;
+    }
     this.startActionBtn = null;
     this.timeDisplay = null;
     this.selectedPortInfo = null;
     this.destinationLabel = null;
     this.selectedDestination = null;
+    this.statusMessage = null;
     this.container.remove();
   }
 
@@ -215,6 +260,11 @@ export class WorldMapScreen implements GameScreen {
     // Set as destination for travel
     this.selectedDestination = port;
 
+    // Update the selected port on the map canvas
+    if (this.mapCanvas) {
+      this.mapCanvas.setSelectedPort(port.id);
+    }
+
     this.selectedPortInfo.className = "worldmap-port-info";
     this.selectedPortInfo.innerHTML = "";
 
@@ -233,6 +283,43 @@ export class WorldMapScreen implements GameScreen {
     const cargo = document.createElement("span");
     cargo.className = "port-info-detail";
     cargo.textContent = `${(port.cargoCapacityTdw / 1_000_000).toFixed(1)}M tdw`;
+
+    // Calculate and show distance from ship's current port
+    const state = this.screenManager.getGameState();
+    if (state) {
+      const player = getActivePlayer(state);
+      const activeShip = player.ships.find(
+        (s) => s.currentPortId !== null && !s.isLaidUp,
+      );
+      if (activeShip && activeShip.currentPortId) {
+        const originPort = getPortById(activeShip.currentPortId);
+        if (originPort && originPort.id !== port.id) {
+          const distanceNm = calculateDistanceNm(originPort, port);
+          const spec = getShipSpecById(activeShip.specId);
+
+          const distEl = document.createElement("span");
+          distEl.className = "port-info-detail";
+          distEl.textContent = `Distance: ${distanceNm.toLocaleString()} nm`;
+          this.selectedPortInfo.appendChild(distEl);
+
+          if (spec) {
+            const travelDays = calculateTravelDays(distanceNm, spec.maxSpeedKnots);
+            const fuelNeeded = spec.fuelConsumptionTonsPerDay * travelDays;
+
+            const timeEl = document.createElement("span");
+            timeEl.className = "port-info-detail";
+            timeEl.textContent = `Travel time: ~${travelDays} days`;
+            this.selectedPortInfo.appendChild(timeEl);
+
+            const fuelEl = document.createElement("span");
+            fuelEl.className = "port-info-detail";
+            fuelEl.style.color = activeShip.fuelTons < fuelNeeded ? "var(--color-danger, #ff4444)" : "var(--color-success, #44ff44)";
+            fuelEl.textContent = `Fuel needed: ~${Math.ceil(fuelNeeded)}t (have ${activeShip.fuelTons}t)`;
+            this.selectedPortInfo.appendChild(fuelEl);
+          }
+        }
+      }
+    }
 
     const destBadge = document.createElement("span");
     destBadge.className = "port-info-destination";
@@ -262,55 +349,72 @@ export class WorldMapScreen implements GameScreen {
       return;
     }
 
-    // Check if we can start travel
+    // Check if player has any ships
     const player = getActivePlayer(state);
+    if (player.ships.length === 0) {
+      this.showStatusMessage("You have no ships! Visit the Ship Broker first.");
+      return;
+    }
+
+    // Check if we can start travel
     const shipIndex = player.ships.findIndex(
       (s) => s.currentPortId !== null && !s.isLaidUp,
     );
 
     if (shipIndex === -1) {
-      console.log("No ships available in port.");
+      this.showStatusMessage("No ships available in port.");
       return;
     }
 
-    if (this.selectedDestination) {
-      const ship = player.ships[shipIndex];
-      // Don't travel to the port the ship is already at
-      if (ship.currentPortId === this.selectedDestination.id) {
-        console.log("Ship is already at this port.");
-        return;
-      }
-
-      // Start travel to selected destination
-      startAction(state);
-      const travelScreen = this.screenManager.getScreen("travel") as TravelScreen | undefined;
-      if (travelScreen) {
-        travelScreen.shipIndex = shipIndex;
-        travelScreen.destinationPortId = this.selectedDestination.id;
-      }
-      this.screenManager.showScreen("travel");
+    if (!this.selectedDestination) {
+      this.showStatusMessage("Select a destination port on the map first.");
       return;
     }
 
-    // No destination selected — fall back to advancing a turn
+    const ship = player.ships[shipIndex];
+    // Don't travel to the port the ship is already at
+    if (ship.currentPortId === this.selectedDestination.id) {
+      this.showStatusMessage("Ship is already at this port. Select a different destination.");
+      return;
+    }
+
+    // Check fuel
+    const originPort = ship.currentPortId ? getPortById(ship.currentPortId) : null;
+    const destPort = this.selectedDestination;
+    if (originPort) {
+      const distanceNm = calculateDistanceNm(originPort, destPort);
+      const spec = getShipSpecById(ship.specId);
+      if (spec) {
+        const travelDays = calculateTravelDays(distanceNm, spec.maxSpeedKnots);
+        const fuelNeeded = spec.fuelConsumptionTonsPerDay * travelDays;
+        if (ship.fuelTons < fuelNeeded * 0.5) {
+          this.showStatusMessage(
+            `Warning: Very low fuel! Need ~${Math.ceil(fuelNeeded)}t, have ${ship.fuelTons}t. Refuel before departing.`,
+          );
+          // Allow travel anyway (game allows running out of fuel with penalty)
+        }
+      }
+    }
+
+    // Start travel to selected destination
     startAction(state);
-    this.updateActionButton(true);
+    const travelScreen = this.screenManager.getScreen("travel") as TravelScreen | undefined;
+    if (travelScreen) {
+      travelScreen.shipIndex = shipIndex;
+      travelScreen.destinationPortId = this.selectedDestination.id;
+    }
+    this.screenManager.showScreen("travel");
+  }
 
+  private showStatusMessage(message: string): void {
+    if (!this.statusMessage) return;
+    this.statusMessage.textContent = message;
+    this.statusMessage.classList.remove("hidden");
     setTimeout(() => {
-      const result = endTurn(state);
-      stopAction(state);
-      this.updateActionButton(false);
-      this.refreshTimeDisplay(state);
-      this.refreshHeader(state);
-
-      if (this.mapCanvas) {
-        const activePlayer = getActivePlayer(state);
-        this.mapCanvas.setShips(activePlayer.ships);
-        this.mapCanvas.setHomePort(activePlayer.homePortId);
+      if (this.statusMessage) {
+        this.statusMessage.classList.add("hidden");
       }
-
-      console.log(result.message);
-    }, 500);
+    }, 4000);
   }
 
   private updateActionButton(isRunning: boolean): void {
