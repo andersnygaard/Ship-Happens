@@ -32,6 +32,9 @@ export class OceanScene {
   private geometry: THREE.PlaneGeometry;
   private basePositions: Float32Array;
 
+  /** Multiplier for wave amplitude (1.0 = normal, >1 = stormy). */
+  private weatherIntensity = 1.0;
+
   constructor() {
     this.geometry = new THREE.PlaneGeometry(
       OCEAN_SIZE,
@@ -82,7 +85,7 @@ export class OceanScene {
           layer.amplitudeZ;
       }
 
-      positions[i * 3 + 1] = y;
+      positions[i * 3 + 1] = y * this.weatherIntensity;
     }
 
     posAttr.needsUpdate = true;
@@ -103,6 +106,14 @@ export class OceanScene {
         Math.cos(z * layer.frequencyZ + elapsedTime * layer.speed * 0.8 + layer.phase) *
         layer.amplitudeZ;
     }
-    return y;
+    return y * this.weatherIntensity;
+  }
+
+  /**
+   * Set the weather intensity multiplier for wave amplitude.
+   * 1.0 = calm seas, 2.0+ = stormy.
+   */
+  setWeatherIntensity(intensity: number): void {
+    this.weatherIntensity = intensity;
   }
 }

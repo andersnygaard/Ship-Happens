@@ -18,6 +18,7 @@ import { SkySystem } from './scene/SkySystem';
 import { AudioSystem } from './audio/AudioSystem';
 import { toast } from './ui/components/Toast';
 import { tutorialSystem } from './game/TutorialSystem';
+import { TravelSceneController } from './scene/TravelSceneController';
 
 // Ship Happens - Main entry point
 // Sets up a Three.js scene with animated ocean, ship, and day/night cycle.
@@ -72,6 +73,17 @@ export function setTimeOfDay(t: number): void {
   skySystem.setTimeOfDay(t);
 }
 
+// ─── Travel Scene Controller ──────────────────────────────────────────────
+
+const travelSceneController = new TravelSceneController(ocean, ship, skySystem);
+
+/**
+ * Get the travel scene controller for use by TravelScreen.
+ */
+export function getTravelSceneController(): TravelSceneController {
+  return travelSceneController;
+}
+
 // ─── Clock & Animation Loop ───────────────────────────────────────────────
 
 const clock = new THREE.Clock();
@@ -98,6 +110,9 @@ function animate(): void {
 
   // Advance day/night cycle (slow auto-advance)
   skySystem.update(delta);
+
+  // Update travel animation (ship forward movement) when active
+  travelSceneController.update(delta);
 
   renderer.render(scene, camera);
 }

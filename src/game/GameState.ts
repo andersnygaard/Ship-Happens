@@ -71,6 +71,17 @@ import {
   calculateDistanceNm,
 } from "./CharterSystem";
 
+import {
+  PlayerStatistics,
+  createPlayerStatistics,
+  recordVoyage,
+  recordRevenue,
+  recordExpense,
+  recordShipPurchase,
+  recordShipSale,
+  recordCharterCompletion,
+} from "./Statistics";
+
 // ─── Player State ────────────────────────────────────────────────────────────
 
 /** Extended player state that combines player info with financial data. */
@@ -85,6 +96,8 @@ export interface PlayerState {
   activeCharters: Record<string, CharterContract & { acceptedDay: number }>;
   /** The total elapsed week number when the player last visited the office. */
   lastOfficeVisitWeek: number;
+  /** Per-player performance statistics. */
+  statistics: PlayerStatistics;
 }
 
 // ─── Full Game State ─────────────────────────────────────────────────────────
@@ -134,6 +147,7 @@ export function createNewGame(config: NewGameConfig): FullGameState {
     ships: [],
     activeCharters: {},
     lastOfficeVisitWeek: 0,
+    statistics: createPlayerStatistics(),
   }));
 
   return {
@@ -184,6 +198,7 @@ export function buyShip(
   const result = purchaseShip(specId, shipName, depositPercent, player.finances, player.homePortId, time);
   if (result.success && result.ship) {
     player.ships.push(result.ship);
+    recordShipPurchase(player.statistics);
   }
   return result;
 }
@@ -211,7 +226,11 @@ export function repairPlayerShip(
   }
 
   const time = getTimeSnapshot(state.time);
-  return repairShip(ship, percentToRepair, port, player.finances, time);
+  const result = repairShip(ship, percentToRepair, port, player.finances, time);
+  if (result.success && result.cost > 0) {
+    recordExpense(player.statistics, result.cost);
+  }
+  return result;
 }
 
 /**
@@ -229,7 +248,11 @@ export function refuelPlayerShip(
   }
 
   const time = getTimeSnapshot(state.time);
-  return refuelShip(ship, tonsToAdd, player.finances, time);
+  const result = refuelShip(ship, tonsToAdd, player.finances, time);
+  if (result.success && result.cost > 0) {
+    recordExpense(player.statistics, result.cost);
+  }
+  return result;
 }
 
 /**
@@ -293,6 +316,12 @@ export function sellShip(
   // Credit net proceeds
   if (netProceeds > 0) {
     credit(player.finances, netProceeds, `Sale of ${ship.name}`, time);
+  }
+
+  // Track statistics
+  recordShipSale(player.statistics);
+  if (netProceeds > 0) {
+    recordRevenue(player.statistics, netProceeds);
   }
 
   // Clear mortgage from financial system
@@ -422,6 +451,13 @@ export function deliverCargo(
     debit(player.finances, penalty, `Late delivery penalty for ${charter.cargoType}`, time);
   }
 
+  // Track statistics
+  recordRevenue(player.statistics, revenue);
+  if (penalty > 0) {
+    recordExpense(player.statistics, penalty);
+  }
+  recordCharterCompletion(player.statistics, charter.rate);
+
   // Unload cargo
   unloadCargo(ship);
 
@@ -459,6 +495,7 @@ export function endTurn(state: FullGameState): { newRound: boolean; message: str
         const weeklyCost = dailyCost * DAYS_PER_WEEK;
         if (weeklyCost > 0) {
           debit(player.finances, weeklyCost, `Weekly operating costs for ${ship.name}`, time);
+          recordExpense(player.statistics, weeklyCost);
         }
 
         // Deduct weekly mortgage payment if outstanding
@@ -553,7 +590,11 @@ export function simulateVoyage(
   const operatingCost = getDailyOperatingCost(ship) * travelDays;
   if (operatingCost > 0) {
     debit(player.finances, operatingCost, `Operating costs for ${ship.name} (${travelDays} days at sea)`, time);
+    recordExpense(player.statistics, operatingCost);
   }
+
+  // Track voyage statistics
+  recordVoyage(player.statistics, distance, destinationPortId);
 
   let message = `${ship.name} arrived at ${destPort.name} after ${travelDays} days. Fuel consumed: ${fuelResult.consumed}t.`;
   if (fuelResult.ranOutOfFuel) {

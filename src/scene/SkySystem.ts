@@ -58,6 +58,12 @@ export class SkySystem {
   private ambientLight: THREE.AmbientLight;
   private timeOfDay: number = 0.4; // default to mid-morning
 
+  /**
+   * Storm factor 0-1. Darkens the sky and thickens fog.
+   * 0 = clear, 0.7+ = heavy storm.
+   */
+  private stormFactor: number = 0;
+
   constructor(
     scene: THREE.Scene,
     directionalLight: THREE.DirectionalLight,
@@ -90,6 +96,20 @@ export class SkySystem {
   }
 
   /**
+   * Set the storm intensity factor (0 = clear, 0.7+ = heavy storm).
+   * Darkens the sky, thickens fog, and dims lighting.
+   */
+  setStormFactor(factor: number): void {
+    this.stormFactor = Math.max(0, Math.min(1, factor));
+    this.applyTimeOfDay();
+  }
+
+  /** Get the current storm factor. */
+  getStormFactor(): number {
+    return this.stormFactor;
+  }
+
+  /**
    * Automatically advance time. Call each frame.
    * @param delta — seconds since last frame
    * @param speed — how fast a full day cycle passes (default: 1 day = 120 seconds)
@@ -101,22 +121,33 @@ export class SkySystem {
 
   private applyTimeOfDay(): void {
     const t = this.timeOfDay;
+    const storm = this.stormFactor;
 
     // Sky / background color
     const skyColor = this.interpolateColorStops(SKY_STOPS, t);
+
+    // During storms: darken sky towards a dark gray-blue
+    if (storm > 0) {
+      const stormColor = new THREE.Color(0x1a1a2e);
+      skyColor.lerp(stormColor, storm);
+    }
+
     this.scene.background = skyColor;
     this.fog.color.copy(skyColor);
 
-    // Directional light intensity
+    // Thicken fog during storms
+    this.fog.density = 0.012 + storm * 0.02;
+
+    // Directional light intensity — dim during storms
     const lightIntensity = this.interpolateScalarStops(LIGHT_INTENSITY_STOPS, t);
-    this.directionalLight.intensity = lightIntensity;
+    this.directionalLight.intensity = lightIntensity * (1 - storm * 0.6);
 
     // Directional light color
     const lightColor = this.interpolateColorStops(LIGHT_COLOR_STOPS, t);
     this.directionalLight.color.copy(lightColor);
 
-    // Ambient light — dimmer version
-    this.ambientLight.intensity = lightIntensity * 0.5 + 0.1;
+    // Ambient light — dimmer version, further dimmed in storms
+    this.ambientLight.intensity = (lightIntensity * 0.5 + 0.1) * (1 - storm * 0.4);
     this.ambientLight.color.copy(lightColor);
 
     // Sun position — arc across the sky

@@ -1663,85 +1663,181 @@
    ═══════════════════════════════════════════════════════════════════════════ */
 
 .travel-screen {
-  background: radial-gradient(
-    ellipse at center,
-    rgba(26, 58, 92, 0.55) 0%,
-    rgba(10, 30, 61, 0.65) 70%
-  );
+  /* Semi-transparent so the Three.js ocean scene shows through */
+  background: transparent;
   flex-direction: column;
   gap: var(--spacing-lg);
+  pointer-events: none;
 }
 
-.travel-panel {
-  max-width: 520px;
-  width: 90%;
+.travel-screen > * {
+  pointer-events: auto;
+}
+
+/* ─── Travel HUD Overlay ─────────────────────────────────────────────── */
+
+.travel-hud {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-md);
+  pointer-events: none;
 }
 
-.travel-title {
-  font-size: 24px;
-  text-align: center;
-  margin-bottom: var(--spacing-sm);
+.travel-hud > * {
+  pointer-events: auto;
 }
 
-.travel-info-grid {
+/* Top bar: ship name + route */
+.travel-hud-top {
   display: flex;
   flex-direction: column;
+  align-items: center;
+  padding: var(--spacing-md) var(--spacing-lg);
+  background: linear-gradient(
+    180deg,
+    rgba(10, 20, 40, 0.85) 0%,
+    rgba(10, 20, 40, 0.0) 100%
+  );
+}
+
+.travel-hud-ship-name {
+  font-family: var(--font-heading);
+  font-size: 22px;
+  color: var(--color-gold);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.travel-hud-route {
+  font-family: var(--font-body);
+  font-size: 15px;
+  color: var(--color-text-primary);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+  margin-top: 4px;
+}
+
+/* Info strip (distance, fuel, condition) */
+.travel-hud-info-strip {
+  display: flex;
+  justify-content: center;
+  gap: var(--spacing-lg);
+  padding: var(--spacing-sm) var(--spacing-lg);
+  flex-wrap: wrap;
+}
+
+.travel-hud-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   gap: 2px;
 }
 
-.travel-info-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  padding: 4px 0;
-  border-bottom: 1px solid rgba(74, 74, 96, 0.3);
-}
-
-.travel-info-row:last-child {
-  border-bottom: none;
-}
-
-.travel-info-label {
+.travel-hud-stat-label {
   font-family: var(--font-body);
-  font-size: 13px;
+  font-size: 11px;
   color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
 }
 
-.travel-info-value {
-  font-size: 13px;
+.travel-hud-stat-value {
+  font-family: var(--font-data);
+  font-size: 14px;
   color: var(--color-text-accent);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
 }
 
-.travel-progress-bar {
+/* Bottom area: progress section */
+.travel-hud-progress-section {
+  position: absolute;
+  bottom: 60px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 70%;
+  max-width: 600px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.travel-hud-day-counter {
+  font-family: var(--font-heading);
+  font-size: 18px;
+  color: var(--color-gold);
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.8);
+  letter-spacing: 0.04em;
+}
+
+.travel-hud-progress-bar {
   width: 100%;
-  height: 8px;
-  background: var(--color-bg-dark);
-  border: 1px solid #4a4a60;
-  border-radius: 4px;
+  height: 10px;
+  background: rgba(10, 20, 40, 0.6);
+  border: 1px solid rgba(212, 168, 68, 0.4);
+  border-radius: 5px;
   overflow: hidden;
-  margin: var(--spacing-sm) 0;
 }
 
-.travel-progress-fill {
+.travel-hud-progress-fill {
   height: 100%;
   width: 0%;
   background: linear-gradient(90deg, var(--color-copper) 0%, var(--color-gold) 100%);
-  border-radius: 4px;
+  border-radius: 5px;
   transition: width 0.8s ease;
 }
 
-.travel-status {
+.travel-hud-progress-text {
+  font-family: var(--font-data);
+  font-size: 13px;
+  color: var(--color-text-primary);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+}
+
+/* Weather indicator */
+.travel-hud-weather {
+  position: absolute;
+  top: var(--spacing-lg);
+  right: var(--spacing-lg);
+  font-family: var(--font-data);
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+  padding: 4px 12px;
+  background: rgba(10, 20, 40, 0.5);
+  border-radius: var(--border-radius);
+  border: 1px solid rgba(74, 74, 96, 0.3);
+}
+
+.travel-hud-weather--storm {
+  color: #ff6644;
+  border-color: rgba(255, 100, 60, 0.5);
+  background: rgba(80, 20, 10, 0.6);
+  animation: storm-pulse 1s ease-in-out infinite alternate;
+}
+
+@keyframes storm-pulse {
+  from { opacity: 0.8; }
+  to { opacity: 1.0; }
+}
+
+/* Status message (event feedback) */
+.travel-hud-status {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
   font-family: var(--font-data);
   font-size: 14px;
   color: var(--color-text-primary);
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
   text-align: center;
-  min-height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  white-space: nowrap;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -2901,16 +2997,19 @@
   .maneuvering-result-panel,
   .save-load-dialog,
   .save-load-confirm,
-  .travel-panel,
   .port-departure-panel {
     width: 100%;
     max-width: 100%;
   }
 
-  /* ─── Travel Screen ────────────────────────────────────────────────── */
+  /* ─── Travel HUD responsive ─────────────────────────────────────────── */
 
-  .travel-title {
-    font-size: 20px;
+  .travel-hud-ship-name {
+    font-size: 18px;
+  }
+
+  .travel-hud-progress-section {
+    width: 90%;
   }
 
   /* ─── Turn Transition ──────────────────────────────────────────────── */

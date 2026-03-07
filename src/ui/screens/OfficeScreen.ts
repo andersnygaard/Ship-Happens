@@ -8,6 +8,8 @@ import type { GameScreen, ScreenManager } from "../ScreenManager";
 import { getActivePlayer, getPlayerSummary, getPlayerBalance } from "../../game/GameState";
 import { renderFleetOverview } from "../components/FleetOverview";
 import { renderFinancialSummary } from "../components/FinancialSummary";
+import { renderStatsPanel } from "../components/StatsPanel";
+import { renderLeaderboard } from "../components/Leaderboard";
 import { createSaveLoadDialog } from "../components/SaveLoadDialog";
 
 export class OfficeScreen implements GameScreen {
@@ -71,6 +73,26 @@ export class OfficeScreen implements GameScreen {
     const finPanel = renderFinancialSummary({ finances: player.finances });
     finPanel.classList.add("panel", "panel-riveted", "office-panel");
     mainArea.appendChild(finPanel);
+
+    // Statistics Panel
+    const statsPanel = renderStatsPanel({
+      statistics: player.statistics,
+      playerName: player.name,
+      companyName: player.companyName,
+    });
+    statsPanel.classList.add("panel", "panel-riveted", "office-panel");
+    mainArea.appendChild(statsPanel);
+
+    // Leaderboard (multiplayer)
+    if (state.players.length > 1) {
+      const leaderboard = renderLeaderboard({
+        players: state.players,
+        currentWeek: state.time.week,
+        currentYear: state.time.year,
+      });
+      leaderboard.classList.add("panel", "panel-riveted", "office-panel");
+      mainArea.appendChild(leaderboard);
+    }
 
     this.container.appendChild(mainArea);
 

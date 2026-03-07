@@ -1,6 +1,8 @@
 /**
  * TravelScreen — Shows voyage progress during travel between ports.
- * Displays ship name, origin, destination, distance, estimated time.
+ *
+ * Makes the Three.js ocean visible behind a semi-transparent overlay,
+ * displays a HUD with ship name, origin/destination, progress bar, and day counter.
  * Shows random events as they occur with choice buttons via EventDialog.
  * After all events are resolved and travel completes, transitions to PortDepartureScreen.
  */
@@ -27,6 +29,7 @@ import { debit } from "../../game/FinancialSystem";
 import { getTimeSnapshot } from "../../game/TimeSystem";
 import { TOWING_PENALTY } from "../../data/constants";
 import type { PortDepartureScreen } from "./PortDepartureScreen";
+import { getTravelSceneController } from "../../main";
 
 export class TravelScreen implements GameScreen {
   private container: HTMLElement;
@@ -36,6 +39,15 @@ export class TravelScreen implements GameScreen {
   public shipIndex: number = 0;
   /** Destination port ID. Set externally before showing. */
   public destinationPortId: string = "";
+
+  /** HUD element references for updates */
+  private hudProgressFill: HTMLElement | null = null;
+  private hudProgressText: HTMLElement | null = null;
+  private hudDayCounter: HTMLElement | null = null;
+  private hudWeatherIndicator: HTMLElement | null = null;
+
+  /** Animation timer for day counter */
+  private dayAnimationTimer: ReturnType<typeof setInterval> | null = null;
 
   constructor(private screenManager: ScreenManager) {
     this.container = document.createElement("div");
@@ -82,55 +94,96 @@ export class TravelScreen implements GameScreen {
       travelDays,
     );
 
-    // Build the voyage info panel
-    const panel = document.createElement("div");
-    panel.className = "travel-panel panel panel-riveted";
+    // --- Start the 3D scene travel animation ---
+    const sceneController = getTravelSceneController();
+    sceneController.startVoyage({
+      shipName: ship.name,
+      originName: originPort.name,
+      destinationName: destPort.name,
+      distanceNm,
+      travelDays,
+    });
 
-    const title = document.createElement("h2");
-    title.className = "travel-title heading-copper";
-    title.textContent = "Voyage in Progress";
-    panel.appendChild(title);
+    // --- Build the HUD overlay ---
+    const hud = document.createElement("div");
+    hud.className = "travel-hud";
 
-    // Ship info
-    const infoGrid = document.createElement("div");
-    infoGrid.className = "travel-info-grid";
+    // Top bar: ship name, route
+    const topBar = document.createElement("div");
+    topBar.className = "travel-hud-top";
 
-    infoGrid.appendChild(this.createInfoRow("Ship", ship.name));
-    infoGrid.appendChild(this.createInfoRow("From", originPort.name));
-    infoGrid.appendChild(this.createInfoRow("To", destPort.name));
-    infoGrid.appendChild(
-      this.createInfoRow("Distance", `${distanceNm.toLocaleString()} nm`),
-    );
-    infoGrid.appendChild(
-      this.createInfoRow("Est. Travel Time", `${travelDays} days`),
-    );
-    infoGrid.appendChild(
-      this.createInfoRow("Fuel on Board", `${ship.fuelTons} tons`),
-    );
-    infoGrid.appendChild(
-      this.createInfoRow("Ship Condition", `${ship.conditionPercent}%`),
-    );
+    const shipNameEl = document.createElement("div");
+    shipNameEl.className = "travel-hud-ship-name";
+    shipNameEl.textContent = ship.name;
+    topBar.appendChild(shipNameEl);
 
-    panel.appendChild(infoGrid);
+    const routeEl = document.createElement("div");
+    routeEl.className = "travel-hud-route";
+    routeEl.textContent = `${originPort.name}  \u2192  ${destPort.name}`;
+    topBar.appendChild(routeEl);
 
-    // Progress bar placeholder
+    hud.appendChild(topBar);
+
+    // Info strip: distance, fuel, condition
+    const infoStrip = document.createElement("div");
+    infoStrip.className = "travel-hud-info-strip";
+
+    infoStrip.appendChild(this.createHudStat("Distance", `${distanceNm.toLocaleString()} nm`));
+    infoStrip.appendChild(this.createHudStat("Est. Time", `${travelDays} days`));
+    infoStrip.appendChild(this.createHudStat("Fuel", `${ship.fuelTons} t`));
+    infoStrip.appendChild(this.createHudStat("Condition", `${ship.conditionPercent}%`));
+
+    hud.appendChild(infoStrip);
+
+    // Progress section
+    const progressSection = document.createElement("div");
+    progressSection.className = "travel-hud-progress-section";
+
+    // Day counter
+    const dayCounter = document.createElement("div");
+    dayCounter.className = "travel-hud-day-counter";
+    dayCounter.textContent = "Day 0";
+    this.hudDayCounter = dayCounter;
+    progressSection.appendChild(dayCounter);
+
+    // Progress bar
     const progressBar = document.createElement("div");
-    progressBar.className = "travel-progress-bar";
+    progressBar.className = "travel-hud-progress-bar";
     const progressFill = document.createElement("div");
-    progressFill.className = "travel-progress-fill";
+    progressFill.className = "travel-hud-progress-fill";
     progressBar.appendChild(progressFill);
-    panel.appendChild(progressBar);
+    this.hudProgressFill = progressFill;
+    progressSection.appendChild(progressBar);
 
-    // Status message area
+    // Progress percentage text
+    const progressText = document.createElement("div");
+    progressText.className = "travel-hud-progress-text";
+    progressText.textContent = "0%";
+    this.hudProgressText = progressText;
+    progressSection.appendChild(progressText);
+
+    hud.appendChild(progressSection);
+
+    // Weather indicator
+    const weatherIndicator = document.createElement("div");
+    weatherIndicator.className = "travel-hud-weather";
+    weatherIndicator.textContent = "Clear seas";
+    this.hudWeatherIndicator = weatherIndicator;
+    hud.appendChild(weatherIndicator);
+
+    // Status message area (for event messages)
     const statusArea = document.createElement("div");
-    statusArea.className = "travel-status";
+    statusArea.className = "travel-hud-status";
     statusArea.textContent = "Sailing...";
-    panel.appendChild(statusArea);
+    hud.appendChild(statusArea);
 
-    this.container.appendChild(panel);
+    this.container.appendChild(hud);
+
+    // Start day counter animation
+    this.startDayAnimation(travelDays, events.length);
 
     // Process events sequentially, then complete voyage
-    this.processEvents(events, 0, state, statusArea, progressFill, travelDays);
+    this.processEvents(events, 0, state, statusArea, travelDays, sceneController);
 
     return this.container;
   }
@@ -140,7 +193,49 @@ export class TravelScreen implements GameScreen {
       this.eventDialog.hide();
       this.eventDialog = null;
     }
+
+    // Stop the day animation timer
+    if (this.dayAnimationTimer !== null) {
+      clearInterval(this.dayAnimationTimer);
+      this.dayAnimationTimer = null;
+    }
+
+    // Stop the 3D scene animation
+    const sceneController = getTravelSceneController();
+    sceneController.stopVoyage();
+
     this.container.remove();
+  }
+
+  /**
+   * Animate the day counter incrementing over time.
+   * The counter runs independently and visually ticks up days.
+   */
+  private startDayAnimation(travelDays: number, eventCount: number): void {
+    // Total animation time: events take ~(eventCount * 2.3s), then 2s for completion
+    // We want days to tick up proportionally to progress
+    const totalAnimTime = (eventCount * 2.3 + 2) * 1000; // ms
+    const tickInterval = Math.max(200, totalAnimTime / travelDays);
+    let currentDay = 0;
+
+    this.dayAnimationTimer = setInterval(() => {
+      if (currentDay >= travelDays) {
+        if (this.dayAnimationTimer !== null) {
+          clearInterval(this.dayAnimationTimer);
+          this.dayAnimationTimer = null;
+        }
+        return;
+      }
+
+      currentDay++;
+      if (this.hudDayCounter) {
+        this.hudDayCounter.textContent = `Day ${currentDay}`;
+      }
+
+      // Update scene controller day
+      const sceneController = getTravelSceneController();
+      sceneController.setProgress(currentDay / travelDays);
+    }, tickInterval);
   }
 
   /**
@@ -152,12 +247,12 @@ export class TravelScreen implements GameScreen {
     index: number,
     state: FullGameState,
     statusArea: HTMLElement,
-    progressFill: HTMLElement,
     travelDays: number,
+    sceneController: ReturnType<typeof getTravelSceneController>,
   ): void {
     if (index >= events.length) {
       // All events processed — execute the actual voyage
-      this.completeVoyage(state, statusArea, progressFill, travelDays);
+      this.completeVoyage(state, statusArea, travelDays);
       return;
     }
 
@@ -165,8 +260,17 @@ export class TravelScreen implements GameScreen {
 
     // Animate progress to the event point
     const progressPercent = ((index + 1) / (events.length + 1)) * 80;
-    progressFill.style.width = `${progressPercent}%`;
+    this.updateProgress(progressPercent);
     statusArea.textContent = `Event encountered: ${event.title}`;
+
+    // If this is a storm event, trigger storm visuals
+    if (event.type === "storm") {
+      sceneController.setStorm(true);
+      if (this.hudWeatherIndicator) {
+        this.hudWeatherIndicator.textContent = "STORM";
+        this.hudWeatherIndicator.classList.add("travel-hud-weather--storm");
+      }
+    }
 
     // Show event dialog
     this.eventDialog = new EventDialog({
@@ -190,6 +294,13 @@ export class TravelScreen implements GameScreen {
             );
           }
           statusArea.textContent = result.message;
+
+          // Clear storm after resolution
+          sceneController.setStorm(false);
+          if (this.hudWeatherIndicator) {
+            this.hudWeatherIndicator.textContent = "Clear seas";
+            this.hudWeatherIndicator.classList.remove("travel-hud-weather--storm");
+          }
         } else if (event.type === "emergency") {
           const result = resolveEmergencyEvent();
           statusArea.textContent = result.message;
@@ -212,8 +323,8 @@ export class TravelScreen implements GameScreen {
             index + 1,
             state,
             statusArea,
-            progressFill,
             travelDays,
+            sceneController,
           );
         }, 1500);
       },
@@ -233,11 +344,10 @@ export class TravelScreen implements GameScreen {
   private completeVoyage(
     state: FullGameState,
     statusArea: HTMLElement,
-    progressFill: HTMLElement,
     _travelDays: number,
   ): void {
     // Animate progress to 100%
-    progressFill.style.width = "100%";
+    this.updateProgress(100);
 
     const result = simulateVoyage(state, this.shipIndex, this.destinationPortId);
     statusArea.textContent = result.message;
@@ -252,20 +362,31 @@ export class TravelScreen implements GameScreen {
     }, 2000);
   }
 
-  private createInfoRow(label: string, value: string): HTMLElement {
-    const row = document.createElement("div");
-    row.className = "travel-info-row";
+  /** Update the HUD progress bar and text. */
+  private updateProgress(percent: number): void {
+    if (this.hudProgressFill) {
+      this.hudProgressFill.style.width = `${percent}%`;
+    }
+    if (this.hudProgressText) {
+      this.hudProgressText.textContent = `${Math.round(percent)}%`;
+    }
+  }
+
+  /** Create a small stat element for the info strip. */
+  private createHudStat(label: string, value: string): HTMLElement {
+    const stat = document.createElement("div");
+    stat.className = "travel-hud-stat";
 
     const labelEl = document.createElement("span");
-    labelEl.className = "travel-info-label";
+    labelEl.className = "travel-hud-stat-label";
     labelEl.textContent = label;
 
     const valueEl = document.createElement("span");
-    valueEl.className = "travel-info-value data-display";
+    valueEl.className = "travel-hud-stat-value";
     valueEl.textContent = value;
 
-    row.appendChild(labelEl);
-    row.appendChild(valueEl);
-    return row;
+    stat.appendChild(labelEl);
+    stat.appendChild(valueEl);
+    return stat;
   }
 }
