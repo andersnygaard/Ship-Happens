@@ -1614,8 +1614,8 @@
 .travel-screen {
   background: radial-gradient(
     ellipse at center,
-    rgba(26, 58, 92, 0.95) 0%,
-    rgba(10, 30, 61, 0.98) 70%
+    rgba(26, 58, 92, 0.55) 0%,
+    rgba(10, 30, 61, 0.65) 70%
   );
   flex-direction: column;
   gap: var(--spacing-lg);
@@ -1987,4 +1987,315 @@
   align-self: center;
   min-width: 200px;
   margin-top: var(--spacing-sm);
+}
+
+/* ─── Setup Screen — Save/Load Area ────────────────────────────────────── */
+
+.setup-save-load-area {
+  display: flex;
+  gap: var(--spacing-md);
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.setup-continue-btn,
+.setup-load-btn {
+  min-width: 180px;
+}
+
+/* ─── Save/Load Dialog ─────────────────────────────────────────────────── */
+
+.save-load-dialog {
+  width: 520px;
+  max-width: 90vw;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+  padding: var(--spacing-xl);
+}
+
+.save-load-title {
+  text-align: center;
+  margin: 0;
+  font-size: 24px;
+}
+
+.save-load-slots {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.save-slot {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md);
+  background: var(--color-bg-dark);
+  border: 1px solid #4a4a60;
+  border-radius: var(--border-radius);
+  transition: border-color 0.2s ease;
+}
+
+.save-slot-filled {
+  border-color: var(--color-copper-dark);
+}
+
+.save-slot-filled:hover {
+  border-color: var(--color-copper);
+}
+
+.save-slot-header {
+  font-family: var(--font-data);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-text-muted);
+}
+
+.save-slot-empty-label {
+  font-size: 14px;
+  color: var(--color-text-muted);
+  font-style: italic;
+  padding: var(--spacing-sm) 0;
+}
+
+.save-slot-info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.save-slot-company {
+  font-family: var(--font-heading);
+  font-size: 18px;
+  color: var(--color-text-accent);
+}
+
+.save-slot-details {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+.save-slot-date {
+  font-size: 11px;
+  color: var(--color-text-muted);
+}
+
+.save-slot-actions {
+  display: flex;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-xs);
+}
+
+.save-slot-btn {
+  font-size: 12px;
+  padding: var(--spacing-xs) var(--spacing-md);
+}
+
+.save-load-close-btn {
+  align-self: center;
+  min-width: 120px;
+}
+
+/* Save/Load Overwrite Confirmation */
+.save-load-confirm {
+  width: 360px;
+  max-width: 85vw;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  padding: var(--spacing-xl);
+}
+
+.save-load-confirm-msg {
+  font-size: 15px;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.save-load-confirm-btns {
+  display: flex;
+  gap: var(--spacing-md);
+  justify-content: center;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Setup Screen — Multi-Player Entries
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.player-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+  margin-bottom: var(--spacing-md);
+}
+
+.player-entry {
+  background: var(--color-bg-dark);
+  border: 1px solid #4a4a60;
+  border-radius: var(--border-radius);
+  padding: var(--spacing-md);
+}
+
+.player-entry-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-md);
+}
+
+.player-entry-label {
+  font-family: var(--font-heading);
+  font-size: 16px;
+  color: var(--color-gold);
+  font-weight: 700;
+}
+
+.player-remove-btn {
+  font-size: 12px;
+  padding: var(--spacing-xs) var(--spacing-sm);
+}
+
+.add-player-btn {
+  width: 100%;
+  margin-top: var(--spacing-sm);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Turn Indicator — Player circles in world map footer
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.turn-indicator {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.turn-indicator.hidden {
+  display: none;
+}
+
+.turn-indicator-circles {
+  display: flex;
+  gap: var(--spacing-sm);
+  align-items: center;
+}
+
+.turn-indicator-circle {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-data);
+  font-size: 13px;
+  font-weight: 700;
+  border: 2px solid #4a4a60;
+  background: var(--color-bg-dark);
+  color: var(--color-text-muted);
+  transition: all 0.3s ease;
+}
+
+.turn-indicator-circle.active {
+  border-color: var(--color-gold);
+  background: linear-gradient(135deg, var(--color-copper) 0%, var(--color-gold) 100%);
+  color: #fff;
+  box-shadow: 0 0 8px rgba(212, 168, 68, 0.4);
+}
+
+.turn-indicator-name {
+  font-family: var(--font-body);
+  font-size: 11px;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   End Turn Button
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.end-turn-btn {
+  white-space: nowrap;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Turn Transition Overlay
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.turn-transition-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(10, 10, 26, 0.92);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 500;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.turn-transition-overlay.visible {
+  opacity: 1;
+}
+
+.turn-transition-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-md);
+  text-align: center;
+}
+
+.turn-transition-badge {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-data);
+  font-size: 28px;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(135deg, var(--color-copper) 0%, var(--color-gold) 100%);
+  border: 3px solid var(--color-gold);
+  box-shadow: 0 0 20px rgba(212, 168, 68, 0.4);
+}
+
+.turn-transition-heading {
+  font-family: var(--font-heading);
+  font-size: 36px;
+  color: var(--color-gold);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
+  margin: 0;
+}
+
+.turn-transition-company {
+  font-family: var(--font-heading);
+  font-size: 20px;
+  color: var(--color-copper-light);
+}
+
+.turn-transition-name {
+  font-family: var(--font-body);
+  font-size: 16px;
+  color: var(--color-text-secondary);
+}
+
+.turn-transition-hint {
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--color-text-muted);
+  margin-top: var(--spacing-md);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }

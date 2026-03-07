@@ -8,6 +8,7 @@ import type { GameScreen, ScreenManager } from "../ScreenManager";
 import { getActivePlayer, getPlayerSummary, getPlayerBalance } from "../../game/GameState";
 import { renderFleetOverview } from "../components/FleetOverview";
 import { renderFinancialSummary } from "../components/FinancialSummary";
+import { createSaveLoadDialog } from "../components/SaveLoadDialog";
 
 export class OfficeScreen implements GameScreen {
   private container: HTMLElement;
@@ -98,9 +99,23 @@ export class OfficeScreen implements GameScreen {
       this.showStatusDialog();
     });
 
+    const saveBtn = document.createElement("button");
+    saveBtn.className = "btn btn-secondary office-footer-btn";
+    saveBtn.textContent = "Save Game";
+    saveBtn.addEventListener("click", () => {
+      const currentState = this.screenManager.getGameState();
+      if (currentState) {
+        createSaveLoadDialog("save", currentState, {
+          onLoad: () => {},
+          onClose: () => {},
+        });
+      }
+    });
+
     footer.appendChild(okBtn);
     footer.appendChild(infoBtn);
     footer.appendChild(statusBtn);
+    footer.appendChild(saveBtn);
     this.container.appendChild(footer);
 
     return this.container;

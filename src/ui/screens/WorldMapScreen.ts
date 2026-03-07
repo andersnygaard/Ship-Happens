@@ -18,6 +18,8 @@ import {
 import type { FullGameState } from "../../game/GameState";
 import { WorldMapCanvas } from "../components/WorldMapCanvas";
 import { NewsTicker } from "../components/NewsTicker";
+import { TurnIndicator } from "../components/TurnIndicator";
+import { TurnTransition } from "../components/TurnTransition";
 import type { Port } from "../../data/types";
 import type { TravelScreen } from "./TravelScreen";
 import { calculateDistanceNm } from "../../game/CharterSystem";
@@ -35,6 +37,8 @@ export class WorldMapScreen implements GameScreen {
   private destinationLabel: HTMLElement | null = null;
   private statusMessage: HTMLElement | null = null;
   private newsTicker: NewsTicker | null = null;
+  private turnIndicator: TurnIndicator | null = null;
+  private turnTransition: TurnTransition | null = null;
 
   constructor(private screenManager: ScreenManager) {
     this.container = document.createElement("div");
@@ -134,6 +138,11 @@ export class WorldMapScreen implements GameScreen {
       this.newsTicker.destroy();
       this.newsTicker = null;
     }
+    if (this.turnTransition) {
+      this.turnTransition.dismiss();
+      this.turnTransition = null;
+    }
+    this.turnIndicator = null;
     this.startActionBtn = null;
     this.timeDisplay = null;
     this.selectedPortInfo = null;
@@ -228,6 +237,19 @@ export class WorldMapScreen implements GameScreen {
 
     footer.appendChild(this.timeDisplay);
 
+    // Turn indicator (only visible with 2+ players)
+    this.turnIndicator = new TurnIndicator();
+    if (state) {
+      const player = getActivePlayer(state);
+      footer.appendChild(
+        this.turnIndicator.render({
+          playerCount: state.turns.playerCount,
+          activeIndex: state.turns.activePlayerIndex,
+          activePlayerName: player.name,
+        }),
+      );
+    }
+
     // Destination label
     this.destinationLabel = document.createElement("div");
     this.destinationLabel.className = "destination-label hidden";
@@ -242,6 +264,15 @@ export class WorldMapScreen implements GameScreen {
       this.handleActionClick(),
     );
     footer.appendChild(this.startActionBtn);
+
+    // End Turn button (only visible with 2+ players)
+    if (state && state.turns.playerCount >= 2) {
+      const endTurnBtn = document.createElement("button");
+      endTurnBtn.className = "btn btn-secondary end-turn-btn";
+      endTurnBtn.textContent = "End Turn";
+      endTurnBtn.addEventListener("click", () => this.handleEndTurn());
+      footer.appendChild(endTurnBtn);
+    }
 
     return footer;
   }
@@ -404,6 +435,33 @@ export class WorldMapScreen implements GameScreen {
       travelScreen.destinationPortId = this.selectedDestination.id;
     }
     this.screenManager.showScreen("travel");
+  }
+
+  private handleEndTurn(): void {
+    const state = this.screenManager.getGameState();
+    if (!state) return;
+
+    const result = endTurn(state);
+
+    // Get the new active player info
+    const newPlayer = getActivePlayer(state);
+    const playerNumber = state.turns.activePlayerIndex + 1;
+
+    // Show turn transition overlay
+    this.turnTransition = new TurnTransition();
+    this.turnTransition.show({
+      playerNumber,
+      playerName: newPlayer.name,
+      companyName: newPlayer.companyName,
+      onDismiss: () => {
+        // Refresh the world map for the new player
+        this.screenManager.showScreen("worldmap");
+      },
+    });
+
+    if (result.newRound) {
+      console.log(result.message);
+    }
   }
 
   private showStatusMessage(message: string): void {
