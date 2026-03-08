@@ -27,11 +27,13 @@ import {
   getRandomBreakdownEngineText,
   getRandomBreakdownHullText,
   getRandomBreakdownElectricalText,
+  getRandomCrewEventTemplate,
+  getCaptainTraitCommentary,
 } from "../data/humorTexts";
 
 // ─── Event Types ──────────────────────────────────────────────────────────────
 
-export type TravelEventType = "storm" | "emergency" | "out-of-fuel" | "crew-complaint" | "port-event" | "breakdown";
+export type TravelEventType = "storm" | "emergency" | "out-of-fuel" | "crew-complaint" | "crew-event" | "port-event" | "breakdown";
 
 export type BreakdownSubtype = "engine-failure" | "hull-leak" | "electrical-failure";
 
@@ -80,6 +82,17 @@ export interface BreakdownConsequence {
   readonly extraDays: number;
   /** Additional condition damage (percentage points). */
   readonly conditionDamage: number;
+  /** Description of what happened. */
+  readonly message: string;
+}
+
+export interface CrewEventConsequence {
+  /** Financial cost (positive = player pays, negative = player receives). */
+  readonly costDollars: number;
+  /** Extra travel days (delay). */
+  readonly extraDays: number;
+  /** Condition change (negative = damage, positive = bonus). */
+  readonly conditionChange: number;
   /** Description of what happened. */
   readonly message: string;
 }
@@ -173,6 +186,7 @@ export function generateTravelEvents(
   shipFuelConsumptionPerDay: number,
   travelDays: number,
   shipConditionPercent: number = 100,
+  captainTrait?: string,
 ): TravelEvent[] {
   const events: TravelEvent[] = [];
 
@@ -217,16 +231,14 @@ export function generateTravelEvents(
     });
   }
 
-  // Crew complaint (~25% for longer voyages, scaled by travel days)
-  const crewComplaintChance = Math.min(0.25 * (travelDays / 7), 0.5);
-  if (Math.random() < crewComplaintChance) {
-    const complaint = getRandomCrewComplaint();
-    events.push({
-      type: "crew-complaint",
-      title: "Crew Report",
-      description: complaint,
-      choices: [{ label: "Noted", id: "acknowledge" }],
-    });
+  // Crew event (~25% for longer voyages, scaled by travel days)
+  // Now generates two-choice decision events instead of acknowledge-only complaints
+  const crewEventChance = Math.min(0.25 * (travelDays / 7), 0.5);
+  if (Math.random() < crewEventChance) {
+    const crewEvent = generateCrewEvent(captainTrait);
+    if (crewEvent) {
+      events.push(crewEvent);
+    }
   }
 
   // Breakdown check: only for ships below critical condition threshold
@@ -236,6 +248,223 @@ export function generateTravelEvents(
   }
 
   return events;
+}
+
+// ─── Crew Event Generation & Resolution ───────────────────────────────────────
+
+/**
+ * Generate a two-choice crew event with humorous description.
+ * Optionally biased toward the captain's personality trait.
+ */
+export function generateCrewEvent(captainTrait?: string): TravelEvent | null {
+  const template = getRandomCrewEventTemplate(captainTrait);
+
+  // Add captain trait commentary if available
+  let description = template.description;
+  if (captainTrait) {
+    const commentary = getCaptainTraitCommentary(captainTrait);
+    if (commentary) {
+      description += `\n\n${commentary}`;
+    }
+  }
+
+  return {
+    type: "crew-event",
+    title: template.title,
+    description,
+    choices: [
+      { label: template.choiceA.label, id: template.choiceA.id },
+      { label: template.choiceB.label, id: template.choiceB.id },
+    ],
+  };
+}
+
+/**
+ * Resolve a crew event based on the player's choice.
+ * "Grant" choices typically cost money but avoid penalties.
+ * "Deny" choices are free but may cause minor condition loss or delays.
+ * Effects are intentionally small (5-10% range) to avoid dominant strategies.
+ */
+export function resolveCrewEvent(choiceId: string): CrewEventConsequence {
+  // Grant choices (choiceA) — spend money, positive outcome
+  switch (choiceId) {
+    case "crew-grant-shore-leave":
+      return {
+        costDollars: 15_000,
+        extraDays: 2,
+        conditionChange: 0,
+        message: "Shore leave granted! The crew returns refreshed, tanned, and with several questionable souvenirs. Cost: $15,000. Delay: 2 days.",
+      };
+    case "crew-deny-shore-leave":
+      return {
+        costDollars: 0,
+        extraDays: 0,
+        conditionChange: -2,
+        message: "Shore leave denied. The crew is grumbling, and someone has drawn an unflattering caricature of you in the mess hall. Ship condition: -2%.",
+      };
+    case "crew-grant-wifi":
+      return {
+        costDollars: 10_000,
+        extraDays: 0,
+        conditionChange: 0,
+        message: "WiFi upgraded! The crew is now happily streaming cat videos instead of plotting mutiny. Cost: $10,000.",
+      };
+    case "crew-deny-wifi":
+      return {
+        costDollars: 0,
+        extraDays: 1,
+        conditionChange: -1,
+        message: "WiFi remains terrible. The crew staged a 'digital detox protest' that lasted one day. They're still sulking. Delay: 1 day. Condition: -1%.",
+      };
+    case "crew-grant-chef":
+      return {
+        costDollars: 20_000,
+        extraDays: 0,
+        conditionChange: 2,
+        message: "New chef hired! The crew is ecstatic. The first meal was so good, two sailors cried. Cost: $20,000. Morale boost: +2% condition.",
+      };
+    case "crew-deny-chef":
+      return {
+        costDollars: 0,
+        extraDays: 0,
+        conditionChange: -3,
+        message: "The crew continues on instant noodles. Three sailors have developed a worrying thousand-yard stare at mealtimes. Condition: -3%.",
+      };
+    case "crew-deny-karaoke":
+      return {
+        costDollars: 0,
+        extraDays: 0,
+        conditionChange: -2,
+        message: "Karaoke machine confiscated. The night watch is now humming sea shanties passive-aggressively. Condition: -2%.",
+      };
+    case "crew-grant-karaoke":
+      return {
+        costDollars: 8_000,
+        extraDays: 0,
+        conditionChange: 1,
+        message: "Better speakers purchased! Thursday Karaoke Night is now an official ship tradition. The first mate's 'My Heart Will Go On' is surprisingly emotional. Cost: $8,000. Condition: +1%.",
+      };
+    case "crew-grant-ritual":
+      return {
+        costDollars: 5_000,
+        extraDays: 1,
+        conditionChange: 0,
+        message: "Cleansing ritual performed! The crew burned sage, threw salt overboard, and sang something that sounded vaguely nautical. The albatross left. Cost: $5,000. Delay: 1 day.",
+      };
+    case "crew-deny-ritual":
+      return {
+        costDollars: 0,
+        extraDays: 0,
+        conditionChange: -2,
+        message: "You dismissed the superstition. The albatross is still there. The crew is convinced doom is imminent. Condition: -2%.",
+      };
+    case "crew-grant-gym":
+      return {
+        costDollars: 12_000,
+        extraDays: 0,
+        conditionChange: 1,
+        message: "Gym equipment installed! The crew is now working out instead of causing trouble. The bosun has developed an impressive bicep. Cost: $12,000. Condition: +1%.",
+      };
+    case "crew-deny-gym":
+      return {
+        costDollars: 0,
+        extraDays: 0,
+        conditionChange: -1,
+        message: "Gym request denied. The crew is now doing push-ups on the cargo deck out of spite. One container was knocked loose. Condition: -1%.",
+      };
+    case "crew-grant-pet":
+      return {
+        costDollars: 5_000,
+        extraDays: 0,
+        conditionChange: 1,
+        message: "Captain Jr. the goat is now an official crew member. The crew's morale has never been higher. Cost: $5,000 (feed). Condition: +1%.",
+      };
+    case "crew-deny-pet":
+      return {
+        costDollars: 0,
+        extraDays: 1,
+        conditionChange: -1,
+        message: "The goat was removed at the next port. The crew held a tearful farewell ceremony. Productivity dropped. Delay: 1 day. Condition: -1%.",
+      };
+    case "crew-grant-overtime":
+      return {
+        costDollars: 18_000,
+        extraDays: 0,
+        conditionChange: 1,
+        message: "Overtime paid! The crew now refers to you as 'the reasonable one.' The union rep filed his 47 pages anyway, 'for the record.' Cost: $18,000. Condition: +1%.",
+      };
+    case "crew-deny-overtime":
+      return {
+        costDollars: 0,
+        extraDays: 0,
+        conditionChange: -2,
+        message: "Overtime denied. The crew is now performing all tasks at minimum speed, citing 'work-to-rule.' Everything takes slightly longer. Condition: -2%.",
+      };
+    case "crew-grant-movies":
+      return {
+        costDollars: 6_000,
+        extraDays: 0,
+        conditionChange: 1,
+        message: "Streaming subscription activated! Movie night attendance: 100%. The navigator cried during Finding Nemo. Cost: $6,000. Condition: +1%.",
+      };
+    case "crew-deny-movies":
+      return {
+        costDollars: 0,
+        extraDays: 0,
+        conditionChange: -1,
+        message: "No new movies. The crew has now memorized every line of Titanic. The bosun keeps yelling 'I'm the king of the world!' from the bow. Condition: -1%.",
+      };
+    case "crew-grant-band":
+      return {
+        costDollars: 10_000,
+        extraDays: 0,
+        conditionChange: 1,
+        message: "Soundproofing installed! 'Propeller Death' now practices without deafening the bridge. Their first album 'Full Speed Astern' is surprisingly good. Cost: $10,000. Condition: +1%.",
+      };
+    case "crew-deny-band":
+      return {
+        costDollars: 0,
+        extraDays: 0,
+        conditionChange: -2,
+        message: "The band has been silenced. The chief engineer is now expressing himself through passive-aggressive engine maintenance. Condition: -2%.",
+      };
+    case "crew-grant-paint":
+      return {
+        costDollars: 0,
+        extraDays: 0,
+        conditionChange: 2,
+        message: "The flames stay! The crew is thrilled. Several port officials have taken photos. Your ship is now the most recognizable vessel in the fleet. Condition: +2%.",
+      };
+    case "crew-deny-paint":
+      return {
+        costDollars: 8_000,
+        extraDays: 1,
+        conditionChange: 0,
+        message: "Ship repainted to regulation colors. The crew mourns the loss of their artistic vision. Cost: $8,000. Delay: 1 day.",
+      };
+    case "crew-grant-coffee":
+      return {
+        costDollars: 7_000,
+        extraDays: 0,
+        conditionChange: 1,
+        message: "Artisanal coffee machine installed! Productivity is up, and the first mate's latte art is surprisingly good. Cost: $7,000. Condition: +1%.",
+      };
+    case "crew-deny-coffee":
+      return {
+        costDollars: 0,
+        extraDays: 0,
+        conditionChange: -1,
+        message: "Instant coffee it is. The crew has started a 'coffee quality awareness campaign' involving protest signs taped to every surface. Condition: -1%.",
+      };
+    default:
+      // Fallback for unknown choice IDs — treat as acknowledge
+      return {
+        costDollars: 0,
+        extraDays: 0,
+        conditionChange: 0,
+        message: "The crew situation was resolved without further incident.",
+      };
+  }
 }
 
 // ─── Port Arrival Events ──────────────────────────────────────────────────────

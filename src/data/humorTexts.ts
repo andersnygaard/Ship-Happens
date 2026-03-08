@@ -145,6 +145,169 @@ export const BREAKDOWN_ELECTRICAL_TEXTS: readonly string[] = [
   "All instruments went dark. The navigator is now using a compass he found in a cereal box.",
 ] as const;
 
+// ─── Crew Events (Two-Choice Decision Events) ───────────────────────────────
+
+/**
+ * Crew event definitions with two choices and consequences.
+ * Each event has a humorous description and two options with different outcomes.
+ */
+export interface CrewEventTemplate {
+  readonly id: string;
+  readonly title: string;
+  readonly description: string;
+  readonly choiceA: { readonly label: string; readonly id: string };
+  readonly choiceB: { readonly label: string; readonly id: string };
+  /** Which captain traits make this event more likely (optional). */
+  readonly affinityTraits?: readonly string[];
+}
+
+export const CREW_EVENT_TEMPLATES: readonly CrewEventTemplate[] = [
+  {
+    id: "shore-leave",
+    title: "Shore Leave Demand",
+    description: "The crew has presented a formal petition (written on a napkin) demanding shore leave. They claim they've been at sea so long that one sailor has started naming the waves. Grant 2 extra days in port or refuse and face grumpy sailors.",
+    choiceA: { label: "Grant Shore Leave ($15,000)", id: "crew-grant-shore-leave" },
+    choiceB: { label: "Deny Request", id: "crew-deny-shore-leave" },
+  },
+  {
+    id: "wifi-mutiny",
+    title: "WiFi Mutiny",
+    description: "The crew is threatening mutiny over the ship's WiFi speed. The chief engineer reports they can boost the signal by rerouting power from the navigation lights. The first mate has already started a Change.org petition.",
+    choiceA: { label: "Upgrade WiFi ($10,000)", id: "crew-grant-wifi" },
+    choiceB: { label: "Tell Them to Read a Book", id: "crew-deny-wifi" },
+  },
+  {
+    id: "chef-quit",
+    title: "Chef Crisis",
+    description: "The ship's cook has quit in a dramatic fashion, throwing his hat into the ocean and declaring he's 'done with this floating prison.' The crew is now surviving on instant noodles and raw determination.",
+    choiceA: { label: "Hire Emergency Chef ($20,000)", id: "crew-grant-chef" },
+    choiceB: { label: "Noodles Build Character", id: "crew-deny-chef" },
+  },
+  {
+    id: "karaoke-machine",
+    title: "Karaoke Incident",
+    description: "Someone smuggled a karaoke machine aboard. The night watch has been performing enthusiastic (and terrible) renditions of sea shanties at 2 AM. Productivity is down, but morale is... complicated.",
+    choiceA: { label: "Confiscate It ($0, -morale)", id: "crew-deny-karaoke" },
+    choiceB: { label: "Buy Better Speakers ($8,000)", id: "crew-grant-karaoke" },
+  },
+  {
+    id: "superstition",
+    title: "Bad Omen",
+    description: "An albatross landed on the bridge and stared at the captain for 45 minutes. The superstitious crew members are convinced this means doom. Half the crew wants to turn back, the other half wants to adopt it as a mascot.",
+    choiceA: { label: "Perform Cleansing Ritual ($5,000)", id: "crew-grant-ritual" },
+    choiceB: { label: "It's Just a Bird", id: "crew-deny-ritual" },
+    affinityTraits: ["Superstitious"],
+  },
+  {
+    id: "gym-demand",
+    title: "Fitness Revolution",
+    description: "The crew has converted the cargo hold into an unauthorized gym. They're demanding the company install a proper exercise room, citing 'workplace wellness regulations' they definitely made up.",
+    choiceA: { label: "Install Gym Equipment ($12,000)", id: "crew-grant-gym" },
+    choiceB: { label: "Cargo Hold Is for Cargo", id: "crew-deny-gym" },
+  },
+  {
+    id: "pet-stowaway",
+    title: "Stowaway Pet",
+    description: "The crew has been hiding a goat named 'Captain Jr.' in the engine room for the past three ports. It has eaten two logbooks and one life vest. The crew insists it's an 'emotional support animal.'",
+    choiceA: { label: "Allow the Goat ($5,000 feed costs)", id: "crew-grant-pet" },
+    choiceB: { label: "The Goat Goes Ashore", id: "crew-deny-pet" },
+  },
+  {
+    id: "overtime-dispute",
+    title: "Overtime Dispute",
+    description: "The crew is demanding overtime pay for what they call 'involuntary scenic ocean viewing.' Their union rep (a deckhand with a clipboard) has prepared a 47-page document. In crayon.",
+    choiceA: { label: "Pay Overtime ($18,000)", id: "crew-grant-overtime" },
+    choiceB: { label: "The View Is Free", id: "crew-deny-overtime" },
+    affinityTraits: ["Strict Disciplinarian"],
+  },
+  {
+    id: "movie-night",
+    title: "Entertainment Emergency",
+    description: "The ship's movie collection consists entirely of Titanic, The Poseidon Adventure, and Jaws. The crew has watched each one 14 times. Morale is sinking faster than the ships in those movies.",
+    choiceA: { label: "Buy Streaming Subscription ($6,000)", id: "crew-grant-movies" },
+    choiceB: { label: "Recommend Reading Instead", id: "crew-deny-movies" },
+    affinityTraits: ["Charismatic"],
+  },
+  {
+    id: "engine-room-band",
+    title: "Engine Room Band",
+    description: "The engine room crew has formed a heavy metal band called 'Propeller Death.' They practice during maintenance hours, claiming the noise 'drowns out the real engine problems.' The chief engineer is the lead guitarist.",
+    choiceA: { label: "Soundproof the Room ($10,000)", id: "crew-grant-band" },
+    choiceB: { label: "Silence the Music", id: "crew-deny-band" },
+  },
+  {
+    id: "paint-job",
+    title: "Unauthorized Redecoration",
+    description: "The night crew has repainted the ship's hull with flames and racing stripes. They claim it makes the ship 'go faster.' The harbormaster at the next port will have questions.",
+    choiceA: { label: "Keep the Flames ($0, +speed)", id: "crew-grant-paint" },
+    choiceB: { label: "Repaint It Properly ($8,000)", id: "crew-deny-paint" },
+    affinityTraits: ["Reckless"],
+  },
+  {
+    id: "budget-complaints",
+    title: "Budget Complaints",
+    description: "The crew has discovered the company's profit margins and is now demanding 'artisanal coffee' instead of the instant stuff. The first mate calculated that proper coffee would actually improve productivity by 23%. His methodology is suspect.",
+    choiceA: { label: "Upgrade to Good Coffee ($7,000)", id: "crew-grant-coffee" },
+    choiceB: { label: "Instant Coffee Builds Grit", id: "crew-deny-coffee" },
+    affinityTraits: ["Frugal"],
+  },
+] as const;
+
+/** Trait-specific flavor text shown as captain commentary on crew events. */
+export const CAPTAIN_TRAIT_COMMENTARY: Record<string, readonly string[]> = {
+  "Cautious": [
+    "Your captain frowns and consults the safety manual before responding.",
+    "Captain insists on a formal risk assessment before making any decision.",
+    "The captain has already prepared a contingency plan. And a backup contingency plan.",
+  ],
+  "Reckless": [
+    "Your captain grins and says 'Where's the fun in playing it safe?'",
+    "Captain responds with 'Hold my coffee and watch this.'",
+    "The captain doesn't even look up from polishing their lucky anchor.",
+  ],
+  "Frugal": [
+    "Your captain winces at every dollar sign mentioned in the briefing.",
+    "Captain mutters something about 'the money tree not being in bloom.'",
+    "The captain pulls out a calculator and starts running the numbers. Twice.",
+  ],
+  "Superstitious": [
+    "Your captain checks the calendar nervously. Is it Friday the 13th?",
+    "Captain crosses their fingers and knocks on the wooden deck three times.",
+    "The captain consults their lucky coin before responding.",
+  ],
+  "Charismatic": [
+    "Your captain gives a rousing speech about teamwork. The crew is moderately inspired.",
+    "Captain flashes a winning smile and says 'Leave it to me, lads!'",
+    "The captain has already convinced half the crew this was their own idea.",
+  ],
+  "Strict Disciplinarian": [
+    "Your captain's eye twitches. This is not how a ship should be run.",
+    "Captain reaches for the regulation handbook. It's dog-eared and highlighted.",
+    "The captain mutters 'In my day, sailors didn't complain. They just suffered.'",
+  ],
+};
+
+/** Get captain trait commentary for a given trait. */
+export function getCaptainTraitCommentary(trait: string): string {
+  const options = CAPTAIN_TRAIT_COMMENTARY[trait];
+  if (!options || options.length === 0) return "";
+  return pickRandom(options);
+}
+
+/** Get a random crew event template, optionally biased toward a given captain trait. */
+export function getRandomCrewEventTemplate(captainTrait?: string): CrewEventTemplate {
+  // 30% chance to pick a trait-affinity event if one matches
+  if (captainTrait && Math.random() < 0.3) {
+    const affinityEvents = CREW_EVENT_TEMPLATES.filter(
+      (e) => e.affinityTraits?.includes(captainTrait),
+    );
+    if (affinityEvents.length > 0) {
+      return pickRandom(affinityEvents);
+    }
+  }
+  return pickRandom(CREW_EVENT_TEMPLATES);
+}
+
 // ─── Helper Functions ────────────────────────────────────────────────────────
 
 /** Pick a random item from an array. */

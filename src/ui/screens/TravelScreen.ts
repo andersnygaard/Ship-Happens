@@ -24,6 +24,7 @@ import {
   resolveEmergencyEvent,
   resolveOutOfFuelEvent,
   resolveBreakdownEvent,
+  resolveCrewEvent,
   type TravelEvent,
 } from "../../game/EventSystem";
 import { EventDialog } from "../components/EventDialog";
@@ -101,6 +102,7 @@ export class TravelScreen implements GameScreen {
       effectiveFuelPerDay,
       travelDays,
       ship.conditionPercent,
+      ship.captainTrait,
     );
 
     // Augment storm event descriptions with charter deadline context
@@ -378,6 +380,26 @@ export class TravelScreen implements GameScreen {
             ship.conditionPercent = Math.max(
               0,
               ship.conditionPercent - result.conditionDamage,
+            );
+          }
+          statusArea.textContent = result.message;
+        } else if (event.type === "crew-event") {
+          const result = resolveCrewEvent(choiceId);
+          const time = getTimeSnapshot(state.time);
+          // Apply financial cost
+          if (result.costDollars > 0) {
+            debit(
+              player.finances,
+              result.costDollars,
+              `Crew event: ${event.title}`,
+              time,
+            );
+          }
+          // Apply condition change (can be positive or negative)
+          if (result.conditionChange !== 0 && ship) {
+            ship.conditionPercent = Math.max(
+              0,
+              Math.min(100, ship.conditionPercent + result.conditionChange),
             );
           }
           statusArea.textContent = result.message;

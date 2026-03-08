@@ -3,7 +3,7 @@
  * Handles purchasing, repairing, refueling, and tracking ship state.
  */
 
-import { OwnedShip, ShipSpec, CargoType, Port } from "../data/types";
+import { OwnedShip, ShipSpec, CargoType, Port, ALL_CAPTAIN_TRAITS } from "../data/types";
 import { getShipSpecById, SHIP_CATALOG } from "../data/ships";
 import { getPortById as getPortByIdForName } from "../data/ports";
 import {
@@ -142,6 +142,7 @@ export function purchaseShip(
     specId,
     name: `MS ${name}`,
     captainName: getNextCaptainName(),
+    captainTrait: ALL_CAPTAIN_TRAITS[Math.floor(Math.random() * ALL_CAPTAIN_TRAITS.length)],
     conditionPercent: MAX_CONDITION_PERCENT,
     fuelTons: spec.bunkerCapacityTons, // New ships come fully fueled
     currentPortId: homePortId,

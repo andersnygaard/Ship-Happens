@@ -249,10 +249,11 @@ export class PortOperationsScreen implements GameScreen {
     const charter = player.activeCharters[ship.name];
     const resultText = charter ? `Charter: $${charter.rate.toLocaleString()}` : "---";
 
+    const traitText = ship.captainTrait ? ` (${ship.captainTrait})` : "";
     const rows: [string, string][] = [
       ["Company:", summary.companyName],
       ["Ship:", ship.name],
-      ["Captain:", ship.captainName],
+      ["Captain:", ship.captainName + traitText],
       ["Port:", originText],
       ["Cargo:", cargoText],
       ["Result:", resultText],

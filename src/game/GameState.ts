@@ -4,7 +4,7 @@
  * Framework-agnostic, serializable, plain TypeScript.
  */
 
-import { Player, OwnedShip, CharterContract, CargoType, Port } from "../data/types";
+import { Player, OwnedShip, CharterContract, CargoType, Port, ALL_CAPTAIN_TRAITS, CaptainTrait } from "../data/types";
 import { getPortById } from "../data/ports";
 import { getShipSpecById } from "../data/ships";
 import {
@@ -835,6 +835,14 @@ export function deserializeGameState(json: string): FullGameState {
   // Backward compatibility: ensure worldEvents array exists
   if (!parsed.worldEvents) {
     parsed.worldEvents = [];
+  }
+  // Backward compatibility: assign random captain traits to ships without one
+  for (const player of parsed.players) {
+    for (const ship of player.ships) {
+      if (!ship.captainTrait) {
+        ship.captainTrait = ALL_CAPTAIN_TRAITS[Math.floor(Math.random() * ALL_CAPTAIN_TRAITS.length)];
+      }
+    }
   }
   return parsed;
 }

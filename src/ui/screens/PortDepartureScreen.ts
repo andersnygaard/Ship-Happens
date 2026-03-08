@@ -51,7 +51,8 @@ export class PortDepartureScreen implements GameScreen {
     // Title with ship name and captain
     const title = document.createElement("h2");
     title.className = "port-departure-title heading-copper";
-    title.textContent = ship ? `${ship.name}, captain ${ship.captainName}` : "Arriving at Port";
+    const traitSuffix = ship?.captainTrait ? ` the ${ship.captainTrait}` : "";
+    title.textContent = ship ? `${ship.name}, captain ${ship.captainName}${traitSuffix}` : "Arriving at Port";
     panel.appendChild(title);
 
     // Port name
