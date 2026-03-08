@@ -6,6 +6,7 @@
 import type { OwnedShip, Port } from "../../data/types";
 import type { PlayerState } from "../../game/GameState";
 import { getPlayerBalance } from "../../game/GameState";
+import { createDryDockView } from "./ShipIllustration";
 
 export interface RepairDialogCallbacks {
   onConfirm: (percentToRepair: number) => void;
@@ -20,6 +21,7 @@ export function createRepairDialog(
   port: Port,
   player: PlayerState,
   callbacks: RepairDialogCallbacks,
+  costMultiplier: number = 1.0,
 ): HTMLElement {
   const overlay = document.createElement("div");
   overlay.className = "ship-info-overlay";
@@ -33,24 +35,44 @@ export function createRepairDialog(
   title.textContent = "Ship Repair";
   dialog.appendChild(title);
 
+  // Two-column layout: dry dock illustration + form
+  const layout = document.createElement("div");
+  layout.className = "repair-dialog-layout";
+
+  // Left: dry dock illustration
+  const illustrationCol = document.createElement("div");
+  illustrationCol.className = "repair-dialog-illustration";
+  const dryDock = createDryDockView(ship.specId, 180, 200);
+  illustrationCol.appendChild(dryDock);
+  layout.appendChild(illustrationCol);
+
+  // Right: repair form
+  const formCol = document.createElement("div");
+  formCol.className = "repair-dialog-form";
+
   // Ship docked message
   const dockedMsg = document.createElement("p");
   dockedMsg.className = "port-ops-dialog-text";
   dockedMsg.textContent = "Your ship has docked.";
-  dialog.appendChild(dockedMsg);
+  formCol.appendChild(dockedMsg);
 
   // Info section
   const infoSection = document.createElement("div");
   infoSection.className = "port-ops-dialog-info";
 
   const maxRepairable = 100 - ship.conditionPercent;
-  const costPerPercent = port.repairCostPerPercent;
+  const baseCostPerPercent = port.repairCostPerPercent;
+  const costPerPercent = Math.round(baseCostPerPercent * costMultiplier);
   const maxCost = maxRepairable * costPerPercent;
   const balance = getPlayerBalance(player);
 
+  const costLabel = costMultiplier > 1.0
+    ? `$${costPerPercent.toLocaleString()} per % (+${Math.round((costMultiplier - 1) * 100)}% event surcharge)`
+    : `$${costPerPercent.toLocaleString()} per %`;
+
   const infoLines: [string, string][] = [
     ["State:", `${ship.conditionPercent}%`],
-    ["Costs:", `$${costPerPercent.toLocaleString()} per %`],
+    ["Costs:", costLabel],
     ["Maximum:", `$${maxCost.toLocaleString()}`],
     ["Balance:", `$${(balance / 1_000_000).toFixed(2)}M`],
   ];
@@ -62,7 +84,7 @@ export function createRepairDialog(
     infoSection.appendChild(row);
   }
 
-  dialog.appendChild(infoSection);
+  formCol.appendChild(infoSection);
 
   // Input section
   const inputSection = document.createElement("div");
@@ -114,7 +136,7 @@ export function createRepairDialog(
   updateCostPreview();
 
   inputSection.appendChild(costPreview);
-  dialog.appendChild(inputSection);
+  formCol.appendChild(inputSection);
 
   // Buttons
   const buttons = document.createElement("div");
@@ -138,7 +160,9 @@ export function createRepairDialog(
   cancelBtn.addEventListener("click", callbacks.onCancel);
   buttons.appendChild(cancelBtn);
 
-  dialog.appendChild(buttons);
+  formCol.appendChild(buttons);
+  layout.appendChild(formCol);
+  dialog.appendChild(layout);
   overlay.appendChild(dialog);
 
   overlay.addEventListener("click", (e) => {

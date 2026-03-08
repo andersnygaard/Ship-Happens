@@ -14,6 +14,8 @@ import {
   MAX_CHARTER_OPTIONS,
 } from "../data/constants";
 import { getRandomFunnyCargoDescription } from "../data/humorTexts";
+import type { WorldEvent } from "./WorldEvents";
+import { getPortCostMultiplier } from "./WorldEvents";
 
 /**
  * Calculate the great-circle distance between two ports in nautical miles.
@@ -127,6 +129,7 @@ export function generateCharterContracts(
   shipCapacityBrt: number,
   week: number,
   year: number,
+  worldEvents?: readonly WorldEvent[],
 ): CharterContract[] {
   const currentPort = getPortById(currentPortId);
   if (!currentPort) return [];
@@ -176,7 +179,12 @@ export function generateCharterContracts(
     const rateFactor = rng();
     const deadlineFactor = rng();
 
-    const rate = calculateRate(distance, shipCapacityBrt, cargoType, rateFactor);
+    let rate = calculateRate(distance, shipCapacityBrt, cargoType, rateFactor);
+    // Apply world event cost multiplier for the destination port
+    const destMultiplier = getPortCostMultiplier(destPort.id, worldEvents);
+    if (destMultiplier > 1.0) {
+      rate = Math.round(rate * destMultiplier);
+    }
     const deadline = calculateDeadline(distance, deadlineFactor);
     const penalty = Math.round(rate * LATE_DELIVERY_PENALTY_RATE);
 

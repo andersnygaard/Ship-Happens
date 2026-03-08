@@ -4,8 +4,14 @@
  * Contract details shown in a bottom panel.
  */
 
-import type { CharterContract } from "../../data/types";
+import type { CharterContract, ShipSpec } from "../../data/types";
 import { getPortById } from "../../data/ports";
+import type { WorldEvent } from "../../game/WorldEvents";
+import { isPortBlocked, getPortCostMultiplier, getEventsAffectingPort } from "../../game/WorldEvents";
+import { calculateVoyageProfitability, getAdjustedFuelCost } from "../../game/VoyageEstimator";
+import type { VoyageProfitability } from "../../game/VoyageEstimator";
+import { getFuelCostPerTon } from "../../game/ShipManager";
+import { createProfitBadge, createProfitBreakdown } from "./VoyageProfitEstimate";
 
 export interface CharterDialogCallbacks {
   onAccept: (contract: CharterContract) => void;
@@ -15,9 +21,19 @@ export interface CharterDialogCallbacks {
 /**
  * Create the charter dialog overlay.
  */
+/** Optional ship context for profitability estimation. */
+export interface CharterShipContext {
+  /** Ship specification for cost calculations. */
+  spec: ShipSpec;
+  /** Current port ID (for fuel price lookup). */
+  currentPortId: string;
+}
+
 export function createCharterDialog(
   contracts: CharterContract[],
   callbacks: CharterDialogCallbacks,
+  worldEvents?: readonly WorldEvent[],
+  shipContext?: CharterShipContext,
 ): HTMLElement {
   const overlay = document.createElement("div");
   overlay.className = "ship-info-overlay";
@@ -59,6 +75,27 @@ export function createCharterDialog(
 
     if (!cargoTypes.has(c.cargoType)) cargoTypes.set(c.cargoType, []);
     cargoTypes.get(c.cargoType)!.push(c);
+  }
+
+  // Pre-compute profitability for each contract if ship context is available
+  const profitabilityMap = new Map<CharterContract, VoyageProfitability>();
+  if (shipContext) {
+    const baseFuelCost = getFuelCostPerTon(shipContext.currentPortId);
+    // Account for world event cost multipliers on fuel at the departure port
+    const departureMultiplier = worldEvents
+      ? getPortCostMultiplier(shipContext.currentPortId, worldEvents)
+      : 1.0;
+    const adjustedFuelCost = getAdjustedFuelCost(baseFuelCost, departureMultiplier);
+
+    for (const c of contracts) {
+      const profitability = calculateVoyageProfitability(
+        shipContext.spec,
+        c.distanceNm,
+        adjustedFuelCost,
+        c.rate,
+      );
+      profitabilityMap.set(c, profitability);
+    }
   }
 
   let selectedContract: CharterContract | null = null;
@@ -112,9 +149,25 @@ export function createCharterDialog(
       ? `<div class="charter-funny-cargo">"${contract.funnyDescription}"</div>`
       : "";
 
+    // Check for world event warnings at destination
+    let eventWarningHtml = "";
+    if (worldEvents && worldEvents.length > 0) {
+      const destBlocked = isPortBlocked(contract.destinationPortId, worldEvents);
+      const destMultiplier = getPortCostMultiplier(contract.destinationPortId, worldEvents);
+      const destEvents = getEventsAffectingPort(contract.destinationPortId, worldEvents);
+
+      if (destBlocked) {
+        eventWarningHtml = `<div style="color: #ff4444; font-weight: bold; margin: 4px 0; padding: 4px 8px; background: rgba(255,68,68,0.1); border-radius: 4px;">WARNING: Destination port is BLOCKED!</div>`;
+      } else if (destMultiplier > 1.0 && destEvents.length > 0) {
+        const eventHeadline = destEvents[0].headline;
+        eventWarningHtml = `<div style="color: #ffaa33; font-style: italic; margin: 4px 0; padding: 4px 8px; background: rgba(255,170,51,0.1); border-radius: 4px;">Event: ${eventHeadline} (costs +${Math.round((destMultiplier - 1) * 100)}%)</div>`;
+      }
+    }
+
     detailsContent.innerHTML = `
       <div class="charter-details-title">${contract.cargoType} to ${destName}</div>
       ${funnyLine}
+      ${eventWarningHtml}
       <div class="port-ops-dialog-row">
         <span class="port-ops-dialog-label">Rate:</span>
         <span class="port-ops-dialog-value data-display">$${contract.rate.toLocaleString()}</span>
@@ -132,6 +185,13 @@ export function createCharterDialog(
         <span class="port-ops-dialog-value data-display">${contract.distanceNm.toLocaleString()} nm</span>
       </div>
     `;
+
+    // Add profitability breakdown if ship context is available
+    const profitability = profitabilityMap.get(contract);
+    if (profitability) {
+      const breakdown = createProfitBreakdown(profitability);
+      detailsContent.appendChild(breakdown);
+    }
   }
 
   // Render contract items as a flat list
@@ -142,14 +202,43 @@ export function createCharterDialog(
     // Destination item
     const destItem = document.createElement("div");
     destItem.className = "charter-item";
-    destItem.textContent = destName;
+    // Add warning indicator if destination has world event
+    let destDisplayName = destName;
+    if (worldEvents && worldEvents.length > 0) {
+      if (isPortBlocked(contract.destinationPortId, worldEvents)) {
+        destDisplayName = `${destName} [BLOCKED]`;
+        destItem.style.color = "#ff4444";
+      } else if (getPortCostMultiplier(contract.destinationPortId, worldEvents) > 1.0) {
+        destDisplayName = `${destName} [!]`;
+        destItem.style.color = "#ffaa33";
+      }
+    }
+    destItem.textContent = destDisplayName;
     destItem.dataset.contractIdx = String(contracts.indexOf(contract));
+
+    // Add profit badge to destination item for quick scanning
+    const destProfitability = profitabilityMap.get(contract);
+    if (destProfitability) {
+      const badge = createProfitBadge(destProfitability);
+      badge.style.marginLeft = "6px";
+      badge.style.fontSize = "0.85em";
+      destItem.appendChild(badge);
+    }
 
     // Cargo item
     const cargoItem = document.createElement("div");
     cargoItem.className = "charter-item";
     cargoItem.textContent = contract.cargoType;
     cargoItem.dataset.contractIdx = String(contracts.indexOf(contract));
+
+    // Add profit badge to cargo item for quick scanning
+    const cargoProfitability = profitabilityMap.get(contract);
+    if (cargoProfitability) {
+      const cargoBadge = createProfitBadge(cargoProfitability);
+      cargoBadge.style.marginLeft = "6px";
+      cargoBadge.style.fontSize = "0.85em";
+      cargoItem.appendChild(cargoBadge);
+    }
 
     function selectContract(): void {
       selectedContract = contract;

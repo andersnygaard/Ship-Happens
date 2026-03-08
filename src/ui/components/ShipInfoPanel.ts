@@ -4,6 +4,7 @@
  */
 
 import type { ShipSpec } from "../../data/types";
+import { createShipSideView } from "./ShipIllustration";
 
 /**
  * Create and show a ship info modal overlay.
@@ -22,13 +23,13 @@ export function createShipInfoPanel(spec: ShipSpec, onClose: () => void): HTMLEl
   header.textContent = `Ship Specification`;
   panel.appendChild(header);
 
-  // Ship image placeholder
+  // Large ship illustration on dark background
   const imageBox = document.createElement("div");
   imageBox.className = "ship-info-image";
-  const imageLabel = document.createElement("div");
-  imageLabel.className = "ship-info-image-label";
-  imageLabel.textContent = formatShipName(spec.id);
-  imageBox.appendChild(imageLabel);
+  const shipIllust = createShipSideView(spec.id, 400, 120);
+  shipIllust.style.width = "100%";
+  shipIllust.style.height = "100%";
+  imageBox.appendChild(shipIllust);
   panel.appendChild(imageBox);
 
   // Specifications table

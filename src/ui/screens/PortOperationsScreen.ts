@@ -27,7 +27,11 @@ import { getShipSpec } from "../../game/ShipManager";
 import { createRepairDialog } from "../components/RepairDialog";
 import { createRefuelDialog } from "../components/RefuelDialog";
 import { createCharterDialog } from "../components/CharterDialog";
+import type { CharterShipContext } from "../components/CharterDialog";
 import { createPortSkylineCanvas } from "../components/PortSkyline";
+import { toast } from "../components/Toast";
+import { getPortCostMultiplier } from "../../game/WorldEvents";
+import { createDeadlineStatusRow } from "../components/CharterDeadlineIndicator";
 
 export class PortOperationsScreen implements GameScreen {
   private container: HTMLElement;
@@ -72,7 +76,12 @@ export class PortOperationsScreen implements GameScreen {
     if (charter && ship.currentPortId === ship.cargoDestinationPortId) {
       const deliveryResult = deliverCargo(state, this.activeShipIndex);
       if (deliveryResult.success) {
-        // Show delivery message after rendering
+        // Show delivery result prominently using toast
+        const profitMsg = deliveryResult.netProfit >= 0
+          ? `Profit: $${deliveryResult.netProfit.toLocaleString()}`
+          : `Loss: $${Math.abs(deliveryResult.netProfit).toLocaleString()}`;
+        toast.show(`Cargo delivered! ${profitMsg}`, deliveryResult.netProfit >= 0 ? "success" : "error");
+        // Also show inline message after rendering
         setTimeout(() => this.showMessage(deliveryResult.message), 300);
       }
     }
@@ -144,7 +153,7 @@ export class PortOperationsScreen implements GameScreen {
     const grid = document.createElement("div");
     grid.className = "port-ops-grid";
 
-    grid.appendChild(this.createShipStatusPanel(player, ship, port));
+    grid.appendChild(this.createShipStatusPanel(state, player, ship, port));
     grid.appendChild(this.createPortViewPanel(port));
     grid.appendChild(this.createCaptainOrdersPanel(state, player, ship, port));
     grid.appendChild(this.createPortInfoPanel(port));
@@ -163,10 +172,23 @@ export class PortOperationsScreen implements GameScreen {
     });
     footer.appendChild(backBtn);
 
-    // "Set Sail" button — prominent button to leave port and return to world map
+    // "Set Sail" button — prominent button to leave port
     const setSailBtn = document.createElement("button");
     setSailBtn.className = "btn btn-primary";
-    setSailBtn.textContent = "Set Sail";
+
+    // Show appropriate text based on ship state
+    const charter = player.activeCharters[ship.name];
+    if (ship.cargoType && ship.cargoDestinationPortId) {
+      const destPort = getPortById(ship.cargoDestinationPortId);
+      const destName = destPort ? destPort.name : ship.cargoDestinationPortId;
+      setSailBtn.textContent = `Set Sail to ${destName}`;
+    } else if (charter && !ship.cargoType) {
+      setSailBtn.textContent = "Load Cargo First!";
+      setSailBtn.disabled = true;
+    } else {
+      setSailBtn.textContent = "Set Sail";
+    }
+
     setSailBtn.addEventListener("click", () => {
       this.screenManager.showScreen("worldmap");
     });
@@ -208,7 +230,7 @@ export class PortOperationsScreen implements GameScreen {
 
   // ─── Top-Left: Ship Status Panel ──────────────────────────────────────────
 
-  private createShipStatusPanel(player: PlayerState, ship: OwnedShip, port: Port): HTMLElement {
+  private createShipStatusPanel(state: FullGameState, player: PlayerState, ship: OwnedShip, port: Port): HTMLElement {
     const panel = document.createElement("div");
     panel.className = "port-ops-quadrant port-ops-ship-status panel panel-riveted";
 
@@ -227,10 +249,11 @@ export class PortOperationsScreen implements GameScreen {
     const charter = player.activeCharters[ship.name];
     const resultText = charter ? `Charter: $${charter.rate.toLocaleString()}` : "---";
 
+    const traitText = ship.captainTrait ? ` (${ship.captainTrait})` : "";
     const rows: [string, string][] = [
       ["Company:", summary.companyName],
       ["Ship:", ship.name],
-      ["Captain:", ship.captainName],
+      ["Captain:", ship.captainName + traitText],
       ["Port:", originText],
       ["Cargo:", cargoText],
       ["Result:", resultText],
@@ -270,6 +293,30 @@ export class PortOperationsScreen implements GameScreen {
       table.appendChild(row);
     }
 
+    // Charter deadline row (only if ship has an active charter)
+    if (charter) {
+      const deadlineRow = document.createElement("div");
+      deadlineRow.className = "port-ops-status-row";
+
+      const deadlineInfo = createDeadlineStatusRow(charter, state.time.totalDaysElapsed);
+
+      const deadlineLabelEl = document.createElement("span");
+      deadlineLabelEl.className = "port-ops-status-label";
+      deadlineLabelEl.textContent = deadlineInfo.label;
+
+      const deadlineValueEl = document.createElement("span");
+      deadlineValueEl.className = "port-ops-status-value data-display";
+      deadlineValueEl.textContent = deadlineInfo.value;
+      deadlineValueEl.style.color = deadlineInfo.color;
+      if (deadlineInfo.urgency === "overdue") {
+        deadlineValueEl.style.animation = "blink 0.8s infinite";
+      }
+
+      deadlineRow.appendChild(deadlineLabelEl);
+      deadlineRow.appendChild(deadlineValueEl);
+      table.appendChild(deadlineRow);
+    }
+
     panel.appendChild(table);
     return panel;
   }
@@ -280,9 +327,14 @@ export class PortOperationsScreen implements GameScreen {
     const panel = document.createElement("div");
     panel.className = "port-ops-quadrant port-ops-port-view panel panel-riveted";
 
-    // Porthole frame
+    // Porthole frame with rivets at all 4 cardinal points
     const porthole = document.createElement("div");
     porthole.className = "port-ops-porthole";
+
+    // Rivet wrapper for left/right rivets (top/bottom handled by ::before/::after)
+    const rivets = document.createElement("div");
+    rivets.className = "port-ops-porthole-rivets";
+    porthole.appendChild(rivets);
 
     // Canvas-rendered skyline
     const skylineCanvas = createPortSkylineCanvas(port.id, 220, port.lng);
@@ -308,11 +360,11 @@ export class PortOperationsScreen implements GameScreen {
     port: Port,
   ): HTMLElement {
     const panel = document.createElement("div");
-    panel.className = "port-ops-quadrant port-ops-orders panel panel-riveted";
+    panel.className = "port-ops-quadrant port-ops-orders";
 
     const title = document.createElement("h3");
     title.className = "port-ops-panel-title heading-copper";
-    title.textContent = "Captain's Orders";
+    title.textContent = "Captain\u2019s Orders";
     panel.appendChild(title);
 
     const menu = document.createElement("div");
@@ -428,6 +480,7 @@ export class PortOperationsScreen implements GameScreen {
   // ─── Dialog Actions ───────────────────────────────────────────────────────
 
   private openRepairDialog(state: FullGameState, player: PlayerState, ship: OwnedShip, port: Port): void {
+    const costMultiplier = getPortCostMultiplier(port.id, state.worldEvents);
     const dialog = createRepairDialog(ship, port, player, {
       onConfirm: (percentToRepair: number) => {
         const result = repairPlayerShip(state, this.activeShipIndex, percentToRepair);
@@ -438,11 +491,13 @@ export class PortOperationsScreen implements GameScreen {
       onCancel: () => {
         this.removeDialog();
       },
-    });
+    }, costMultiplier);
     this.container.appendChild(dialog);
   }
 
   private openRefuelDialog(state: FullGameState, player: PlayerState, ship: OwnedShip): void {
+    const portId = ship.currentPortId ?? "";
+    const costMultiplier = getPortCostMultiplier(portId, state.worldEvents);
     const dialog = createRefuelDialog(ship, player, {
       onConfirm: (tonsToAdd: number) => {
         const result = refuelPlayerShip(state, this.activeShipIndex, tonsToAdd);
@@ -453,12 +508,20 @@ export class PortOperationsScreen implements GameScreen {
       onCancel: () => {
         this.removeDialog();
       },
-    });
+    }, costMultiplier);
     this.container.appendChild(dialog);
   }
 
   private openCharterDialog(state: FullGameState, player: PlayerState, ship: OwnedShip): void {
     const contracts = getAvailableCharters(state, this.activeShipIndex);
+
+    // Build ship context for profitability estimation
+    const spec = getShipSpec(ship);
+    let shipContext: CharterShipContext | undefined;
+    if (spec && ship.currentPortId) {
+      shipContext = { spec, currentPortId: ship.currentPortId };
+    }
+
     const dialog = createCharterDialog(contracts, {
       onAccept: (contract: CharterContract) => {
         const result = acceptCharter(state, this.activeShipIndex, contract);
@@ -469,7 +532,7 @@ export class PortOperationsScreen implements GameScreen {
       onCancel: () => {
         this.removeDialog();
       },
-    });
+    }, state.worldEvents, shipContext);
     this.container.appendChild(dialog);
   }
 

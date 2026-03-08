@@ -18,9 +18,18 @@ interface PlayerEntry {
   homePortId: string | null;
 }
 
+/** Game duration presets. null means unlimited/sandbox. */
+const DURATION_OPTIONS: Array<{ label: string; value: number | null }> = [
+  { label: "5 Years", value: 5 },
+  { label: "10 Years", value: 10 },
+  { label: "20 Years", value: 20 },
+  { label: "Unlimited", value: null },
+];
+
 export class SetupScreen implements GameScreen {
   private container: HTMLElement;
   private players: PlayerEntry[] = [];
+  private gameDurationYears: number | null = 10; // default: 10 years
   private validationMsg!: HTMLElement;
   private startBtn!: HTMLButtonElement;
   private addPlayerBtn!: HTMLButtonElement;
@@ -71,6 +80,9 @@ export class SetupScreen implements GameScreen {
     playersPanel.appendChild(this.addPlayerBtn);
 
     wrapper.appendChild(playersPanel);
+
+    // Game duration panel
+    wrapper.appendChild(this.buildDurationSelector());
 
     // Start button area
     wrapper.appendChild(this.buildStartArea());
@@ -164,6 +176,54 @@ export class SetupScreen implements GameScreen {
     area.appendChild(loadBtn);
 
     return area;
+  }
+
+  private buildDurationSelector(): HTMLElement {
+    const panel = document.createElement("div");
+    panel.className = "panel panel-riveted form-section";
+
+    const heading = document.createElement("h3");
+    heading.className = "port-section-title";
+    heading.textContent = "Game Duration";
+    panel.appendChild(heading);
+
+    const desc = document.createElement("p");
+    desc.className = "form-description";
+    desc.style.margin = "0 0 12px 0";
+    desc.style.opacity = "0.8";
+    desc.textContent = "How long should the game last? The game ends when the selected year is reached.";
+    panel.appendChild(desc);
+
+    const btnRow = document.createElement("div");
+    btnRow.className = "duration-selector";
+    btnRow.style.display = "flex";
+    btnRow.style.gap = "8px";
+    btnRow.style.flexWrap = "wrap";
+
+    for (const option of DURATION_OPTIONS) {
+      const btn = document.createElement("button");
+      btn.className = "btn btn-secondary duration-option";
+      btn.textContent = option.label;
+      if (this.gameDurationYears === option.value) {
+        btn.classList.add("btn-primary");
+        btn.classList.remove("btn-secondary");
+      }
+      btn.addEventListener("click", () => {
+        this.gameDurationYears = option.value;
+        // Update button styles
+        const allBtns = btnRow.querySelectorAll(".duration-option");
+        allBtns.forEach((b) => {
+          b.classList.remove("btn-primary");
+          b.classList.add("btn-secondary");
+        });
+        btn.classList.add("btn-primary");
+        btn.classList.remove("btn-secondary");
+      });
+      btnRow.appendChild(btn);
+    }
+
+    panel.appendChild(btnRow);
+    return panel;
   }
 
   // ── Player list management ──────────────────────────────────────────
@@ -356,6 +416,7 @@ export class SetupScreen implements GameScreen {
         companyName: p.companyName,
         homePortId: p.homePortId!,
       })),
+      gameDurationYears: this.gameDurationYears,
     });
 
     this.screenManager.setGameState(gameState);

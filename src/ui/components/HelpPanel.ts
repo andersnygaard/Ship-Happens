@@ -66,6 +66,7 @@ export class HelpPanel {
     content.appendChild(this.buildSection("Controls & Keyboard Shortcuts", this.controlsContent()));
     content.appendChild(this.buildSection("Economy", this.economyContent()));
     content.appendChild(this.buildSection("Ship Management", this.shipManagementContent()));
+    content.appendChild(this.buildSection("Captain Traits", this.captainTraitsContent()));
     content.appendChild(this.buildSection("Port Operations", this.portOperationsContent()));
     content.appendChild(this.buildSection("Maneuvering", this.maneuveringContent()));
 
@@ -196,6 +197,21 @@ export class HelpPanel {
         <li><strong>Lay up</strong> — Ships not in use can be laid up to reduce operating costs.</li>
         <li><strong>Multiple ships</strong> — As your company grows, manage a fleet of vessels.</li>
       </ul>
+    `;
+  }
+
+  private captainTraitsContent(): string {
+    return `
+      <p>Each captain is assigned a personality trait when you purchase a ship. Traits add flavor and occasionally influence crew events during voyages.</p>
+      <ul>
+        <li><strong>Cautious</strong> — Safety-conscious captain. Tends to attract events involving risk assessment and careful planning.</li>
+        <li><strong>Reckless</strong> — Bold and daring. More likely to see events about unauthorized modifications and crew shenanigans.</li>
+        <li><strong>Frugal</strong> — Penny-pinching by nature. Cost-related crew complaints are more common.</li>
+        <li><strong>Superstitious</strong> — Believes in omens and rituals. May trigger superstition-themed events at sea.</li>
+        <li><strong>Charismatic</strong> — A natural leader. Crew morale events tend to have a social angle.</li>
+        <li><strong>Strict Disciplinarian</strong> — Runs a tight ship. Expects order, which sometimes leads to pushback from the crew.</li>
+      </ul>
+      <p>During voyages, crew events present you with two choices — each with minor consequences such as small costs, delays, or condition changes. Neither option is always best, so choose wisely!</p>
     `;
   }
 

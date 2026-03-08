@@ -12,6 +12,7 @@ import type { FullGameState } from "../../game/GameState";
 import {
   getActivePlayer,
   simulateVoyage,
+  stopAction,
 } from "../../game/GameState";
 import { getPortById } from "../../data/ports";
 import { getShipSpecById } from "../../data/ships";
@@ -22,6 +23,8 @@ import {
   resolveStormEvent,
   resolveEmergencyEvent,
   resolveOutOfFuelEvent,
+  resolveBreakdownEvent,
+  resolveCrewEvent,
   type TravelEvent,
 } from "../../game/EventSystem";
 import { EventDialog } from "../components/EventDialog";
@@ -30,6 +33,8 @@ import { getTimeSnapshot } from "../../game/TimeSystem";
 import { TOWING_PENALTY } from "../../data/constants";
 import type { PortDepartureScreen } from "./PortDepartureScreen";
 import { getTravelSceneController } from "../../main";
+import { calculateFuelConsumptionAtSpeed } from "../../game/ShipManager";
+import { formatDeadlineCountdown, getCharterDeadlineInfo } from "../components/CharterDeadlineIndicator";
 
 export class TravelScreen implements GameScreen {
   private container: HTMLElement;
@@ -39,6 +44,8 @@ export class TravelScreen implements GameScreen {
   public shipIndex: number = 0;
   /** Destination port ID. Set externally before showing. */
   public destinationPortId: string = "";
+  /** Cruising speed in knots. If undefined, uses max speed. */
+  public cruisingSpeedKnots: number | undefined = undefined;
 
   /** HUD element references for updates */
   private hudProgressFill: HTMLElement | null = null;
@@ -84,15 +91,33 @@ export class TravelScreen implements GameScreen {
     }
 
     const distanceNm = calculateDistanceNm(originPort, destPort);
-    const travelDays = calculateTravelDays(distanceNm, spec.maxSpeedKnots);
+    const effectiveSpeed = this.cruisingSpeedKnots ?? spec.maxSpeedKnots;
+    const travelDays = calculateTravelDays(distanceNm, effectiveSpeed);
+    const effectiveFuelPerDay = calculateFuelConsumptionAtSpeed(spec, effectiveSpeed);
 
     // Generate events before the voyage
     const events = generateTravelEvents(
       distanceNm,
       ship.fuelTons,
-      spec.fuelConsumptionTonsPerDay,
+      effectiveFuelPerDay,
       travelDays,
+      ship.conditionPercent,
+      ship.captainTrait,
     );
+
+    // Augment storm event descriptions with charter deadline context
+    const activeCharterForEvents = player.activeCharters[ship.name];
+    if (activeCharterForEvents) {
+      const deadlineCountdown = formatDeadlineCountdown(activeCharterForEvents, state.time.totalDaysElapsed);
+      for (let i = 0; i < events.length; i++) {
+        if (events[i].type === "storm") {
+          events[i] = {
+            ...events[i],
+            description: events[i].description + `\n\n${deadlineCountdown}`,
+          };
+        }
+      }
+    }
 
     // --- Start the 3D scene travel animation ---
     const sceneController = getTravelSceneController();
@@ -129,6 +154,7 @@ export class TravelScreen implements GameScreen {
     infoStrip.className = "travel-hud-info-strip";
 
     infoStrip.appendChild(this.createHudStat("Distance", `${distanceNm.toLocaleString()} nm`));
+    infoStrip.appendChild(this.createHudStat("Speed", `${Math.round(effectiveSpeed)} kn${effectiveSpeed < spec.maxSpeedKnots ? ` (${Math.round(effectiveSpeed / spec.maxSpeedKnots * 100)}%)` : ""}`));
     infoStrip.appendChild(this.createHudStat("Est. Time", `${travelDays} days`));
     infoStrip.appendChild(this.createHudStat("Fuel", `${ship.fuelTons} t`));
     infoStrip.appendChild(this.createHudStat("Condition", `${ship.conditionPercent}%`));
@@ -170,6 +196,29 @@ export class TravelScreen implements GameScreen {
     weatherIndicator.textContent = "Clear seas";
     this.hudWeatherIndicator = weatherIndicator;
     hud.appendChild(weatherIndicator);
+
+    // Charter deadline countdown (only shown if ship has an active charter)
+    const activeCharter = player.activeCharters[ship.name];
+    if (activeCharter) {
+      const deadlineEl = document.createElement("div");
+      deadlineEl.className = "travel-hud-deadline";
+      const deadlineText = formatDeadlineCountdown(activeCharter, state.time.totalDaysElapsed);
+      deadlineEl.textContent = deadlineText;
+      const deadlineInfo = getCharterDeadlineInfo(activeCharter, state.time.totalDaysElapsed);
+      switch (deadlineInfo.urgency) {
+        case "safe":
+          deadlineEl.style.color = "var(--color-success, #44ff44)";
+          break;
+        case "warning":
+          deadlineEl.style.color = "var(--color-gold, #ffaa33)";
+          break;
+        case "danger":
+        case "overdue":
+          deadlineEl.style.color = "var(--color-danger, #ff4444)";
+          break;
+      }
+      hud.appendChild(deadlineEl);
+    }
 
     // Status message area (for event messages)
     const statusArea = document.createElement("div");
@@ -314,6 +363,46 @@ export class TravelScreen implements GameScreen {
             time,
           );
           statusArea.textContent = result.message;
+        } else if (event.type === "breakdown") {
+          const result = resolveBreakdownEvent(choiceId);
+          const time = getTimeSnapshot(state.time);
+          // Apply financial cost
+          if (result.costDollars > 0) {
+            debit(
+              player.finances,
+              result.costDollars,
+              `Breakdown repair: ${result.subtype}`,
+              time,
+            );
+          }
+          // Apply additional condition damage
+          if (result.conditionDamage > 0 && ship) {
+            ship.conditionPercent = Math.max(
+              0,
+              ship.conditionPercent - result.conditionDamage,
+            );
+          }
+          statusArea.textContent = result.message;
+        } else if (event.type === "crew-event") {
+          const result = resolveCrewEvent(choiceId);
+          const time = getTimeSnapshot(state.time);
+          // Apply financial cost
+          if (result.costDollars > 0) {
+            debit(
+              player.finances,
+              result.costDollars,
+              `Crew event: ${event.title}`,
+              time,
+            );
+          }
+          // Apply condition change (can be positive or negative)
+          if (result.conditionChange !== 0 && ship) {
+            ship.conditionPercent = Math.max(
+              0,
+              Math.min(100, ship.conditionPercent + result.conditionChange),
+            );
+          }
+          statusArea.textContent = result.message;
         }
 
         // Small delay then process next event
@@ -349,8 +438,11 @@ export class TravelScreen implements GameScreen {
     // Animate progress to 100%
     this.updateProgress(100);
 
-    const result = simulateVoyage(state, this.shipIndex, this.destinationPortId);
+    const result = simulateVoyage(state, this.shipIndex, this.destinationPortId, this.cruisingSpeedKnots);
     statusArea.textContent = result.message;
+
+    // Stop the simulation now that the voyage is complete
+    stopAction(state);
 
     // After a delay, transition to port departure
     setTimeout(() => {

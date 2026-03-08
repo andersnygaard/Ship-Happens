@@ -93,6 +93,55 @@ export const RESCUE_EVENT_PROBABILITY = 0.05;
 /** Probability of office embezzlement per turn when office is not visited. */
 export const EMBEZZLEMENT_PROBABILITY = 0.10;
 
+// ─── Breakdown Constants ─────────────────────────────────────────────────
+
+/** Base probability of a breakdown event when condition is at the critical threshold (20%). */
+export const BREAKDOWN_BASE_PROBABILITY = 0.05;
+
+/** Maximum breakdown probability at very low condition (around 5%). */
+export const BREAKDOWN_MAX_PROBABILITY = 0.40;
+
+/** Condition threshold below which departure is blocked with a warning. */
+export const BREAKDOWN_DEPARTURE_BLOCK_PERCENT = 5;
+
+/** Cost of emergency towing after a breakdown at sea. */
+export const BREAKDOWN_TOWING_COST = 500_000;
+
+/** Cost of emergency field repair after a breakdown at sea. */
+export const BREAKDOWN_FIELD_REPAIR_COST = 200_000;
+
+/** Extra days added by a breakdown towing event. */
+export const BREAKDOWN_TOWING_DELAY_DAYS = 5;
+
+/** Extra days added by a field repair event. */
+export const BREAKDOWN_FIELD_REPAIR_DELAY_DAYS = 2;
+
+/** Additional condition loss from a hull leak breakdown (percentage points). */
+export const BREAKDOWN_HULL_LEAK_DAMAGE = 8;
+
+/** Additional condition loss from an electrical failure breakdown (percentage points). */
+export const BREAKDOWN_ELECTRICAL_DAMAGE = 3;
+
+/** Very low condition threshold for significantly increased breakdown probability. */
+export const VERY_LOW_CONDITION_PERCENT = 10;
+
+// ─── Speed Selection Constants ──────────────────────────────────────────────
+
+/** Minimum cruising speed as a fraction of max speed (e.g., 0.5 = 50%). */
+export const MIN_SPEED_FRACTION = 0.5;
+
+/** Discrete speed presets as fractions of max speed. */
+export const SPEED_PRESETS: readonly { label: string; fraction: number }[] = [
+  { label: "Slow", fraction: 0.50 },
+  { label: "Economy", fraction: 0.65 },
+  { label: "Standard", fraction: 0.80 },
+  { label: "Full", fraction: 0.90 },
+  { label: "Max", fraction: 1.00 },
+];
+
+/** Exponent for the cubic fuel consumption scaling (admiralty formula). */
+export const FUEL_CONSUMPTION_SPEED_EXPONENT = 3;
+
 // ─── Gameplay Balance ───────────────────────────────────────────────────────
 
 /** Number of charter contract options offered at a port (max). */
@@ -100,6 +149,41 @@ export const MAX_CHARTER_OPTIONS = 6;
 
 /** Speed multiplier used for travel time calculation (distance / (speed * 24)). */
 export const TRAVEL_TIME_SPEED_FACTOR = 24;
+
+// ─── Docking & Tug Constants ───────────────────────────────────────────────
+
+/** Tug cost per difficulty rating (1-5). Replaces the flat $50,000 fee. */
+export const TUG_COST_BY_DIFFICULTY: Record<number, number> = {
+  1: 30_000,
+  2: 40_000,
+  3: 50_000,
+  4: 65_000,
+  5: 80_000,
+};
+
+/** Base docking bonus per difficulty rating (1-5). */
+export const DOCKING_BASE_BONUS: Record<number, number> = {
+  1: 10_000,
+  2: 15_000,
+  3: 18_000,
+  4: 22_000,
+  5: 25_000,
+};
+
+/** Bonus awarded for zero-collision docking at any port. */
+export const DOCKING_CLEAN_BONUS = 15_000;
+
+/** Time bonus rate: dollars earned per second remaining. */
+export const DOCKING_TIME_BONUS_RATE = 500;
+
+/** Difficulty multiplier for total docking bonus (applied to base + time + clean). */
+export const DOCKING_DIFFICULTY_MULTIPLIER: Record<number, number> = {
+  1: 1.0,
+  2: 1.3,
+  3: 1.6,
+  4: 2.0,
+  5: 2.5,
+};
 
 // ─── Office Neglect Constants ─────────────────────────────────────────────
 

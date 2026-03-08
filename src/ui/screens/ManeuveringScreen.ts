@@ -10,9 +10,19 @@
 
 import type { GameScreen, ScreenManager } from "../ScreenManager";
 import { getActivePlayer } from "../../game/GameState";
+import { credit } from "../../game/FinancialSystem";
+import { getTimeSnapshot } from "../../game/TimeSystem";
+import { recordDockingBonus, recordRevenue } from "../../game/Statistics";
 import type { PortOperationsScreen } from "./PortOperationsScreen";
-import { getLayoutForPort } from "../../data/harborLayouts";
-import type { HarborLayout, EnvironmentTheme, ObstacleDecoration } from "../../data/harborLayouts";
+import { getLayoutForPort, getDifficultyRating } from "../../data/harborLayouts";
+import type { HarborLayout, EnvironmentTheme, ObstacleDecoration, DifficultyRating } from "../../data/harborLayouts";
+import {
+  DOCKING_BASE_BONUS,
+  DOCKING_CLEAN_BONUS,
+  DOCKING_TIME_BONUS_RATE,
+  DOCKING_DIFFICULTY_MULTIPLIER,
+} from "../../data/constants";
+import { getDockingCommentary } from "../../data/humorTexts";
 import {
   createShipState,
   updateShipPhysics,
@@ -23,6 +33,7 @@ import {
   isConditionFailed,
   angleToPoint,
   getSteeringDirection,
+  getConditionSpeedMultiplier,
   SHIP_RADIUS,
   THROTTLE_LEVELS,
 } from "../../game/HarborPhysics";
@@ -35,17 +46,16 @@ const CANVAS_HEIGHT = 600;
 const TIMEOUT_DAMAGE = 10;
 
 // Colors — defaults (standard theme)
-const COLOR_WATER = "#0a1e3d";
-const COLOR_LAND = "#2d5a3d";
-const COLOR_WALL = "#cc3333";
 const COLOR_BERTH_FILL = "rgba(0, 200, 80, 0.25)";
 const COLOR_BERTH_STROKE = "#00cc55";
 const COLOR_SHIP = "#e8e8e8";
 const COLOR_SHIP_ACCENT = "#d4a844";
-const COLOR_TIMER_BG = "#1a1a2e";
 const COLOR_TIMER_FILL_GOOD = "#00cc55";
 const COLOR_TIMER_FILL_WARN = "#ccaa00";
 const COLOR_TIMER_FILL_DANGER = "#cc3333";
+
+/** Duration (in seconds) for collision damage flash effect. */
+const DAMAGE_FLASH_DURATION = 0.25;
 
 /** Theme-specific color palettes for harbor rendering. */
 interface ThemeColors {
@@ -106,6 +116,13 @@ export class ManeuveringScreen implements GameScreen {
   private lastTimestamp: number = 0;
   private initialCondition: number = 100;
 
+  // Collision tracking for docking bonus
+  private collisionCount: number = 0;
+
+  // Visual effects state
+  private waveTime: number = 0;
+  private damageFlashTimer: number = 0;
+
   // Input state
   private keysDown: Set<string> = new Set();
   private mouseTarget: { x: number; y: number } | null = null;
@@ -135,6 +152,9 @@ export class ManeuveringScreen implements GameScreen {
     this.mouseTarget = null;
     this.touchSteerDir = 0;
     this.touchThrottleDir = 0;
+    this.collisionCount = 0;
+    this.waveTime = 0;
+    this.damageFlashTimer = 0;
 
     const state = this.screenManager.getGameState();
     if (!state) {
@@ -212,7 +232,9 @@ export class ManeuveringScreen implements GameScreen {
     const conditionEl = document.createElement("div");
     conditionEl.className = "maneuvering-condition";
     conditionEl.id = "maneuvering-condition";
-    conditionEl.textContent = `Condition: ${Math.round(this.ship!.conditionPercent)}%`;
+    const speedMult = getConditionSpeedMultiplier(this.ship!.conditionPercent);
+    const speedPenaltyText = speedMult < 1.0 ? ` | Max Speed: ${Math.round(speedMult * 100)}%` : "";
+    conditionEl.textContent = `Condition: ${Math.round(this.ship!.conditionPercent)}%${speedPenaltyText}`;
     header.appendChild(conditionEl);
 
     this.container.appendChild(header);
@@ -448,6 +470,18 @@ export class ManeuveringScreen implements GameScreen {
     if (this.ship && this.layout) {
       const collided = updateShipPhysics(this.ship, dt, this.layout);
 
+      // Track wave animation time
+      this.waveTime += dt;
+
+      // Track damage flash and collision count
+      if (collided) {
+        this.collisionCount++;
+        this.damageFlashTimer = DAMAGE_FLASH_DURATION;
+      }
+      if (this.damageFlashTimer > 0) {
+        this.damageFlashTimer = Math.max(0, this.damageFlashTimer - dt);
+      }
+
       // Update timer
       this.timeRemaining -= dt;
 
@@ -530,6 +564,9 @@ export class ManeuveringScreen implements GameScreen {
     ctx.fillStyle = theme.water;
     ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
+    // Phase 2: Draw wave patterns on water
+    this.drawWavePatterns(ctx, theme);
+
     // Draw land masses with themed color
     ctx.fillStyle = theme.land;
     for (const land of this.layout.lands) {
@@ -543,9 +580,7 @@ export class ManeuveringScreen implements GameScreen {
     }
 
     // Draw obstacle land masses (islands, icebergs) with distinct fill
-    // For layouts with more than 2 land masses, the extras are obstacles
     if (this.layout.lands.length > 2) {
-      ctx.fillStyle = theme.obstacleFill;
       for (let i = 2; i < this.layout.lands.length; i++) {
         const land = this.layout.lands[i];
         ctx.beginPath();
@@ -554,9 +589,19 @@ export class ManeuveringScreen implements GameScreen {
           ctx.lineTo(land.points[j].x, land.points[j].y);
         }
         ctx.closePath();
-        ctx.fill();
+
+        // Arctic theme: faceted iceberg look
+        if (this.layout.theme === "arctic") {
+          this.drawIcebergFill(ctx, land.points);
+        } else {
+          ctx.fillStyle = theme.obstacleFill;
+          ctx.fill();
+        }
       }
     }
+
+    // Phase 2: Draw foam along land/water boundaries
+    this.drawCoastlineFoam(ctx);
 
     // Draw decorations (palm trees, icebergs, cranes, etc.)
     if (this.layout.decorations) {
@@ -610,8 +655,15 @@ export class ManeuveringScreen implements GameScreen {
     // Draw ship
     this.drawShip(ctx, this.ship);
 
-    // Draw throttle indicator
-    this.drawThrottleIndicator(ctx, this.ship);
+    // Phase 3: Draw HUD elements on canvas
+    this.drawCanvasHUD(ctx, this.ship);
+
+    // Phase 3: Draw damage flash overlay
+    if (this.damageFlashTimer > 0) {
+      const alpha = (this.damageFlashTimer / DAMAGE_FLASH_DURATION) * 0.3;
+      ctx.fillStyle = `rgba(255, 0, 0, ${alpha})`;
+      ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+    }
   }
 
   private drawShip(ctx: CanvasRenderingContext2D, ship: ShipPhysicsState): void {
@@ -619,58 +671,338 @@ export class ManeuveringScreen implements GameScreen {
     ctx.translate(ship.x, ship.y);
     ctx.rotate(ship.heading);
 
-    // Ship body (triangle/arrow shape)
     const size = SHIP_RADIUS;
+
+    // Hull shape — proper bow and stern
     ctx.beginPath();
-    ctx.moveTo(size * 1.3, 0); // bow (front)
-    ctx.lineTo(-size, -size * 0.7); // port stern
-    ctx.lineTo(-size * 0.6, 0); // stern center indent
-    ctx.lineTo(-size, size * 0.7); // starboard stern
+    // Bow (pointed front)
+    ctx.moveTo(size * 1.5, 0);
+    // Starboard side
+    ctx.quadraticCurveTo(size * 0.8, -size * 0.75, -size * 0.3, -size * 0.7);
+    // Stern starboard
+    ctx.lineTo(-size, -size * 0.5);
+    // Stern (flat)
+    ctx.lineTo(-size, size * 0.5);
+    // Port stern
+    ctx.lineTo(-size * 0.3, size * 0.7);
+    // Port side
+    ctx.quadraticCurveTo(size * 0.8, size * 0.75, size * 1.5, 0);
     ctx.closePath();
 
+    // Hull fill and outline
     ctx.fillStyle = COLOR_SHIP;
     ctx.fill();
     ctx.strokeStyle = COLOR_SHIP_ACCENT;
     ctx.lineWidth = 1.5;
     ctx.stroke();
 
-    // Bridge dot
-    ctx.fillStyle = COLOR_SHIP_ACCENT;
+    // Deck line (inner hull edge)
+    ctx.strokeStyle = "rgba(180, 180, 180, 0.4)";
+    ctx.lineWidth = 0.8;
     ctx.beginPath();
-    ctx.arc(-size * 0.2, 0, 2, 0, Math.PI * 2);
-    ctx.fill();
+    ctx.moveTo(size * 1.0, 0);
+    ctx.quadraticCurveTo(size * 0.5, -size * 0.45, -size * 0.2, -size * 0.4);
+    ctx.lineTo(-size * 0.7, -size * 0.3);
+    ctx.lineTo(-size * 0.7, size * 0.3);
+    ctx.lineTo(-size * 0.2, size * 0.4);
+    ctx.quadraticCurveTo(size * 0.5, size * 0.45, size * 1.0, 0);
+    ctx.stroke();
+
+    // Bridge/superstructure (aft of center)
+    ctx.fillStyle = COLOR_SHIP_ACCENT;
+    ctx.fillRect(-size * 0.5, -size * 0.25, size * 0.4, size * 0.5);
+    ctx.strokeStyle = "rgba(0, 0, 0, 0.3)";
+    ctx.lineWidth = 0.5;
+    ctx.strokeRect(-size * 0.5, -size * 0.25, size * 0.4, size * 0.5);
+
+    // Bridge windows
+    ctx.fillStyle = "rgba(100, 200, 255, 0.5)";
+    ctx.fillRect(-size * 0.45, -size * 0.15, size * 0.1, size * 0.3);
+
+    // Rudder indicator line (extends from stern)
+    ctx.strokeStyle = "#aaa";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(-size, 0);
+    // Show rudder angle based on turn direction
+    const rudderAngle = ship.turnDirection * 0.4;
+    ctx.lineTo(-size - 6 * Math.cos(rudderAngle), 6 * Math.sin(rudderAngle));
+    ctx.stroke();
 
     ctx.restore();
   }
 
-  private drawThrottleIndicator(ctx: CanvasRenderingContext2D, ship: ShipPhysicsState): void {
-    const x = 20;
-    const y = CANVAS_HEIGHT - 80;
-    const width = 16;
-    const height = 60;
+  /** Phase 2: Draw subtle wave pattern lines across the water surface. */
+  private drawWavePatterns(ctx: CanvasRenderingContext2D, _theme: ThemeColors): void {
+    ctx.save();
+    // Wave color varies by environment theme
+    ctx.strokeStyle = this.layout!.theme === "arctic"
+      ? "rgba(180, 210, 240, 0.12)"
+      : "rgba(120, 180, 255, 0.1)";
+    ctx.lineWidth = 1;
 
-    // Background
+    const waveSpacing = 30;
+    const amplitude = 3;
+    const frequency = 0.02;
+    const timeOffset = this.waveTime * 0.8;
+
+    for (let row = 0; row < CANVAS_HEIGHT; row += waveSpacing) {
+      ctx.beginPath();
+      for (let x = 0; x < CANVAS_WIDTH; x += 8) {
+        const y = row + Math.sin(x * frequency + timeOffset + row * 0.1) * amplitude;
+        if (x === 0) {
+          ctx.moveTo(x, y);
+        } else {
+          ctx.lineTo(x, y);
+        }
+      }
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  /** Phase 2: Draw white foam along land/water edges. */
+  private drawCoastlineFoam(ctx: CanvasRenderingContext2D): void {
+    if (!this.layout) return;
+
+    ctx.save();
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.25)";
+    ctx.lineWidth = 2.5;
+    ctx.setLineDash([3, 5]);
+
+    // Foam along wall segments (approximates the coastline)
+    for (const wall of this.layout.walls) {
+      ctx.beginPath();
+      ctx.moveTo(wall.x1, wall.y1);
+      ctx.lineTo(wall.x2, wall.y2);
+      ctx.stroke();
+    }
+
+    ctx.setLineDash([]);
+    ctx.restore();
+  }
+
+  /** Phase 2 (arctic): Draw faceted iceberg fill with gradient highlights. */
+  private drawIcebergFill(ctx: CanvasRenderingContext2D, points: Array<{ x: number; y: number }>): void {
+    // Base fill — icy blue-white
+    ctx.fillStyle = "#c8dce8";
+    ctx.fill();
+
+    // Faceted highlight — lighter triangular sections
+    if (points.length >= 3) {
+      // Calculate centroid
+      let cx = 0, cy = 0;
+      for (const p of points) { cx += p.x; cy += p.y; }
+      cx /= points.length;
+      cy /= points.length;
+
+      // Draw lighter facet from first two points to center
+      ctx.fillStyle = "rgba(220, 240, 255, 0.6)";
+      ctx.beginPath();
+      ctx.moveTo(points[0].x, points[0].y);
+      ctx.lineTo(points[1].x, points[1].y);
+      ctx.lineTo(cx, cy);
+      ctx.closePath();
+      ctx.fill();
+
+      // Draw medium facet
+      if (points.length >= 4) {
+        ctx.fillStyle = "rgba(200, 225, 245, 0.4)";
+        ctx.beginPath();
+        ctx.moveTo(points[2].x, points[2].y);
+        ctx.lineTo(points[3].x, points[3].y);
+        ctx.lineTo(cx, cy);
+        ctx.closePath();
+        ctx.fill();
+      }
+
+      // Outline the iceberg with a crisp edge
+      ctx.strokeStyle = "#a0b8cc";
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(points[0].x, points[0].y);
+      for (let i = 1; i < points.length; i++) {
+        ctx.lineTo(points[i].x, points[i].y);
+      }
+      ctx.closePath();
+      ctx.stroke();
+    }
+  }
+
+  /** Phase 3: Draw all HUD elements on the canvas. */
+  private drawCanvasHUD(ctx: CanvasRenderingContext2D, ship: ShipPhysicsState): void {
+    if (!this.layout) return;
+
+    // ── Port Name (top-right corner) ──
+    ctx.save();
     ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
-    ctx.fillRect(x - 2, y - 2, width + 4, height + 4);
+    ctx.fillRect(CANVAS_WIDTH - 180, 6, 174, 24);
+    ctx.strokeStyle = "#b87333";
+    ctx.lineWidth = 1;
+    ctx.strokeRect(CANVAS_WIDTH - 180, 6, 174, 24);
+
+    ctx.fillStyle = "#e8d4a0";
+    ctx.font = "bold 13px monospace";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(this.layout.name, CANVAS_WIDTH - 93, 18);
+    ctx.restore();
+
+    // ── Timer Panel (top-left) with framed look ──
+    const timerX = 10;
+    const timerY = 8;
+    const timerW = 160;
+    const timerH = 28;
+
+    ctx.save();
+    // Dark background
+    ctx.fillStyle = "rgba(10, 10, 15, 0.7)";
+    ctx.fillRect(timerX, timerY, timerW, timerH);
+    // Copper border
+    ctx.strokeStyle = "#b87333";
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(timerX, timerY, timerW, timerH);
+
+    // "TIME" label
+    ctx.fillStyle = "#b87333";
+    ctx.font = "bold 9px monospace";
+    ctx.textAlign = "left";
+    ctx.textBaseline = "top";
+    ctx.fillText("TIME", timerX + 4, timerY + 2);
+
+    // Timer bar fill
+    const pct = Math.max(0, this.timeRemaining / this.layout.timeLimit);
+    const barX = timerX + 4;
+    const barY = timerY + 14;
+    const barW = timerW - 8;
+    const barH = 10;
+
+    // Bar background
+    ctx.fillStyle = "#1a1a1a";
+    ctx.fillRect(barX, barY, barW, barH);
+
+    // Bar fill with color based on time remaining
+    let barColor = COLOR_TIMER_FILL_GOOD;
+    if (pct <= 0.25) barColor = COLOR_TIMER_FILL_DANGER;
+    else if (pct <= 0.5) barColor = COLOR_TIMER_FILL_WARN;
+    ctx.fillStyle = barColor;
+    ctx.fillRect(barX, barY, barW * pct, barH);
+
+    // Time text overlay
+    ctx.fillStyle = "#fff";
+    ctx.font = "bold 9px monospace";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(`${Math.ceil(this.timeRemaining)}s`, barX + barW / 2, barY + barH / 2);
+
+    ctx.restore();
+
+    // ── Speed Gauge (left side, vertical bar segments) ──
+    const gaugeX = 14;
+    const gaugeY = CANVAS_HEIGHT - 100;
+    const gaugeW = 20;
+    const gaugeH = 70;
+
+    ctx.save();
+    // Background panel
+    ctx.fillStyle = "rgba(10, 10, 15, 0.7)";
+    ctx.fillRect(gaugeX - 4, gaugeY - 16, gaugeW + 8, gaugeH + 30);
+    ctx.strokeStyle = "#b87333";
+    ctx.lineWidth = 1;
+    ctx.strokeRect(gaugeX - 4, gaugeY - 16, gaugeW + 8, gaugeH + 30);
+
+    // "SPD" label
+    ctx.fillStyle = "#b87333";
+    ctx.font = "bold 8px monospace";
+    ctx.textAlign = "center";
+    ctx.fillText("SPD", gaugeX + gaugeW / 2, gaugeY - 6);
 
     // Throttle segments
     const levels = THROTTLE_LEVELS.length;
-    const segHeight = height / levels;
+    const segHeight = gaugeH / levels;
     for (let i = 0; i < levels; i++) {
-      const segY = y + height - (i + 1) * segHeight;
+      const segY = gaugeY + gaugeH - (i + 1) * segHeight;
       if (i <= ship.throttleIndex) {
         ctx.fillStyle = i === 0 ? "#555" : i === 1 ? COLOR_TIMER_FILL_WARN : COLOR_TIMER_FILL_GOOD;
       } else {
-        ctx.fillStyle = "#222";
+        ctx.fillStyle = "#1a1a1a";
       }
-      ctx.fillRect(x, segY + 1, width, segHeight - 2);
+      ctx.fillRect(gaugeX, segY + 1, gaugeW, segHeight - 2);
+      // Segment border
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.1)";
+      ctx.lineWidth = 0.5;
+      ctx.strokeRect(gaugeX, segY + 1, gaugeW, segHeight - 2);
     }
 
-    // Label
-    ctx.fillStyle = "#aaa";
-    ctx.font = "10px monospace";
+    ctx.restore();
+
+    // ── Speed Dots (bottom edge — 10 circles showing thrust level) ──
+    const dotsY = CANVAS_HEIGHT - 14;
+    const dotsStartX = CANVAS_WIDTH / 2 - 55;
+    const dotSpacing = 12;
+    const dotRadius = 3.5;
+
+    ctx.save();
+    // Map throttle to number of filled dots (0..10)
+    const filledDots = Math.round((ship.speed / THROTTLE_LEVELS[THROTTLE_LEVELS.length - 1]) * 10);
+    for (let i = 0; i < 10; i++) {
+      const dx = dotsStartX + i * dotSpacing;
+      ctx.beginPath();
+      ctx.arc(dx, dotsY, dotRadius, 0, Math.PI * 2);
+      if (i < filledDots) {
+        ctx.fillStyle = i < 3 ? "#00cc55" : i < 7 ? "#ccaa00" : "#cc3333";
+      } else {
+        ctx.fillStyle = "rgba(255, 255, 255, 0.1)";
+      }
+      ctx.fill();
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.2)";
+      ctx.lineWidth = 0.5;
+      ctx.stroke();
+    }
+    ctx.restore();
+
+    // ── Heading / Rudder Indicator (bottom-right) ──
+    const compassX = CANVAS_WIDTH - 40;
+    const compassY = CANVAS_HEIGHT - 40;
+    const compassR = 18;
+
+    ctx.save();
+    // Compass circle
+    ctx.fillStyle = "rgba(10, 10, 15, 0.6)";
+    ctx.beginPath();
+    ctx.arc(compassX, compassY, compassR + 4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = "#b87333";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.arc(compassX, compassY, compassR + 4, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Cardinal markers
+    ctx.fillStyle = "#888";
+    ctx.font = "7px monospace";
     ctx.textAlign = "center";
-    ctx.fillText("THR", x + width / 2, y + height + 14);
+    ctx.textBaseline = "middle";
+    ctx.fillText("N", compassX, compassY - compassR - 1);
+
+    // Heading needle
+    ctx.strokeStyle = "#e84040";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(compassX, compassY);
+    ctx.lineTo(
+      compassX + Math.cos(ship.heading) * compassR,
+      compassY + Math.sin(ship.heading) * compassR,
+    );
+    ctx.stroke();
+
+    // Center dot
+    ctx.fillStyle = "#fff";
+    ctx.beginPath();
+    ctx.arc(compassX, compassY, 2, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.restore();
   }
 
   private drawDecoration(ctx: CanvasRenderingContext2D, deco: ObstacleDecoration): void {
@@ -787,6 +1119,63 @@ export class ManeuveringScreen implements GameScreen {
         ctx.fill();
         ctx.stroke();
         break;
+
+      case "warehouse":
+        // Rectangular warehouse building (top-down view)
+        ctx.fillStyle = "#5a5550";
+        ctx.strokeStyle = "#3a3530";
+        ctx.lineWidth = 1;
+        ctx.fillRect(-14, -8, 28, 16);
+        ctx.strokeRect(-14, -8, 28, 16);
+        // Roof ridge line
+        ctx.strokeStyle = "#7a7570";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(-14, 0);
+        ctx.lineTo(14, 0);
+        ctx.stroke();
+        // Door
+        ctx.fillStyle = "#3a3530";
+        ctx.fillRect(10, -3, 4, 6);
+        break;
+
+      case "bollard":
+        // Small mooring bollard (circle with cross)
+        ctx.fillStyle = "#888";
+        ctx.strokeStyle = "#555";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.arc(0, 0, 3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        // Cross detail
+        ctx.strokeStyle = "#aaa";
+        ctx.lineWidth = 0.5;
+        ctx.beginPath();
+        ctx.moveTo(-2, 0);
+        ctx.lineTo(2, 0);
+        ctx.moveTo(0, -2);
+        ctx.lineTo(0, 2);
+        ctx.stroke();
+        break;
+
+      case "pine-tree":
+        // Pine/conifer tree (top-down: dark green circle cluster)
+        ctx.fillStyle = "#2d5a3d";
+        ctx.beginPath();
+        ctx.arc(0, 0, 6, 0, Math.PI * 2);
+        ctx.fill();
+        // Darker center
+        ctx.fillStyle = "#1a4a2d";
+        ctx.beginPath();
+        ctx.arc(0, 0, 3, 0, Math.PI * 2);
+        ctx.fill();
+        // Trunk hint
+        ctx.fillStyle = "#5a3a1a";
+        ctx.beginPath();
+        ctx.arc(0, 0, 1.5, 0, Math.PI * 2);
+        ctx.fill();
+        break;
     }
 
     ctx.restore();
@@ -801,6 +1190,15 @@ export class ManeuveringScreen implements GameScreen {
     if (this.animFrameId) {
       cancelAnimationFrame(this.animFrameId);
       this.animFrameId = 0;
+    }
+
+    // Calculate docking bonus for successful maneuvering
+    let dockingBonus = 0;
+    let bonusBreakdown: { base: number; time: number; clean: number; multiplier: number; total: number } | null = null;
+    let difficultyRating: DifficultyRating = 3;
+
+    if (this.layout) {
+      difficultyRating = getDifficultyRating(this.layout);
     }
 
     // Apply results to game state
@@ -818,6 +1216,22 @@ export class ManeuveringScreen implements GameScreen {
         } else {
           // Success: apply any collision damage that occurred
           ownedShip.conditionPercent = this.ship.conditionPercent;
+
+          // Calculate docking bonus
+          const baseBonus = DOCKING_BASE_BONUS[difficultyRating] ?? 18_000;
+          const timeBonus = Math.round(this.timeRemaining * DOCKING_TIME_BONUS_RATE);
+          const cleanBonus = this.collisionCount === 0 ? DOCKING_CLEAN_BONUS : 0;
+          const multiplier = DOCKING_DIFFICULTY_MULTIPLIER[difficultyRating] ?? 1.6;
+          const total = Math.round((baseBonus + timeBonus + cleanBonus) * multiplier);
+
+          bonusBreakdown = { base: baseBonus, time: timeBonus, clean: cleanBonus, multiplier, total };
+          dockingBonus = total;
+
+          // Credit the bonus to player finances
+          const time = getTimeSnapshot(state.time);
+          credit(player.finances, dockingBonus, "Docking bonus — skilled maneuvering", time);
+          recordRevenue(player.statistics, dockingBonus);
+          recordDockingBonus(player.statistics, dockingBonus);
         }
       }
     }
@@ -826,10 +1240,14 @@ export class ManeuveringScreen implements GameScreen {
     this.render();
 
     // Show result overlay
-    this.showResultOverlay(result);
+    this.showResultOverlay(result, bonusBreakdown, difficultyRating);
   }
 
-  private showResultOverlay(result: "success" | "timeout" | "condition-fail"): void {
+  private showResultOverlay(
+    result: "success" | "timeout" | "condition-fail",
+    bonusBreakdown: { base: number; time: number; clean: number; multiplier: number; total: number } | null,
+    difficultyRating: DifficultyRating,
+  ): void {
     const overlay = document.createElement("div");
     overlay.className = "maneuvering-result-overlay";
 
@@ -846,9 +1264,10 @@ export class ManeuveringScreen implements GameScreen {
 
     if (result === "success") {
       title.textContent = "Docking Successful!";
-      message.textContent = damageDealt > 0
-        ? `Ship docked safely. Minor collision damage: ${damageDealt}% condition lost.`
-        : "Ship docked without incident. Well done, Captain!";
+      // Get humorous commentary based on performance
+      const timeRemainingPct = this.layout ? this.timeRemaining / this.layout.timeLimit : 0;
+      const commentary = getDockingCommentary(this.collisionCount, timeRemainingPct);
+      message.textContent = commentary;
     } else if (result === "timeout") {
       title.textContent = "Time Expired";
       message.textContent = `Time ran out. The ship was towed in, suffering ${TIMEOUT_DAMAGE}% additional damage. Total damage: ${damageDealt + TIMEOUT_DAMAGE}%.`;
@@ -860,13 +1279,57 @@ export class ManeuveringScreen implements GameScreen {
     panel.appendChild(title);
     panel.appendChild(message);
 
+    // Docking bonus breakdown (only on success)
+    if (result === "success" && bonusBreakdown) {
+      const bonusPanel = document.createElement("div");
+      bonusPanel.className = "maneuvering-result-bonus";
+
+      const bonusTitle = document.createElement("div");
+      bonusTitle.className = "maneuvering-result-bonus-title";
+      bonusTitle.textContent = "Docking Bonus";
+      bonusPanel.appendChild(bonusTitle);
+
+      const breakdownList = document.createElement("div");
+      breakdownList.className = "maneuvering-result-breakdown";
+
+      const addLine = (label: string, value: number, highlight?: boolean) => {
+        const line = document.createElement("div");
+        line.className = "maneuvering-result-breakdown-line" + (highlight ? " highlight" : "");
+        line.innerHTML = `<span>${label}</span><span>$${value.toLocaleString()}</span>`;
+        breakdownList.appendChild(line);
+      };
+
+      addLine("Base bonus:", bonusBreakdown.base);
+      addLine(`Time bonus (${Math.round(this.timeRemaining)}s left):`, bonusBreakdown.time);
+      if (bonusBreakdown.clean > 0) {
+        addLine("Clean docking (0 collisions):", bonusBreakdown.clean);
+      } else {
+        addLine(`Collisions: ${this.collisionCount}`, 0);
+      }
+      addLine(`Difficulty multiplier (${"\u2693".repeat(difficultyRating)}):`, 0);
+
+      const multiplierLine = document.createElement("div");
+      multiplierLine.className = "maneuvering-result-breakdown-line";
+      multiplierLine.innerHTML = `<span>x${bonusBreakdown.multiplier.toFixed(1)}</span><span></span>`;
+      breakdownList.appendChild(multiplierLine);
+
+      // Total line
+      const totalLine = document.createElement("div");
+      totalLine.className = "maneuvering-result-breakdown-total";
+      totalLine.innerHTML = `<span><strong>Total Bonus:</strong></span><span><strong>$${bonusBreakdown.total.toLocaleString()}</strong></span>`;
+      breakdownList.appendChild(totalLine);
+
+      bonusPanel.appendChild(breakdownList);
+      panel.appendChild(bonusPanel);
+    }
+
     // Condition summary
     const condSummary = document.createElement("div");
     condSummary.className = "maneuvering-result-condition";
     const finalCond = result === "timeout"
       ? Math.max(0, (this.ship?.conditionPercent ?? 0) - TIMEOUT_DAMAGE)
       : (this.ship?.conditionPercent ?? 0);
-    condSummary.textContent = `Ship Condition: ${Math.round(this.initialCondition)}% → ${Math.round(finalCond)}%`;
+    condSummary.textContent = `Ship Condition: ${Math.round(this.initialCondition)}% \u2192 ${Math.round(finalCond)}%`;
     panel.appendChild(condSummary);
 
     // Continue button

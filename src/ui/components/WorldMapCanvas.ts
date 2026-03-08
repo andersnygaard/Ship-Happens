@@ -55,6 +55,18 @@ export class WorldMapCanvas {
   private resizeObserver: ResizeObserver | null = null;
   private shipDataList: MapShipData[] = [];
   private homePortId: string | null = null;
+  /** Port IDs that are blocked by world events. */
+  private blockedPortIds: Set<string> = new Set();
+  /** Port IDs with a cost multiplier > 1 from world events (not blocked). */
+  private affectedPortIds: Set<string> = new Set();
+  /** Port IDs that should show a wrench icon (ship needs repairs, port has cheap repairs). */
+  private repairNeededPortIds: Set<string> = new Set();
+  /** Port IDs that should show a fuel icon (ship needs fuel, port has cheap fuel). */
+  private fuelNeededPortIds: Set<string> = new Set();
+  /** Port ID with the cheapest repairs (gets a subtle glow). */
+  private cheapestRepairPortId: string | null = null;
+  /** Port ID with the cheapest fuel (gets a subtle glow). */
+  private cheapestFuelPortId: string | null = null;
 
   // Map rendering constants
   private readonly OCEAN_COLOR = "#0a1e3d";
@@ -82,6 +94,8 @@ export class WorldMapCanvas {
     "#8b331f",
   ];
   private readonly HOME_PORT_COLOR = "#44aaff";
+  private readonly BLOCKED_PORT_COLOR = "#ff3333";
+  private readonly AFFECTED_PORT_COLOR = "#ffaa33";
   private readonly PORT_RADIUS = 4;
   private readonly PORT_HOVER_RADIUS = 7;
 
@@ -129,6 +143,37 @@ export class WorldMapCanvas {
   /** Set the selected port. */
   setSelectedPort(portId: string | null): void {
     this.selectedPortId = portId;
+    this.render();
+  }
+
+  /** Set port IDs that are blocked by world events. */
+  setBlockedPorts(portIds: string[]): void {
+    this.blockedPortIds = new Set(portIds);
+    this.render();
+  }
+
+  /** Set port IDs that are affected (cost multiplier) by world events. */
+  setAffectedPorts(portIds: string[]): void {
+    this.affectedPortIds = new Set(portIds);
+    this.render();
+  }
+
+  /** Set port IDs that should show a wrench (repair needed) icon. */
+  setRepairNeededPorts(portIds: string[]): void {
+    this.repairNeededPortIds = new Set(portIds);
+    this.render();
+  }
+
+  /** Set port IDs that should show a fuel drop icon. */
+  setFuelNeededPorts(portIds: string[]): void {
+    this.fuelNeededPortIds = new Set(portIds);
+    this.render();
+  }
+
+  /** Set the cheapest repair and fuel port IDs for highlighting. */
+  setCheapestPorts(repairPortId: string | null, fuelPortId: string | null): void {
+    this.cheapestRepairPortId = repairPortId;
+    this.cheapestFuelPortId = fuelPortId;
     this.render();
   }
 
@@ -321,6 +366,8 @@ export class WorldMapCanvas {
       const isHovered = this.hoveredPort?.id === marker.port.id;
       const isSelected = this.selectedPortId === marker.port.id;
       const isHome = this.homePortId === marker.port.id;
+      const isBlocked = this.blockedPortIds.has(marker.port.id);
+      const isAffected = this.affectedPortIds.has(marker.port.id);
 
       let color = this.PORT_COLOR;
       let radius = marker.radius;
@@ -328,6 +375,12 @@ export class WorldMapCanvas {
       if (isHome) {
         color = this.HOME_PORT_COLOR;
         radius = this.PORT_RADIUS + 1;
+      }
+      if (isAffected) {
+        color = this.AFFECTED_PORT_COLOR;
+      }
+      if (isBlocked) {
+        color = this.BLOCKED_PORT_COLOR;
       }
       if (isSelected) {
         color = this.PORT_SELECTED_COLOR;
@@ -341,11 +394,15 @@ export class WorldMapCanvas {
       // Outer glow
       this.ctx.beginPath();
       this.ctx.arc(marker.x, marker.y, radius + 2, 0, Math.PI * 2);
-      this.ctx.fillStyle = isHovered
-        ? "rgba(240, 200, 96, 0.3)"
-        : isHome
-          ? "rgba(68, 170, 255, 0.2)"
-          : "rgba(212, 168, 68, 0.15)";
+      this.ctx.fillStyle = isBlocked
+        ? "rgba(255, 51, 51, 0.35)"
+        : isAffected
+          ? "rgba(255, 170, 51, 0.3)"
+          : isHovered
+            ? "rgba(240, 200, 96, 0.3)"
+            : isHome
+              ? "rgba(68, 170, 255, 0.2)"
+              : "rgba(212, 168, 68, 0.15)";
       this.ctx.fill();
 
       // Main dot
@@ -358,6 +415,82 @@ export class WorldMapCanvas {
       this.ctx.strokeStyle = "rgba(0, 0, 0, 0.5)";
       this.ctx.lineWidth = 1;
       this.ctx.stroke();
+
+      // Draw warning icon for blocked ports (X mark)
+      if (isBlocked) {
+        const iconSize = 4;
+        const iconY = marker.y - radius - iconSize - 3;
+        this.ctx.strokeStyle = this.BLOCKED_PORT_COLOR;
+        this.ctx.lineWidth = 2;
+        this.ctx.beginPath();
+        this.ctx.moveTo(marker.x - iconSize, iconY - iconSize);
+        this.ctx.lineTo(marker.x + iconSize, iconY + iconSize);
+        this.ctx.moveTo(marker.x + iconSize, iconY - iconSize);
+        this.ctx.lineTo(marker.x - iconSize, iconY + iconSize);
+        this.ctx.stroke();
+      }
+
+      // Draw warning dot for affected (non-blocked) ports
+      if (isAffected && !isBlocked) {
+        const dotY = marker.y - radius - 5;
+        this.ctx.beginPath();
+        this.ctx.arc(marker.x, dotY, 2.5, 0, Math.PI * 2);
+        this.ctx.fillStyle = this.AFFECTED_PORT_COLOR;
+        this.ctx.fill();
+      }
+
+      // Draw cheapest port glow
+      const isCheapestRepair = this.cheapestRepairPortId === marker.port.id;
+      const isCheapestFuel = this.cheapestFuelPortId === marker.port.id;
+      if ((isCheapestRepair || isCheapestFuel) && !isBlocked) {
+        this.ctx.beginPath();
+        this.ctx.arc(marker.x, marker.y, radius + 5, 0, Math.PI * 2);
+        this.ctx.strokeStyle = isCheapestRepair ? "rgba(100, 220, 100, 0.5)" : "rgba(100, 180, 255, 0.5)";
+        this.ctx.lineWidth = 1.5;
+        this.ctx.stroke();
+      }
+
+      // Draw need-based icons (wrench for repair, fuel drop for fuel)
+      const showRepairIcon = this.repairNeededPortIds.has(marker.port.id) && !isBlocked;
+      const showFuelIcon = this.fuelNeededPortIds.has(marker.port.id) && !isBlocked;
+
+      if (showRepairIcon || showFuelIcon) {
+        let iconOffsetX = 0;
+
+        if (showRepairIcon) {
+          // Draw small wrench icon to the right of the port dot
+          const ix = marker.x + radius + 4 + iconOffsetX;
+          const iy = marker.y - 3;
+          this.ctx.strokeStyle = "#66dd66";
+          this.ctx.lineWidth = 1.5;
+          this.ctx.beginPath();
+          // Simple wrench shape: diagonal line with small circles at ends
+          this.ctx.moveTo(ix, iy);
+          this.ctx.lineTo(ix + 5, iy + 5);
+          this.ctx.stroke();
+          this.ctx.beginPath();
+          this.ctx.arc(ix, iy, 1.5, 0, Math.PI * 2);
+          this.ctx.fillStyle = "#66dd66";
+          this.ctx.fill();
+          this.ctx.beginPath();
+          this.ctx.arc(ix + 5, iy + 5, 1.5, 0, Math.PI * 2);
+          this.ctx.fill();
+          iconOffsetX += 10;
+        }
+
+        if (showFuelIcon) {
+          // Draw small fuel drop icon
+          const ix = marker.x + radius + 4 + iconOffsetX;
+          const iy = marker.y - 4;
+          this.ctx.fillStyle = "#66aaff";
+          this.ctx.beginPath();
+          // Teardrop shape
+          this.ctx.moveTo(ix + 2.5, iy);
+          this.ctx.quadraticCurveTo(ix + 6, iy + 5, ix + 2.5, iy + 7);
+          this.ctx.quadraticCurveTo(ix - 1, iy + 5, ix + 2.5, iy);
+          this.ctx.fill();
+        }
+      }
     }
   }
 
@@ -475,7 +608,10 @@ export class WorldMapCanvas {
     );
     if (!marker) return;
 
-    const text = `${marker.port.name}, ${marker.port.country}`;
+    const isBlocked = this.blockedPortIds.has(marker.port.id);
+    const isAffected = this.affectedPortIds.has(marker.port.id);
+    const statusSuffix = isBlocked ? " [BLOCKED]" : isAffected ? " [!]" : "";
+    const text = `${marker.port.name}, ${marker.port.country}${statusSuffix}`;
     this.ctx.font = "bold 12px Inter, sans-serif";
     const metrics = this.ctx.measureText(text);
     const padding = 6;

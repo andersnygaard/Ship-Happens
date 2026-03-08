@@ -14,6 +14,10 @@ export interface PlayerStatistics {
   cargoDelivered: number;
   distanceSailed: number;
   chartersCompleted: number;
+  /** Number of times the player earned a docking bonus. */
+  dockingBonusesEarned: number;
+  /** Total amount earned from docking bonuses. */
+  totalDockingBonus: number;
 }
 
 /**
@@ -30,6 +34,8 @@ export function createPlayerStatistics(): PlayerStatistics {
     cargoDelivered: 0,
     distanceSailed: 0,
     chartersCompleted: 0,
+    dockingBonusesEarned: 0,
+    totalDockingBonus: 0,
   };
 }
 
@@ -85,6 +91,14 @@ export function recordPortVisit(stats: PlayerStatistics, portId: string): void {
 export function recordCharterCompletion(stats: PlayerStatistics, cargoTons: number): void {
   stats.chartersCompleted += 1;
   stats.cargoDelivered += cargoTons;
+}
+
+/**
+ * Record a docking bonus earned from the maneuvering minigame.
+ */
+export function recordDockingBonus(stats: PlayerStatistics, amount: number): void {
+  stats.dockingBonusesEarned += 1;
+  stats.totalDockingBonus += amount;
 }
 
 /**

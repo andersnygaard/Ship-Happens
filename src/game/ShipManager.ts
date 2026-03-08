@@ -3,8 +3,9 @@
  * Handles purchasing, repairing, refueling, and tracking ship state.
  */
 
-import { OwnedShip, ShipSpec, CargoType, Port } from "../data/types";
+import { OwnedShip, ShipSpec, CargoType, Port, ALL_CAPTAIN_TRAITS } from "../data/types";
 import { getShipSpecById, SHIP_CATALOG } from "../data/ships";
+import { getPortById as getPortByIdForName } from "../data/ports";
 import {
   MAX_CONDITION_PERCENT,
   BASE_FUEL_COST_PER_TON,
@@ -12,6 +13,7 @@ import {
   FUEL_COST_MAX_MULTIPLIER,
   CONDITION_LOSS_PER_VOYAGE_BASE,
   WEEKS_PER_YEAR,
+  FUEL_CONSUMPTION_SPEED_EXPONENT,
 } from "../data/constants";
 import {
   FinancialState,
@@ -140,6 +142,7 @@ export function purchaseShip(
     specId,
     name: `MS ${name}`,
     captainName: getNextCaptainName(),
+    captainTrait: ALL_CAPTAIN_TRAITS[Math.floor(Math.random() * ALL_CAPTAIN_TRAITS.length)],
     conditionPercent: MAX_CONDITION_PERCENT,
     fuelTons: spec.bunkerCapacityTons, // New ships come fully fueled
     currentPortId: homePortId,
@@ -149,6 +152,7 @@ export function purchaseShip(
     mortgagePercent,
     mortgageRemaining: mortgageAmount,
     mortgagePayment: weeklyPayment,
+    originalMortgageAmount: mortgageAmount,
     purchaseWeek: time.week,
     purchaseYear: time.year,
   };
@@ -328,7 +332,9 @@ export function loadCargo(
   ship.cargoType = cargoType;
   ship.cargoDestinationPortId = destinationPortId;
 
-  return { success: true, message: `Loaded ${cargoType} onto ${ship.name}. Destination: ${destinationPortId}.` };
+  const destPortInfo = getPortByIdForName(destinationPortId);
+  const destName = destPortInfo ? destPortInfo.name : destinationPortId;
+  return { success: true, message: `Loaded ${cargoType} onto ${ship.name}. Destination: ${destName}.` };
 }
 
 /**
@@ -356,18 +362,37 @@ export function applyVoyageWear(ship: OwnedShip, additionalLoss: number = 0): vo
 }
 
 /**
+ * Calculate fuel consumption per day at a given cruising speed.
+ * Uses the admiralty formula (cubic scaling): consumption = maxConsumption * (speed / maxSpeed)^3.
+ * This makes slow steaming significantly more fuel-efficient.
+ *
+ * @param spec - The ship specification
+ * @param speedKnots - The cruising speed in knots
+ * @returns Fuel consumption in tons per day at the given speed
+ */
+export function calculateFuelConsumptionAtSpeed(spec: ShipSpec, speedKnots: number): number {
+  if (speedKnots <= 0 || spec.maxSpeedKnots <= 0) return 0;
+  const speedFraction = Math.min(speedKnots / spec.maxSpeedKnots, 1.0);
+  return spec.fuelConsumptionTonsPerDay * Math.pow(speedFraction, FUEL_CONSUMPTION_SPEED_EXPONENT);
+}
+
+/**
  * Consume fuel during a voyage.
  * @param ship - The ship consuming fuel
  * @param days - Number of days of travel
+ * @param cruisingSpeedKnots - Optional cruising speed; if omitted, uses max speed consumption
  * @returns The actual fuel consumed (may be less than needed if tank runs dry)
  */
-export function consumeFuel(ship: OwnedShip, days: number): { consumed: number; ranOutOfFuel: boolean } {
+export function consumeFuel(ship: OwnedShip, days: number, cruisingSpeedKnots?: number): { consumed: number; ranOutOfFuel: boolean } {
   const spec = getShipSpecById(ship.specId);
   if (!spec) {
     return { consumed: 0, ranOutOfFuel: false };
   }
 
-  const needed = Math.round(spec.fuelConsumptionTonsPerDay * days);
+  const consumptionPerDay = cruisingSpeedKnots !== undefined
+    ? calculateFuelConsumptionAtSpeed(spec, cruisingSpeedKnots)
+    : spec.fuelConsumptionTonsPerDay;
+  const needed = Math.round(consumptionPerDay * days);
   const consumed = Math.min(needed, ship.fuelTons);
   ship.fuelTons -= consumed;
 

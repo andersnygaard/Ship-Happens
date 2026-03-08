@@ -4,10 +4,13 @@
  */
 
 import type { FinancialState, LedgerEntry } from "../../game/FinancialSystem";
+import type { OwnedShip } from "../../data/types";
 import { getBalance } from "../../game/FinancialSystem";
 
 export interface FinancialSummaryData {
   finances: FinancialState;
+  /** Ships array for calculating weekly debt service total. */
+  ships?: OwnedShip[];
 }
 
 /** Number of recent transactions to display. */
@@ -41,6 +44,30 @@ export function renderFinancialSummary(data: FinancialSummaryData): HTMLElement 
   balanceDiv.appendChild(balanceLabel);
   balanceDiv.appendChild(balanceValue);
   container.appendChild(balanceDiv);
+
+  // Weekly Debt Service line
+  if (data.ships && data.ships.length > 0) {
+    const totalWeeklyDebtService = data.ships.reduce(
+      (sum, ship) => sum + ship.mortgagePayment, 0,
+    );
+    if (totalWeeklyDebtService > 0) {
+      const debtServiceDiv = document.createElement("div");
+      debtServiceDiv.className = "office-debt-service-display";
+
+      const debtServiceLabel = document.createElement("span");
+      debtServiceLabel.className = "office-balance-label";
+      debtServiceLabel.textContent = "Weekly Debt Service";
+
+      const debtServiceValue = document.createElement("span");
+      debtServiceValue.className = "office-balance-value data-display";
+      debtServiceValue.style.color = "var(--color-gold, #e8a44a)";
+      debtServiceValue.textContent = `-$${totalWeeklyDebtService.toLocaleString()}`;
+
+      debtServiceDiv.appendChild(debtServiceLabel);
+      debtServiceDiv.appendChild(debtServiceValue);
+      container.appendChild(debtServiceDiv);
+    }
+  }
 
   // Recent transactions
   const txTitle = document.createElement("h4");

@@ -51,12 +51,28 @@ export interface ShipSpec {
   readonly dailyOperatingCosts: number;
 }
 
+// ─── Captain Traits ─────────────────────────────────────────────────────────
+
+export enum CaptainTrait {
+  Cautious = "Cautious",
+  Reckless = "Reckless",
+  Frugal = "Frugal",
+  Superstitious = "Superstitious",
+  Charismatic = "Charismatic",
+  StrictDisciplinarian = "Strict Disciplinarian",
+}
+
+/** All captain traits as an array for random selection. */
+export const ALL_CAPTAIN_TRAITS: readonly CaptainTrait[] = Object.values(CaptainTrait);
+
 // ─── Owned Ship (in-game instance) ──────────────────────────────────────────
 
 export interface OwnedShip {
   readonly specId: string;
   name: string;
   captainName: string;
+  /** Captain personality trait — affects minor gameplay events and flavor text. */
+  captainTrait: CaptainTrait;
   conditionPercent: number;
   fuelTons: number;
   currentPortId: string | null;
@@ -68,6 +84,8 @@ export interface OwnedShip {
   mortgageRemaining: number;
   /** Weekly mortgage payment amount in dollars. */
   mortgagePayment: number;
+  /** Original mortgage amount in dollars at time of purchase (for tracking interest paid). */
+  originalMortgageAmount: number;
   /** Week the ship was purchased (for age-based depreciation). */
   purchaseWeek: number;
   /** Year the ship was purchased (for age-based depreciation). */
