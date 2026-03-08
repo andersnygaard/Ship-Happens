@@ -55,6 +55,10 @@ export class WorldMapCanvas {
   private resizeObserver: ResizeObserver | null = null;
   private shipDataList: MapShipData[] = [];
   private homePortId: string | null = null;
+  /** Port IDs that are blocked by world events. */
+  private blockedPortIds: Set<string> = new Set();
+  /** Port IDs with a cost multiplier > 1 from world events (not blocked). */
+  private affectedPortIds: Set<string> = new Set();
 
   // Map rendering constants
   private readonly OCEAN_COLOR = "#0a1e3d";
@@ -82,6 +86,8 @@ export class WorldMapCanvas {
     "#8b331f",
   ];
   private readonly HOME_PORT_COLOR = "#44aaff";
+  private readonly BLOCKED_PORT_COLOR = "#ff3333";
+  private readonly AFFECTED_PORT_COLOR = "#ffaa33";
   private readonly PORT_RADIUS = 4;
   private readonly PORT_HOVER_RADIUS = 7;
 
@@ -129,6 +135,18 @@ export class WorldMapCanvas {
   /** Set the selected port. */
   setSelectedPort(portId: string | null): void {
     this.selectedPortId = portId;
+    this.render();
+  }
+
+  /** Set port IDs that are blocked by world events. */
+  setBlockedPorts(portIds: string[]): void {
+    this.blockedPortIds = new Set(portIds);
+    this.render();
+  }
+
+  /** Set port IDs that are affected (cost multiplier) by world events. */
+  setAffectedPorts(portIds: string[]): void {
+    this.affectedPortIds = new Set(portIds);
     this.render();
   }
 
@@ -321,6 +339,8 @@ export class WorldMapCanvas {
       const isHovered = this.hoveredPort?.id === marker.port.id;
       const isSelected = this.selectedPortId === marker.port.id;
       const isHome = this.homePortId === marker.port.id;
+      const isBlocked = this.blockedPortIds.has(marker.port.id);
+      const isAffected = this.affectedPortIds.has(marker.port.id);
 
       let color = this.PORT_COLOR;
       let radius = marker.radius;
@@ -328,6 +348,12 @@ export class WorldMapCanvas {
       if (isHome) {
         color = this.HOME_PORT_COLOR;
         radius = this.PORT_RADIUS + 1;
+      }
+      if (isAffected) {
+        color = this.AFFECTED_PORT_COLOR;
+      }
+      if (isBlocked) {
+        color = this.BLOCKED_PORT_COLOR;
       }
       if (isSelected) {
         color = this.PORT_SELECTED_COLOR;
@@ -341,11 +367,15 @@ export class WorldMapCanvas {
       // Outer glow
       this.ctx.beginPath();
       this.ctx.arc(marker.x, marker.y, radius + 2, 0, Math.PI * 2);
-      this.ctx.fillStyle = isHovered
-        ? "rgba(240, 200, 96, 0.3)"
-        : isHome
-          ? "rgba(68, 170, 255, 0.2)"
-          : "rgba(212, 168, 68, 0.15)";
+      this.ctx.fillStyle = isBlocked
+        ? "rgba(255, 51, 51, 0.35)"
+        : isAffected
+          ? "rgba(255, 170, 51, 0.3)"
+          : isHovered
+            ? "rgba(240, 200, 96, 0.3)"
+            : isHome
+              ? "rgba(68, 170, 255, 0.2)"
+              : "rgba(212, 168, 68, 0.15)";
       this.ctx.fill();
 
       // Main dot
@@ -358,6 +388,29 @@ export class WorldMapCanvas {
       this.ctx.strokeStyle = "rgba(0, 0, 0, 0.5)";
       this.ctx.lineWidth = 1;
       this.ctx.stroke();
+
+      // Draw warning icon for blocked ports (X mark)
+      if (isBlocked) {
+        const iconSize = 4;
+        const iconY = marker.y - radius - iconSize - 3;
+        this.ctx.strokeStyle = this.BLOCKED_PORT_COLOR;
+        this.ctx.lineWidth = 2;
+        this.ctx.beginPath();
+        this.ctx.moveTo(marker.x - iconSize, iconY - iconSize);
+        this.ctx.lineTo(marker.x + iconSize, iconY + iconSize);
+        this.ctx.moveTo(marker.x + iconSize, iconY - iconSize);
+        this.ctx.lineTo(marker.x - iconSize, iconY + iconSize);
+        this.ctx.stroke();
+      }
+
+      // Draw warning dot for affected (non-blocked) ports
+      if (isAffected && !isBlocked) {
+        const dotY = marker.y - radius - 5;
+        this.ctx.beginPath();
+        this.ctx.arc(marker.x, dotY, 2.5, 0, Math.PI * 2);
+        this.ctx.fillStyle = this.AFFECTED_PORT_COLOR;
+        this.ctx.fill();
+      }
     }
   }
 
@@ -475,7 +528,10 @@ export class WorldMapCanvas {
     );
     if (!marker) return;
 
-    const text = `${marker.port.name}, ${marker.port.country}`;
+    const isBlocked = this.blockedPortIds.has(marker.port.id);
+    const isAffected = this.affectedPortIds.has(marker.port.id);
+    const statusSuffix = isBlocked ? " [BLOCKED]" : isAffected ? " [!]" : "";
+    const text = `${marker.port.name}, ${marker.port.country}${statusSuffix}`;
     this.ctx.font = "bold 12px Inter, sans-serif";
     const metrics = this.ctx.measureText(text);
     const padding = 6;

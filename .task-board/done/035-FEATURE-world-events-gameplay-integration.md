@@ -92,14 +92,14 @@ The `WorldEvents.ts` system exists with 8 event types and a generation/expiratio
 
 ## Acceptance Criteria
 
-- [ ] World events generate during turn progression (15% chance per round, max 3 active)
-- [ ] Blocked ports show a visual indicator on the world map and cannot be navigated to
-- [ ] Cost multipliers apply to repair, refuel, and charter costs at affected ports
-- [ ] Events persist across save/load correctly
-- [ ] Player is notified when a new world event occurs (toast or dialog)
-- [ ] At least 12 event templates with humorous headlines exist
-- [ ] Event warnings appear in the charter dialog for affected destinations
-- [ ] Build succeeds with no errors
+- [x] World events generate during turn progression (15% chance per round, max 3 active)
+- [x] Blocked ports show a visual indicator on the world map and cannot be navigated to
+- [x] Cost multipliers apply to repair, refuel, and charter costs at affected ports
+- [x] Events persist across save/load correctly
+- [x] Player is notified when a new world event occurs (toast or dialog)
+- [x] At least 12 event templates with humorous headlines exist
+- [x] Event warnings appear in the charter dialog for affected destinations
+- [x] Build succeeds with no errors
 
 ---
 

@@ -82,6 +82,13 @@ import {
   recordCharterCompletion,
 } from "./Statistics";
 
+import {
+  type WorldEvent,
+  maybeGenerateWorldEvent,
+  expireWorldEvents,
+  resetWorldEventIds,
+} from "./WorldEvents";
+
 // ─── Player State ────────────────────────────────────────────────────────────
 
 /** Extended player state that combines player info with financial data. */
@@ -107,6 +114,8 @@ export interface FullGameState {
   players: PlayerState[];
   time: TimeState;
   turns: TurnState;
+  /** Active world events that affect gameplay. */
+  worldEvents: WorldEvent[];
   /** Flag indicating the game has been initialized. */
   initialized: boolean;
 }
@@ -150,10 +159,13 @@ export function createNewGame(config: NewGameConfig): FullGameState {
     statistics: createPlayerStatistics(),
   }));
 
+  resetWorldEventIds();
+
   return {
     players,
     time: createTimeState(),
     turns: createTurnState(config.players.length),
+    worldEvents: [],
     initialized: true,
   };
 }
@@ -366,6 +378,7 @@ export function getAvailableCharters(
     spec.capacityBrt,
     state.time.week,
     state.time.year,
+    state.worldEvents,
   );
 }
 
@@ -480,8 +493,9 @@ export function deliverCargo(
  * Advance to the next player's turn.
  * If a new round starts, advances time by one week and applies weekly costs.
  */
-export function endTurn(state: FullGameState): { newRound: boolean; message: string } {
+export function endTurn(state: FullGameState): { newRound: boolean; message: string; newWorldEvents: WorldEvent[] } {
   const newRound = nextTurn(state.turns);
+  const newWorldEvents: WorldEvent[] = [];
 
   if (newRound) {
     // Advance time by one week
@@ -512,11 +526,25 @@ export function endTurn(state: FullGameState): { newRound: boolean; message: str
         }
       }
     }
+
+    // ── World Events: expire old events and maybe generate new ones ──
+    if (!state.worldEvents) {
+      state.worldEvents = [];
+    }
+    const { remaining } = expireWorldEvents(state.worldEvents, time.week, time.year);
+    state.worldEvents = remaining;
+
+    const newEvent = maybeGenerateWorldEvent(time.week, time.year, state.worldEvents);
+    if (newEvent) {
+      state.worldEvents.push(newEvent);
+      newWorldEvents.push(newEvent);
+    }
   }
 
   const activePlayer = getActivePlayer(state);
   return {
     newRound,
+    newWorldEvents,
     message: newRound
       ? `New round! Week ${state.time.week}, Year ${state.time.year}. It's ${activePlayer.name}'s turn.`
       : `It's ${activePlayer.name}'s turn.`,
@@ -754,6 +782,10 @@ export function deserializeGameState(json: string): FullGameState {
   const parsed = JSON.parse(json) as FullGameState;
   if (!parsed.initialized) {
     throw new Error("Invalid game state: not initialized.");
+  }
+  // Backward compatibility: ensure worldEvents array exists
+  if (!parsed.worldEvents) {
+    parsed.worldEvents = [];
   }
   return parsed;
 }

@@ -20,6 +20,7 @@ export function createRefuelDialog(
   ship: OwnedShip,
   player: PlayerState,
   callbacks: RefuelDialogCallbacks,
+  costMultiplier: number = 1.0,
 ): HTMLElement {
   const overlay = document.createElement("div");
   overlay.className = "ship-info-overlay";
@@ -37,8 +38,13 @@ export function createRefuelDialog(
   const maxCapacity = spec ? spec.bunkerCapacityTons : 0;
   const currentFuel = ship.fuelTons;
   const maxAddable = maxCapacity - currentFuel;
-  const costPerTon = ship.currentPortId ? getFuelCostPerTon(ship.currentPortId) : 0;
+  const baseCostPerTon = ship.currentPortId ? getFuelCostPerTon(ship.currentPortId) : 0;
+  const costPerTon = Math.round(baseCostPerTon * costMultiplier);
   const balance = getPlayerBalance(player);
+
+  const costLabel = costMultiplier > 1.0
+    ? `$${costPerTon.toLocaleString()} (+${Math.round((costMultiplier - 1) * 100)}% event surcharge)`
+    : `$${costPerTon.toLocaleString()}`;
 
   // Info section
   const infoSection = document.createElement("div");
@@ -48,7 +54,7 @@ export function createRefuelDialog(
     ["Current fuel:", `${currentFuel.toLocaleString()}t`],
     ["Tank capacity:", `${maxCapacity.toLocaleString()}t`],
     ["Space available:", `${maxAddable.toLocaleString()}t`],
-    ["Cost per ton:", `$${costPerTon.toLocaleString()}`],
+    ["Cost per ton:", costLabel],
     ["Balance:", `$${(balance / 1_000_000).toFixed(2)}M`],
   ];
 

@@ -3,6 +3,9 @@
  * Generates global events that affect gameplay — trade sanctions,
  * canal blockages, piracy zones, and other disruptions.
  * Events modify route costs, block ports temporarily, or add surcharges.
+ *
+ * Events are stored in FullGameState.worldEvents and managed via
+ * state-passing functions (no module-level mutable state).
  */
 
 import { pickRandom } from "../data/humorTexts";
@@ -17,7 +20,11 @@ export type WorldEventType =
   | "fuel-crisis"
   | "environmental-disaster"
   | "diplomatic-incident"
-  | "tech-failure";
+  | "tech-failure"
+  | "tariff-war"
+  | "social-media-panic"
+  | "absurd-regulation"
+  | "climate-event";
 
 export interface WorldEvent {
   readonly id: string;
@@ -174,6 +181,72 @@ const EVENT_TEMPLATES: readonly WorldEventTemplate[] = [
     blocksPort: false,
     durationWeeks: [1, 3],
   },
+  // ─── New satirical event templates ──────────────────────────────────────────
+  {
+    type: "tariff-war",
+    headlines: [
+      "President announces 500% tariff on imports of common sense",
+      "Trade war escalates: both sides now taxing each other's tariffs",
+      "New tariff on foreign-made tariffs creates infinite loop — economists baffled",
+      "Retaliatory tariffs on tariff consultants leave no one able to calculate costs",
+    ],
+    descriptions: [
+      "A sudden tariff escalation has sent shipping costs soaring. Customs officials are reportedly using a Magic 8-Ball to determine duty rates.",
+      "An escalating trade war has turned import costs into a game of roulette. Shippers report that paperwork now weighs more than actual cargo.",
+    ],
+    costMultiplier: 1.6,
+    blocksPort: false,
+    durationWeeks: [3, 10],
+    targetPortIds: ["shanghai", "new-york", "los-angeles", "hamburg", "rotterdam"],
+  },
+  {
+    type: "social-media-panic",
+    headlines: [
+      "Viral TikTok claims shipping containers cause 5G — ports flooded with protesters",
+      "Influencer accidentally live-streams classified port security codes",
+      "Crypto bro buys entire port, renames it 'BlockchainHarbor.io' — all operations halted",
+    ],
+    descriptions: [
+      "A viral social media post has caused mass panic at several ports. Security forces are overwhelmed by influencers demanding to speak to the port manager.",
+      "An internet celebrity's ill-advised stunt has shut down port operations. The hashtag #PortGate is trending worldwide.",
+    ],
+    costMultiplier: 1.3,
+    blocksPort: true,
+    durationWeeks: [1, 3],
+    targetPortIds: ["los-angeles", "new-york", "london", "tokyo", "sydney"],
+  },
+  {
+    type: "absurd-regulation",
+    headlines: [
+      "EU mandates all ships must carry a minimum of 3 emotional support seagulls",
+      "New IMO regulation requires ships to indicate with turn signals before turning",
+      "UN resolution: all cargo manifests must now be written in haiku form",
+    ],
+    descriptions: [
+      "A bizarre new maritime regulation has brought international shipping to its knees. Compliance officers are reportedly in tears.",
+      "The latest regulatory update has left the shipping industry scrambling. Lawyers are charging triple their usual rates to interpret the new rules.",
+    ],
+    costMultiplier: 1.4,
+    blocksPort: false,
+    durationWeeks: [2, 8],
+  },
+  {
+    type: "climate-event",
+    headlines: [
+      "Hurricane season starts three months early — meteorologists blame 'vibes'",
+      "Unprecedented ice melt opens new Arctic shipping route — penguins file lawsuit",
+      "Freak tidal wave caused by whale belly flop damages port infrastructure",
+      "Fog so thick at port that ships are navigating by smell",
+    ],
+    descriptions: [
+      "Extreme weather conditions have disrupted port operations and increased costs across the region. Insurance companies are pretending their phones are broken.",
+      "A rare climate event has made port access dangerous. The coast guard recommends 'staying home and watching Netflix' until conditions improve.",
+    ],
+    costMultiplier: 1.5,
+    blocksPort: true,
+    durationWeeks: [1, 4],
+    targetPortIds: ["tokyo", "mumbai", "hong-kong", "sydney", "rio-de-janeiro", "new-york"],
+  },
 ] as const;
 
 // ─── Available port IDs for random targeting ─────────────────────────────────
@@ -185,7 +258,7 @@ const ALL_PORT_IDS = [
   "hong-kong", "los-angeles",
 ];
 
-// ─── World Events Manager ────────────────────────────────────────────────────
+// ─── World Events State Functions ───────────────────────────────────────────
 
 let nextEventId = 1;
 
@@ -197,22 +270,19 @@ function generateEventId(): string {
 }
 
 /**
- * Active world events list.
- * In a full implementation this would be part of the game state,
- * but for now we keep it as module-level state.
- */
-let activeEvents: WorldEvent[] = [];
-
-/**
  * Check if a world event should be generated this week.
- * Roughly 15% chance per week if fewer than 2 events are active.
+ * Roughly 15% chance per week if fewer than 3 events are active.
+ * Operates on the provided events array (from game state).
  */
 export function maybeGenerateWorldEvent(
   currentWeek: number,
   currentYear: number,
+  activeEvents?: WorldEvent[],
 ): WorldEvent | null {
+  const events = activeEvents ?? [];
+
   // Don't stack too many events
-  if (activeEvents.length >= 3) return null;
+  if (events.length >= 3) return null;
 
   // 15% chance per week
   if (Math.random() > 0.15) return null;
@@ -249,38 +319,44 @@ export function maybeGenerateWorldEvent(
     startYear: currentYear,
   };
 
-  activeEvents.push(event);
   return event;
 }
 
 /**
  * Expire events that have passed their duration.
+ * Returns a tuple: [remaining events, expired events].
  */
-export function expireWorldEvents(currentWeek: number, currentYear: number): WorldEvent[] {
+export function expireWorldEvents(
+  events: WorldEvent[],
+  currentWeek: number,
+  currentYear: number,
+): { remaining: WorldEvent[]; expired: WorldEvent[] } {
+  const remaining: WorldEvent[] = [];
   const expired: WorldEvent[] = [];
-  activeEvents = activeEvents.filter((event) => {
+  for (const event of events) {
     const elapsedWeeks = (currentYear - event.startYear) * 52 + (currentWeek - event.startWeek);
     if (elapsedWeeks >= event.durationWeeks) {
       expired.push(event);
-      return false;
+    } else {
+      remaining.push(event);
     }
-    return true;
-  });
-  return expired;
+  }
+  return { remaining, expired };
 }
 
 /**
- * Get all currently active world events.
+ * Get all currently active world events from the provided array.
  */
-export function getActiveWorldEvents(): readonly WorldEvent[] {
-  return activeEvents;
+export function getActiveWorldEvents(events?: readonly WorldEvent[]): readonly WorldEvent[] {
+  return events ?? [];
 }
 
 /**
  * Check if a specific port is blocked by any active event.
  */
-export function isPortBlocked(portId: string): boolean {
-  return activeEvents.some(
+export function isPortBlocked(portId: string, events?: readonly WorldEvent[]): boolean {
+  const evts = events ?? [];
+  return evts.some(
     (e) => e.blocksPort && e.affectedPortIds.includes(portId),
   );
 }
@@ -289,9 +365,10 @@ export function isPortBlocked(portId: string): boolean {
  * Get the cost multiplier for a specific port based on active events.
  * Returns the highest multiplier if multiple events affect the port.
  */
-export function getPortCostMultiplier(portId: string): number {
+export function getPortCostMultiplier(portId: string, events?: readonly WorldEvent[]): number {
+  const evts = events ?? [];
   let maxMultiplier = 1.0;
-  for (const event of activeEvents) {
+  for (const event of evts) {
     // Global events (no specific ports) affect everyone
     if (event.affectedPortIds.length === 0 || event.affectedPortIds.includes(portId)) {
       maxMultiplier = Math.max(maxMultiplier, event.costMultiplier);
@@ -304,14 +381,24 @@ export function getPortCostMultiplier(portId: string): number {
  * Get event headlines suitable for the news ticker.
  * Returns headlines from active world events.
  */
-export function getWorldEventHeadlines(): string[] {
-  return activeEvents.map((e) => e.headline);
+export function getWorldEventHeadlines(events?: readonly WorldEvent[]): string[] {
+  const evts = events ?? [];
+  return evts.map((e) => e.headline);
 }
 
 /**
- * Clear all active events (e.g., for a new game).
+ * Get all active events that affect a specific port (blocked or cost multiplier).
  */
-export function clearWorldEvents(): void {
-  activeEvents = [];
+export function getEventsAffectingPort(portId: string, events?: readonly WorldEvent[]): WorldEvent[] {
+  const evts = events ?? [];
+  return evts.filter(
+    (e) => e.affectedPortIds.includes(portId) || e.affectedPortIds.length === 0,
+  );
+}
+
+/**
+ * Reset the event ID counter (e.g., for a new game).
+ */
+export function resetWorldEventIds(): void {
   nextEventId = 1;
 }

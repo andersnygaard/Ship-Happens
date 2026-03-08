@@ -33,6 +33,7 @@ import { toast } from "../components/Toast";
 import { createShipSelector } from "../components/ShipSelector";
 import { helpPanel } from "../components/HelpPanel";
 import { tutorialSystem } from "../../game/TutorialSystem";
+import { isPortBlocked, getPortCostMultiplier } from "../../game/WorldEvents";
 
 export class WorldMapScreen implements GameScreen {
   private container: HTMLElement;
@@ -115,6 +116,30 @@ export class WorldMapScreen implements GameScreen {
       }
       this.mapCanvas.setShips(allShipData);
       this.mapCanvas.setHomePort(player.homePortId);
+
+      // Set world event indicators on the map
+      if (state.worldEvents && state.worldEvents.length > 0) {
+        const blockedIds: string[] = [];
+        const affectedIds: string[] = [];
+        const allPortIds = new Set<string>();
+        for (const evt of state.worldEvents) {
+          for (const pid of evt.affectedPortIds) {
+            allPortIds.add(pid);
+            if (evt.blocksPort) {
+              blockedIds.push(pid);
+            }
+          }
+        }
+        // Affected = has cost multiplier > 1 but not blocked
+        const blockedSet = new Set(blockedIds);
+        for (const pid of allPortIds) {
+          if (!blockedSet.has(pid) && getPortCostMultiplier(pid, state.worldEvents) > 1.0) {
+            affectedIds.push(pid);
+          }
+        }
+        this.mapCanvas.setBlockedPorts(blockedIds);
+        this.mapCanvas.setAffectedPorts(affectedIds);
+      }
     }
 
     mainArea.appendChild(mapContainer);
@@ -433,6 +458,27 @@ export class WorldMapScreen implements GameScreen {
       }
     }
 
+    // World event warnings
+    if (state && state.worldEvents) {
+      if (isPortBlocked(port.id, state.worldEvents)) {
+        const blockedBadge = document.createElement("span");
+        blockedBadge.className = "port-info-detail";
+        blockedBadge.style.color = "var(--color-danger, #ff4444)";
+        blockedBadge.style.fontWeight = "bold";
+        blockedBadge.textContent = "PORT BLOCKED — World Event";
+        this.selectedPortInfo.appendChild(blockedBadge);
+      } else {
+        const multiplier = getPortCostMultiplier(port.id, state.worldEvents);
+        if (multiplier > 1.0) {
+          const costBadge = document.createElement("span");
+          costBadge.className = "port-info-detail";
+          costBadge.style.color = "var(--color-gold, #ffaa33)";
+          costBadge.textContent = `Costs +${Math.round((multiplier - 1) * 100)}% (World Event)`;
+          this.selectedPortInfo.appendChild(costBadge);
+        }
+      }
+    }
+
     const destBadge = document.createElement("span");
     destBadge.className = "port-info-destination";
     destBadge.textContent = "DESTINATION";
@@ -510,6 +556,12 @@ export class WorldMapScreen implements GameScreen {
       return;
     }
 
+    // Check if destination is blocked by a world event
+    if (state.worldEvents && isPortBlocked(this.selectedDestination.id, state.worldEvents)) {
+      toast.show(`${this.selectedDestination.name} is blocked by a world event! Choose another destination.`, "error");
+      return;
+    }
+
     // Check fuel
     const originPort = ship.currentPortId ? getPortById(ship.currentPortId) : null;
     const destPort = this.selectedDestination;
@@ -562,6 +614,15 @@ export class WorldMapScreen implements GameScreen {
 
     if (result.newRound) {
       toast.show(result.message, "info");
+    }
+
+    // Show toast for new world events
+    if (result.newWorldEvents && result.newWorldEvents.length > 0) {
+      for (const evt of result.newWorldEvents) {
+        setTimeout(() => {
+          toast.show(`WORLD EVENT: ${evt.headline}`, "error");
+        }, 500);
+      }
     }
   }
 

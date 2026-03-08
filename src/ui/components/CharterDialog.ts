@@ -6,6 +6,8 @@
 
 import type { CharterContract } from "../../data/types";
 import { getPortById } from "../../data/ports";
+import type { WorldEvent } from "../../game/WorldEvents";
+import { isPortBlocked, getPortCostMultiplier, getEventsAffectingPort } from "../../game/WorldEvents";
 
 export interface CharterDialogCallbacks {
   onAccept: (contract: CharterContract) => void;
@@ -18,6 +20,7 @@ export interface CharterDialogCallbacks {
 export function createCharterDialog(
   contracts: CharterContract[],
   callbacks: CharterDialogCallbacks,
+  worldEvents?: readonly WorldEvent[],
 ): HTMLElement {
   const overlay = document.createElement("div");
   overlay.className = "ship-info-overlay";
@@ -112,9 +115,25 @@ export function createCharterDialog(
       ? `<div class="charter-funny-cargo">"${contract.funnyDescription}"</div>`
       : "";
 
+    // Check for world event warnings at destination
+    let eventWarningHtml = "";
+    if (worldEvents && worldEvents.length > 0) {
+      const destBlocked = isPortBlocked(contract.destinationPortId, worldEvents);
+      const destMultiplier = getPortCostMultiplier(contract.destinationPortId, worldEvents);
+      const destEvents = getEventsAffectingPort(contract.destinationPortId, worldEvents);
+
+      if (destBlocked) {
+        eventWarningHtml = `<div style="color: #ff4444; font-weight: bold; margin: 4px 0; padding: 4px 8px; background: rgba(255,68,68,0.1); border-radius: 4px;">WARNING: Destination port is BLOCKED!</div>`;
+      } else if (destMultiplier > 1.0 && destEvents.length > 0) {
+        const eventHeadline = destEvents[0].headline;
+        eventWarningHtml = `<div style="color: #ffaa33; font-style: italic; margin: 4px 0; padding: 4px 8px; background: rgba(255,170,51,0.1); border-radius: 4px;">Event: ${eventHeadline} (costs +${Math.round((destMultiplier - 1) * 100)}%)</div>`;
+      }
+    }
+
     detailsContent.innerHTML = `
       <div class="charter-details-title">${contract.cargoType} to ${destName}</div>
       ${funnyLine}
+      ${eventWarningHtml}
       <div class="port-ops-dialog-row">
         <span class="port-ops-dialog-label">Rate:</span>
         <span class="port-ops-dialog-value data-display">$${contract.rate.toLocaleString()}</span>
@@ -142,7 +161,18 @@ export function createCharterDialog(
     // Destination item
     const destItem = document.createElement("div");
     destItem.className = "charter-item";
-    destItem.textContent = destName;
+    // Add warning indicator if destination has world event
+    let destDisplayName = destName;
+    if (worldEvents && worldEvents.length > 0) {
+      if (isPortBlocked(contract.destinationPortId, worldEvents)) {
+        destDisplayName = `${destName} [BLOCKED]`;
+        destItem.style.color = "#ff4444";
+      } else if (getPortCostMultiplier(contract.destinationPortId, worldEvents) > 1.0) {
+        destDisplayName = `${destName} [!]`;
+        destItem.style.color = "#ffaa33";
+      }
+    }
+    destItem.textContent = destDisplayName;
     destItem.dataset.contractIdx = String(contracts.indexOf(contract));
 
     // Cargo item

@@ -21,6 +21,7 @@ export function createRepairDialog(
   port: Port,
   player: PlayerState,
   callbacks: RepairDialogCallbacks,
+  costMultiplier: number = 1.0,
 ): HTMLElement {
   const overlay = document.createElement("div");
   overlay.className = "ship-info-overlay";
@@ -60,13 +61,18 @@ export function createRepairDialog(
   infoSection.className = "port-ops-dialog-info";
 
   const maxRepairable = 100 - ship.conditionPercent;
-  const costPerPercent = port.repairCostPerPercent;
+  const baseCostPerPercent = port.repairCostPerPercent;
+  const costPerPercent = Math.round(baseCostPerPercent * costMultiplier);
   const maxCost = maxRepairable * costPerPercent;
   const balance = getPlayerBalance(player);
 
+  const costLabel = costMultiplier > 1.0
+    ? `$${costPerPercent.toLocaleString()} per % (+${Math.round((costMultiplier - 1) * 100)}% event surcharge)`
+    : `$${costPerPercent.toLocaleString()} per %`;
+
   const infoLines: [string, string][] = [
     ["State:", `${ship.conditionPercent}%`],
-    ["Costs:", `$${costPerPercent.toLocaleString()} per %`],
+    ["Costs:", costLabel],
     ["Maximum:", `$${maxCost.toLocaleString()}`],
     ["Balance:", `$${(balance / 1_000_000).toFixed(2)}M`],
   ];

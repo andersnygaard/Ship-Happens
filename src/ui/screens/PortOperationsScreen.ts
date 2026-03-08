@@ -29,6 +29,7 @@ import { createRefuelDialog } from "../components/RefuelDialog";
 import { createCharterDialog } from "../components/CharterDialog";
 import { createPortSkylineCanvas } from "../components/PortSkyline";
 import { toast } from "../components/Toast";
+import { getPortCostMultiplier } from "../../game/WorldEvents";
 
 export class PortOperationsScreen implements GameScreen {
   private container: HTMLElement;
@@ -452,6 +453,7 @@ export class PortOperationsScreen implements GameScreen {
   // ─── Dialog Actions ───────────────────────────────────────────────────────
 
   private openRepairDialog(state: FullGameState, player: PlayerState, ship: OwnedShip, port: Port): void {
+    const costMultiplier = getPortCostMultiplier(port.id, state.worldEvents);
     const dialog = createRepairDialog(ship, port, player, {
       onConfirm: (percentToRepair: number) => {
         const result = repairPlayerShip(state, this.activeShipIndex, percentToRepair);
@@ -462,11 +464,13 @@ export class PortOperationsScreen implements GameScreen {
       onCancel: () => {
         this.removeDialog();
       },
-    });
+    }, costMultiplier);
     this.container.appendChild(dialog);
   }
 
   private openRefuelDialog(state: FullGameState, player: PlayerState, ship: OwnedShip): void {
+    const portId = ship.currentPortId ?? "";
+    const costMultiplier = getPortCostMultiplier(portId, state.worldEvents);
     const dialog = createRefuelDialog(ship, player, {
       onConfirm: (tonsToAdd: number) => {
         const result = refuelPlayerShip(state, this.activeShipIndex, tonsToAdd);
@@ -477,7 +481,7 @@ export class PortOperationsScreen implements GameScreen {
       onCancel: () => {
         this.removeDialog();
       },
-    });
+    }, costMultiplier);
     this.container.appendChild(dialog);
   }
 
@@ -493,7 +497,7 @@ export class PortOperationsScreen implements GameScreen {
       onCancel: () => {
         this.removeDialog();
       },
-    });
+    }, state.worldEvents);
     this.container.appendChild(dialog);
   }
 
