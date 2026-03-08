@@ -68,14 +68,14 @@ The spec emphasizes "Humor first" as a core design principle and describes capta
 - The humor texts should be diverse enough to avoid repetition within a normal play session (at least 3-4 per event type).
 
 ## Acceptance Criteria
-- [ ] Each captain receives a personality trait at ship purchase time (random from 5-6 options).
-- [ ] Captain trait is displayed on Port Operations and Port Departure screens.
-- [ ] At least 6 different crew event types with two-choice decisions (not just acknowledge).
-- [ ] Crew event choices have minor but tangible gameplay consequences (cost, delay, condition, or speed).
-- [ ] At least 15 new humor texts for crew events across different trait types.
-- [ ] Existing save files load correctly — captains without traits get one assigned.
-- [ ] Crew events are funny and varied, fitting the "humor first" design principle.
-- [ ] Captain traits do not create dominant strategies (balanced, minor effects only).
+- [x] Each captain receives a personality trait at ship purchase time (random from 5-6 options).
+- [x] Captain trait is displayed on Port Operations and Port Departure screens.
+- [x] At least 6 different crew event types with two-choice decisions (not just acknowledge).
+- [x] Crew event choices have minor but tangible gameplay consequences (cost, delay, condition, or speed).
+- [x] At least 15 new humor texts for crew events across different trait types.
+- [x] Existing save files load correctly — captains without traits get one assigned.
+- [x] Crew events are funny and varied, fitting the "humor first" design principle.
+- [x] Captain traits do not create dominant strategies (balanced, minor effects only).
 
 ---
 **Next Steps**: Ready for implementation.
