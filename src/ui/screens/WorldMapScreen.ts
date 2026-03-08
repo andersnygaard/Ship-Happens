@@ -34,6 +34,8 @@ import { createShipSelector } from "../components/ShipSelector";
 import { helpPanel } from "../components/HelpPanel";
 import { tutorialSystem } from "../../game/TutorialSystem";
 import { isPortBlocked, getPortCostMultiplier } from "../../game/WorldEvents";
+import { createSpeedSelector, type SpeedSelectionInfo } from "../components/SpeedSelector";
+import { calculateFuelConsumptionAtSpeed } from "../../game/ShipManager";
 
 export class WorldMapScreen implements GameScreen {
   private container: HTMLElement;
@@ -49,6 +51,10 @@ export class WorldMapScreen implements GameScreen {
   private turnTransition: TurnTransition | null = null;
   /** Index of the active ship for travel. */
   public activeShipIndex: number = 0;
+  /** Speed selector component state. */
+  private speedSelectorContainer: HTMLElement | null = null;
+  private speedSelection: SpeedSelectionInfo | null = null;
+  private speedSelectorGetSelection: (() => SpeedSelectionInfo) | null = null;
   constructor(private screenManager: ScreenManager) {
     this.container = document.createElement("div");
     this.container.className = "screen worldmap-screen";
@@ -245,6 +251,9 @@ export class WorldMapScreen implements GameScreen {
     this.destinationLabel = null;
     this.selectedDestination = null;
     this.statusMessage = null;
+    this.speedSelectorContainer = null;
+    this.speedSelection = null;
+    this.speedSelectorGetSelection = null;
     this.container.remove();
   }
 
@@ -421,8 +430,16 @@ export class WorldMapScreen implements GameScreen {
     cargo.className = "port-info-detail";
     cargo.textContent = `${(port.cargoCapacityTdw / 1_000_000).toFixed(1)}M tdw`;
 
-    // Calculate and show distance from ship's current port
+    // Calculate and show distance from ship's current port, with speed selector
     const state = this.screenManager.getGameState();
+    // Remove previous speed selector if any
+    if (this.speedSelectorContainer && this.speedSelectorContainer.parentElement) {
+      this.speedSelectorContainer.remove();
+    }
+    this.speedSelectorContainer = null;
+    this.speedSelection = null;
+    this.speedSelectorGetSelection = null;
+
     if (state) {
       const player = getActivePlayer(state);
       const activeShip = player.ships[this.activeShipIndex] ?? player.ships.find(
@@ -440,19 +457,22 @@ export class WorldMapScreen implements GameScreen {
           this.selectedPortInfo.appendChild(distEl);
 
           if (spec) {
-            const travelDays = calculateTravelDays(distanceNm, spec.maxSpeedKnots);
-            const fuelNeeded = spec.fuelConsumptionTonsPerDay * travelDays;
-
-            const timeEl = document.createElement("span");
-            timeEl.className = "port-info-detail";
-            timeEl.textContent = `Travel time: ~${travelDays} days`;
-            this.selectedPortInfo.appendChild(timeEl);
-
-            const fuelEl = document.createElement("span");
-            fuelEl.className = "port-info-detail";
-            fuelEl.style.color = activeShip.fuelTons < fuelNeeded ? "var(--color-danger, #ff4444)" : "var(--color-success, #44ff44)";
-            fuelEl.textContent = `Fuel needed: ~${Math.ceil(fuelNeeded)}t (have ${activeShip.fuelTons}t)`;
-            this.selectedPortInfo.appendChild(fuelEl);
+            // Show the speed selector component instead of static estimates
+            const activeCharter = player.activeCharters[activeShip.name] ?? null;
+            const { element, getSelection } = createSpeedSelector({
+              spec,
+              distanceNm,
+              currentFuelTons: activeShip.fuelTons,
+              activeCharter,
+              totalDaysElapsed: state.time.totalDaysElapsed,
+              onSpeedChange: (info) => {
+                this.speedSelection = info;
+              },
+            });
+            this.speedSelectorGetSelection = getSelection;
+            this.speedSelection = getSelection();
+            this.speedSelectorContainer = element;
+            this.selectedPortInfo.appendChild(element);
           }
         }
       }
@@ -562,15 +582,22 @@ export class WorldMapScreen implements GameScreen {
       return;
     }
 
-    // Check fuel
+    // Get selected speed from speed selector (default to max speed)
+    const currentSelection = this.speedSelectorGetSelection
+      ? this.speedSelectorGetSelection()
+      : null;
+
+    // Check fuel using selected speed
     const originPort = ship.currentPortId ? getPortById(ship.currentPortId) : null;
     const destPort = this.selectedDestination;
     if (originPort) {
       const distanceNm = calculateDistanceNm(originPort, destPort);
       const spec = getShipSpecById(ship.specId);
       if (spec) {
-        const travelDays = calculateTravelDays(distanceNm, spec.maxSpeedKnots);
-        const fuelNeeded = spec.fuelConsumptionTonsPerDay * travelDays;
+        const effectiveSpeed = currentSelection?.speedKnots ?? spec.maxSpeedKnots;
+        const travelDays = calculateTravelDays(distanceNm, effectiveSpeed);
+        const consumptionPerDay = calculateFuelConsumptionAtSpeed(spec, effectiveSpeed);
+        const fuelNeeded = Math.ceil(consumptionPerDay * travelDays);
         if (ship.fuelTons < fuelNeeded * 0.5) {
           this.showStatusMessage(
             `Warning: Very low fuel! Need ~${Math.ceil(fuelNeeded)}t, have ${ship.fuelTons}t. Refuel before departing.`,
@@ -586,6 +613,7 @@ export class WorldMapScreen implements GameScreen {
     if (travelScreen) {
       travelScreen.shipIndex = shipIndex;
       travelScreen.destinationPortId = this.selectedDestination.id;
+      travelScreen.cruisingSpeedKnots = currentSelection?.speedKnots ?? undefined;
     }
     this.screenManager.showScreen("travel");
   }

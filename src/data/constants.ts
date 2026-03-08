@@ -125,6 +125,23 @@ export const BREAKDOWN_ELECTRICAL_DAMAGE = 3;
 /** Very low condition threshold for significantly increased breakdown probability. */
 export const VERY_LOW_CONDITION_PERCENT = 10;
 
+// ─── Speed Selection Constants ──────────────────────────────────────────────
+
+/** Minimum cruising speed as a fraction of max speed (e.g., 0.5 = 50%). */
+export const MIN_SPEED_FRACTION = 0.5;
+
+/** Discrete speed presets as fractions of max speed. */
+export const SPEED_PRESETS: readonly { label: string; fraction: number }[] = [
+  { label: "Slow", fraction: 0.50 },
+  { label: "Economy", fraction: 0.65 },
+  { label: "Standard", fraction: 0.80 },
+  { label: "Full", fraction: 0.90 },
+  { label: "Max", fraction: 1.00 },
+];
+
+/** Exponent for the cubic fuel consumption scaling (admiralty formula). */
+export const FUEL_CONSUMPTION_SPEED_EXPONENT = 3;
+
 // ─── Gameplay Balance ───────────────────────────────────────────────────────
 
 /** Number of charter contract options offered at a port (max). */

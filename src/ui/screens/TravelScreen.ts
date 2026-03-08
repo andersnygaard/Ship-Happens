@@ -32,6 +32,7 @@ import { getTimeSnapshot } from "../../game/TimeSystem";
 import { TOWING_PENALTY } from "../../data/constants";
 import type { PortDepartureScreen } from "./PortDepartureScreen";
 import { getTravelSceneController } from "../../main";
+import { calculateFuelConsumptionAtSpeed } from "../../game/ShipManager";
 
 export class TravelScreen implements GameScreen {
   private container: HTMLElement;
@@ -41,6 +42,8 @@ export class TravelScreen implements GameScreen {
   public shipIndex: number = 0;
   /** Destination port ID. Set externally before showing. */
   public destinationPortId: string = "";
+  /** Cruising speed in knots. If undefined, uses max speed. */
+  public cruisingSpeedKnots: number | undefined = undefined;
 
   /** HUD element references for updates */
   private hudProgressFill: HTMLElement | null = null;
@@ -86,13 +89,15 @@ export class TravelScreen implements GameScreen {
     }
 
     const distanceNm = calculateDistanceNm(originPort, destPort);
-    const travelDays = calculateTravelDays(distanceNm, spec.maxSpeedKnots);
+    const effectiveSpeed = this.cruisingSpeedKnots ?? spec.maxSpeedKnots;
+    const travelDays = calculateTravelDays(distanceNm, effectiveSpeed);
+    const effectiveFuelPerDay = calculateFuelConsumptionAtSpeed(spec, effectiveSpeed);
 
     // Generate events before the voyage
     const events = generateTravelEvents(
       distanceNm,
       ship.fuelTons,
-      spec.fuelConsumptionTonsPerDay,
+      effectiveFuelPerDay,
       travelDays,
       ship.conditionPercent,
     );
@@ -132,6 +137,7 @@ export class TravelScreen implements GameScreen {
     infoStrip.className = "travel-hud-info-strip";
 
     infoStrip.appendChild(this.createHudStat("Distance", `${distanceNm.toLocaleString()} nm`));
+    infoStrip.appendChild(this.createHudStat("Speed", `${Math.round(effectiveSpeed)} kn${effectiveSpeed < spec.maxSpeedKnots ? ` (${Math.round(effectiveSpeed / spec.maxSpeedKnots * 100)}%)` : ""}`));
     infoStrip.appendChild(this.createHudStat("Est. Time", `${travelDays} days`));
     infoStrip.appendChild(this.createHudStat("Fuel", `${ship.fuelTons} t`));
     infoStrip.appendChild(this.createHudStat("Condition", `${ship.conditionPercent}%`));
@@ -372,7 +378,7 @@ export class TravelScreen implements GameScreen {
     // Animate progress to 100%
     this.updateProgress(100);
 
-    const result = simulateVoyage(state, this.shipIndex, this.destinationPortId);
+    const result = simulateVoyage(state, this.shipIndex, this.destinationPortId, this.cruisingSpeedKnots);
     statusArea.textContent = result.message;
 
     // Stop the simulation now that the voyage is complete

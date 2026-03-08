@@ -570,11 +570,13 @@ export function stopAction(state: FullGameState): void {
  * Advances time, consumes fuel, applies wear, and moves the ship.
  * @param shipIndex - Index of the ship in the active player's fleet
  * @param destinationPortId - Port to travel to
+ * @param cruisingSpeedKnots - Optional cruising speed; defaults to max speed for backward compatibility
  */
 export function simulateVoyage(
   state: FullGameState,
   shipIndex: number,
   destinationPortId: string,
+  cruisingSpeedKnots?: number,
 ): {
   success: boolean;
   travelDays: number;
@@ -599,10 +601,11 @@ export function simulateVoyage(
 
   // Calculate distance and travel time
   const distance = calculateDistanceNm(originPort, destPort);
-  const travelDays = calculateTravelDays(distance, spec.maxSpeedKnots);
+  const effectiveSpeed = cruisingSpeedKnots ?? spec.maxSpeedKnots;
+  const travelDays = calculateTravelDays(distance, effectiveSpeed);
 
-  // Consume fuel
-  const fuelResult = consumeFuel(ship, travelDays);
+  // Consume fuel (uses speed-adjusted consumption via admiralty formula)
+  const fuelResult = consumeFuel(ship, travelDays, effectiveSpeed);
 
   // Advance time
   advanceDays(state.time, travelDays);

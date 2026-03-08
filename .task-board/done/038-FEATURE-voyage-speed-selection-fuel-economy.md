@@ -62,14 +62,14 @@ The spec details ship stats including "Max speed" and "Fuel at max speed," imply
 - Ensure the estimated fuel display accounts for potential storm detours (show a buffer/warning).
 
 ## Acceptance Criteria
-- [ ] Player can select cruising speed before departing on a voyage (at least 3 distinct options).
-- [ ] Fuel consumption scales non-linearly with speed (cubic or similar, not purely linear).
-- [ ] Travel time correctly reflects the selected speed.
-- [ ] UI shows estimated travel days, fuel consumption, and remaining fuel at selected speed.
-- [ ] UI indicates whether selected speed will meet the charter deadline (if applicable).
-- [ ] Lower speed demonstrably saves fuel in gameplay.
-- [ ] Existing save files load correctly with max speed as default.
-- [ ] Speed selection is visually clear and does not clutter the main map UI.
+- [x] Player can select cruising speed before departing on a voyage (at least 3 distinct options).
+- [x] Fuel consumption scales non-linearly with speed (cubic or similar, not purely linear).
+- [x] Travel time correctly reflects the selected speed.
+- [x] UI shows estimated travel days, fuel consumption, and remaining fuel at selected speed.
+- [x] UI indicates whether selected speed will meet the charter deadline (if applicable).
+- [x] Lower speed demonstrably saves fuel in gameplay.
+- [x] Existing save files load correctly with max speed as default.
+- [x] Speed selection is visually clear and does not clutter the main map UI.
 
 ---
 **Next Steps**: Ready for implementation.
