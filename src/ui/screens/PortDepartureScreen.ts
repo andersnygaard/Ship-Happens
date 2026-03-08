@@ -11,6 +11,7 @@ import { getPortById } from "../../data/ports";
 import { debit } from "../../game/FinancialSystem";
 import { getTimeSnapshot } from "../../game/TimeSystem";
 import { generatePortArrivalEvent } from "../../game/EventSystem";
+import { CRITICAL_CONDITION_PERCENT, BREAKDOWN_DEPARTURE_BLOCK_PERCENT } from "../../data/constants";
 import { toast } from "../components/Toast";
 import { createShipSideView } from "../components/ShipIllustration";
 import type { PortOperationsScreen } from "./PortOperationsScreen";
@@ -67,6 +68,37 @@ export class PortDepartureScreen implements GameScreen {
       statusLine.className = "port-departure-status data-display";
       statusLine.textContent = `Condition: ${ship.conditionPercent}% | Fuel: ${ship.fuelTons.toLocaleString()}t | Balance: $${(balance / 1_000_000).toFixed(1)}M`;
       panel.appendChild(statusLine);
+    }
+
+    // Condition warning when ship is in critical state
+    if (ship && ship.conditionPercent < CRITICAL_CONDITION_PERCENT) {
+      const warningPanel = document.createElement("div");
+      warningPanel.className = "port-departure-condition-warning";
+
+      if (ship.conditionPercent <= BREAKDOWN_DEPARTURE_BLOCK_PERCENT) {
+        warningPanel.style.background = "rgba(200, 0, 0, 0.2)";
+        warningPanel.style.border = "2px solid #cc3333";
+        warningPanel.style.padding = "12px";
+        warningPanel.style.margin = "8px 0";
+        warningPanel.style.borderRadius = "4px";
+        warningPanel.style.color = "#ff6666";
+        warningPanel.innerHTML =
+          `<strong>DANGER: Ship condition critically low (${ship.conditionPercent}%)!</strong><br>` +
+          "The ship is barely seaworthy. Departure is extremely risky — breakdown at sea is almost certain. " +
+          "Strongly consider repairing before setting sail.";
+      } else {
+        warningPanel.style.background = "rgba(200, 150, 0, 0.15)";
+        warningPanel.style.border = "2px solid #ccaa00";
+        warningPanel.style.padding = "12px";
+        warningPanel.style.margin = "8px 0";
+        warningPanel.style.borderRadius = "4px";
+        warningPanel.style.color = "#ccaa00";
+        warningPanel.innerHTML =
+          `<strong>WARNING: Ship condition is critical (${ship.conditionPercent}%)!</strong><br>` +
+          "There is a risk of breakdown during the voyage. Consider repairing before departure.";
+      }
+
+      panel.appendChild(warningPanel);
     }
 
     // Ship-at-dock illustration

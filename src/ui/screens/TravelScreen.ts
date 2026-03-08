@@ -23,6 +23,7 @@ import {
   resolveStormEvent,
   resolveEmergencyEvent,
   resolveOutOfFuelEvent,
+  resolveBreakdownEvent,
   type TravelEvent,
 } from "../../game/EventSystem";
 import { EventDialog } from "../components/EventDialog";
@@ -93,6 +94,7 @@ export class TravelScreen implements GameScreen {
       ship.fuelTons,
       spec.fuelConsumptionTonsPerDay,
       travelDays,
+      ship.conditionPercent,
     );
 
     // --- Start the 3D scene travel animation ---
@@ -314,6 +316,26 @@ export class TravelScreen implements GameScreen {
             "Towing penalty — ship ran out of fuel",
             time,
           );
+          statusArea.textContent = result.message;
+        } else if (event.type === "breakdown") {
+          const result = resolveBreakdownEvent(choiceId);
+          const time = getTimeSnapshot(state.time);
+          // Apply financial cost
+          if (result.costDollars > 0) {
+            debit(
+              player.finances,
+              result.costDollars,
+              `Breakdown repair: ${result.subtype}`,
+              time,
+            );
+          }
+          // Apply additional condition damage
+          if (result.conditionDamage > 0 && ship) {
+            ship.conditionPercent = Math.max(
+              0,
+              ship.conditionPercent - result.conditionDamage,
+            );
+          }
           statusArea.textContent = result.message;
         }
 

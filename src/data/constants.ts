@@ -93,6 +93,38 @@ export const RESCUE_EVENT_PROBABILITY = 0.05;
 /** Probability of office embezzlement per turn when office is not visited. */
 export const EMBEZZLEMENT_PROBABILITY = 0.10;
 
+// ─── Breakdown Constants ─────────────────────────────────────────────────
+
+/** Base probability of a breakdown event when condition is at the critical threshold (20%). */
+export const BREAKDOWN_BASE_PROBABILITY = 0.05;
+
+/** Maximum breakdown probability at very low condition (around 5%). */
+export const BREAKDOWN_MAX_PROBABILITY = 0.40;
+
+/** Condition threshold below which departure is blocked with a warning. */
+export const BREAKDOWN_DEPARTURE_BLOCK_PERCENT = 5;
+
+/** Cost of emergency towing after a breakdown at sea. */
+export const BREAKDOWN_TOWING_COST = 500_000;
+
+/** Cost of emergency field repair after a breakdown at sea. */
+export const BREAKDOWN_FIELD_REPAIR_COST = 200_000;
+
+/** Extra days added by a breakdown towing event. */
+export const BREAKDOWN_TOWING_DELAY_DAYS = 5;
+
+/** Extra days added by a field repair event. */
+export const BREAKDOWN_FIELD_REPAIR_DELAY_DAYS = 2;
+
+/** Additional condition loss from a hull leak breakdown (percentage points). */
+export const BREAKDOWN_HULL_LEAK_DAMAGE = 8;
+
+/** Additional condition loss from an electrical failure breakdown (percentage points). */
+export const BREAKDOWN_ELECTRICAL_DAMAGE = 3;
+
+/** Very low condition threshold for significantly increased breakdown probability. */
+export const VERY_LOW_CONDITION_PERCENT = 10;
+
 // ─── Gameplay Balance ───────────────────────────────────────────────────────
 
 /** Number of charter contract options offered at a port (max). */

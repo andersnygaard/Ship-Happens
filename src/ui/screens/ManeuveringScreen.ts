@@ -23,6 +23,7 @@ import {
   isConditionFailed,
   angleToPoint,
   getSteeringDirection,
+  getConditionSpeedMultiplier,
   SHIP_RADIUS,
   THROTTLE_LEVELS,
 } from "../../game/HarborPhysics";
@@ -217,7 +218,9 @@ export class ManeuveringScreen implements GameScreen {
     const conditionEl = document.createElement("div");
     conditionEl.className = "maneuvering-condition";
     conditionEl.id = "maneuvering-condition";
-    conditionEl.textContent = `Condition: ${Math.round(this.ship!.conditionPercent)}%`;
+    const speedMult = getConditionSpeedMultiplier(this.ship!.conditionPercent);
+    const speedPenaltyText = speedMult < 1.0 ? ` | Max Speed: ${Math.round(speedMult * 100)}%` : "";
+    conditionEl.textContent = `Condition: ${Math.round(this.ship!.conditionPercent)}%${speedPenaltyText}`;
     header.appendChild(conditionEl);
 
     this.container.appendChild(header);

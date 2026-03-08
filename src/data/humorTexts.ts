@@ -119,6 +119,32 @@ export const CREW_COMPLAINTS: readonly string[] = [
   "The radio operator keeps 'accidentally' playing whale sounds over the intercom",
 ] as const;
 
+// ─── Breakdown Event Descriptions ────────────────────────────────────────────
+
+export const BREAKDOWN_ENGINE_TEXTS: readonly string[] = [
+  "The engine made a sound like a whale gargling marbles, then went silent.",
+  "Chief engineer reports the engine has 'decided to take a personal day.'",
+  "A mysterious clanking noise from the engine room was followed by an ominous silence.",
+  "The engine threw a connecting rod through the deck. On the bright side, you now have a skylight.",
+  "Engine failure! The ship's cat was found sleeping on the emergency shutoff valve.",
+] as const;
+
+export const BREAKDOWN_HULL_TEXTS: readonly string[] = [
+  "A suspicious bubbling noise from below suggests the hull has developed a new 'feature' — a leak.",
+  "Water is coming in faster than the crew can bail. The ship's WiFi is still working, though.",
+  "Hull breach detected! The duct tape from the last repair didn't hold. Shocking.",
+  "The hull has sprung a leak in the cargo hold. The cargo of vintage wine is now slightly diluted.",
+  "A section of hull plating has decided it would rather be on the ocean floor.",
+] as const;
+
+export const BREAKDOWN_ELECTRICAL_TEXTS: readonly string[] = [
+  "The electrical system has gone haywire. Navigation screens are now showing Netflix.",
+  "A short circuit has knocked out main power. The emergency generator is making optimistic noises.",
+  "Electrical failure! The ship's autopilot attempted a software update at the worst possible time.",
+  "Sparks from the main electrical panel have started a small fire. The fire extinguisher is on backorder.",
+  "All instruments went dark. The navigator is now using a compass he found in a cereal box.",
+] as const;
+
 // ─── Helper Functions ────────────────────────────────────────────────────────
 
 /** Pick a random item from an array. */
@@ -150,4 +176,19 @@ export function getRandomPortEvent(): string {
 /** Get a random crew complaint. */
 export function getRandomCrewComplaint(): string {
   return pickRandom(CREW_COMPLAINTS);
+}
+
+/** Get a random breakdown engine failure description. */
+export function getRandomBreakdownEngineText(): string {
+  return pickRandom(BREAKDOWN_ENGINE_TEXTS);
+}
+
+/** Get a random breakdown hull leak description. */
+export function getRandomBreakdownHullText(): string {
+  return pickRandom(BREAKDOWN_HULL_TEXTS);
+}
+
+/** Get a random breakdown electrical failure description. */
+export function getRandomBreakdownElectricalText(): string {
+  return pickRandom(BREAKDOWN_ELECTRICAL_TEXTS);
 }

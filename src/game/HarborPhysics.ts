@@ -33,6 +33,19 @@ const COLLISION_DAMAGE_MAX = 5;
 /** Condition threshold for auto-fail. */
 const CONDITION_FAIL_THRESHOLD = 10;
 
+/**
+ * Calculate the effective throttle speed multiplier based on ship condition.
+ * At 100% condition: 1.0 (full speed)
+ * At 50% condition: 0.8 (80% max speed)
+ * At 0% condition: 0.5 (50% max speed)
+ * Linear interpolation between these reference points.
+ */
+export function getConditionSpeedMultiplier(conditionPercent: number): number {
+  const clamped = Math.max(0, Math.min(100, conditionPercent));
+  // Map 0-100% condition to 0.5-1.0 speed multiplier
+  return 0.5 + (clamped / 100) * 0.5;
+}
+
 // ─── Ship State ─────────────────────────────────────────────────────────────
 
 export interface ShipPhysicsState {
@@ -83,8 +96,9 @@ export function updateShipPhysics(
   dt: number,
   layout: HarborLayout,
 ): boolean {
-  // Apply throttle to speed
-  const targetSpeed = THROTTLE_LEVELS[ship.throttleIndex];
+  // Apply throttle to speed, scaled by ship condition
+  const conditionMultiplier = getConditionSpeedMultiplier(ship.conditionPercent);
+  const targetSpeed = THROTTLE_LEVELS[ship.throttleIndex] * conditionMultiplier;
   if (targetSpeed > ship.speed) {
     ship.speed += (targetSpeed - ship.speed) * dt * 2;
   } else {
@@ -96,10 +110,10 @@ export function updateShipPhysics(
     ship.speed = 0;
   }
 
-  // Apply turning (turning rate depends on speed)
+  // Apply turning (turning rate depends on speed and condition)
   if (ship.turnDirection !== 0 && ship.speed > MIN_SPEED_FOR_TURN) {
     const speedFactor = Math.min(ship.speed / THROTTLE_LEVELS[1], 1.0);
-    const turnRate = BASE_TURN_RATE * speedFactor;
+    const turnRate = BASE_TURN_RATE * speedFactor * conditionMultiplier;
     ship.heading += ship.turnDirection * turnRate * dt;
   }
 
