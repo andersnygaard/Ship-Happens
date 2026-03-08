@@ -37,6 +37,9 @@ import { isPortBlocked, getPortCostMultiplier } from "../../game/WorldEvents";
 import { createSpeedSelector, type SpeedSelectionInfo } from "../components/SpeedSelector";
 import { calculateFuelConsumptionAtSpeed } from "../../game/ShipManager";
 import { createDeadlineBadge } from "../components/CharterDeadlineIndicator";
+import { calculateVoyageEstimate, getAdjustedFuelCost } from "../../game/VoyageEstimator";
+import { getFuelCostPerTon } from "../../game/ShipManager";
+import { createVoyageCostSummary } from "../components/VoyageProfitEstimate";
 
 export class WorldMapScreen implements GameScreen {
   private container: HTMLElement;
@@ -482,6 +485,16 @@ export class WorldMapScreen implements GameScreen {
             this.speedSelection = getSelection();
             this.speedSelectorContainer = element;
             this.selectedPortInfo.appendChild(element);
+
+            // Show estimated voyage cost summary
+            const baseFuelCost = getFuelCostPerTon(activeShip.currentPortId!);
+            const departureMult = state.worldEvents
+              ? getPortCostMultiplier(activeShip.currentPortId!, state.worldEvents)
+              : 1.0;
+            const adjustedFuel = getAdjustedFuelCost(baseFuelCost, departureMult);
+            const voyageEstimate = calculateVoyageEstimate(spec, distanceNm, adjustedFuel);
+            const costSummary = createVoyageCostSummary(voyageEstimate);
+            this.selectedPortInfo!.appendChild(costSummary);
           }
         }
       }

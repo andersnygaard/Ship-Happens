@@ -63,14 +63,14 @@ Currently, when a player reviews charter contracts in the Charter Dialog, they s
 - Fuel price at the departure port is used for the estimate, but the player might refuel at a different (cheaper) port — this limitation should be noted or the estimate should use the current ship's existing fuel level.
 
 ## Acceptance Criteria
-- [ ] Charter Dialog shows estimated fuel cost, operating costs, and net profit for each contract.
-- [ ] Profit estimates use the current ship's actual specs (speed, consumption, operating costs).
-- [ ] A quick-scan profit indicator (percentage or color) is visible in the contract list.
-- [ ] World Map destination selection shows estimated voyage cost.
-- [ ] Estimates are clearly labeled as approximate.
-- [ ] Negative profit estimates are prominently displayed in red/warning color.
-- [ ] Estimates account for world events cost multipliers on fuel.
-- [ ] The `calculateVoyageEstimate()` function is unit-testable (pure function, no side effects).
+- [x] Charter Dialog shows estimated fuel cost, operating costs, and net profit for each contract.
+- [x] Profit estimates use the current ship's actual specs (speed, consumption, operating costs).
+- [x] A quick-scan profit indicator (percentage or color) is visible in the contract list.
+- [x] World Map destination selection shows estimated voyage cost.
+- [x] Estimates are clearly labeled as approximate.
+- [x] Negative profit estimates are prominently displayed in red/warning color.
+- [x] Estimates account for world events cost multipliers on fuel.
+- [x] The `calculateVoyageEstimate()` function is unit-testable (pure function, no side effects).
 
 ---
 **Next Steps**: Ready for implementation.

@@ -27,6 +27,7 @@ import { getShipSpec } from "../../game/ShipManager";
 import { createRepairDialog } from "../components/RepairDialog";
 import { createRefuelDialog } from "../components/RefuelDialog";
 import { createCharterDialog } from "../components/CharterDialog";
+import type { CharterShipContext } from "../components/CharterDialog";
 import { createPortSkylineCanvas } from "../components/PortSkyline";
 import { toast } from "../components/Toast";
 import { getPortCostMultiplier } from "../../game/WorldEvents";
@@ -512,6 +513,14 @@ export class PortOperationsScreen implements GameScreen {
 
   private openCharterDialog(state: FullGameState, player: PlayerState, ship: OwnedShip): void {
     const contracts = getAvailableCharters(state, this.activeShipIndex);
+
+    // Build ship context for profitability estimation
+    const spec = getShipSpec(ship);
+    let shipContext: CharterShipContext | undefined;
+    if (spec && ship.currentPortId) {
+      shipContext = { spec, currentPortId: ship.currentPortId };
+    }
+
     const dialog = createCharterDialog(contracts, {
       onAccept: (contract: CharterContract) => {
         const result = acceptCharter(state, this.activeShipIndex, contract);
@@ -522,7 +531,7 @@ export class PortOperationsScreen implements GameScreen {
       onCancel: () => {
         this.removeDialog();
       },
-    }, state.worldEvents);
+    }, state.worldEvents, shipContext);
     this.container.appendChild(dialog);
   }
 
