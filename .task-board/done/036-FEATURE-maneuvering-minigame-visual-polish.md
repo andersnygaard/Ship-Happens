@@ -96,15 +96,15 @@ The current maneuvering screen has functional physics and collision detection bu
 
 ## Acceptance Criteria
 
-- [ ] Harbor rendering includes decorative elements: cranes, warehouses, bollards, trees
-- [ ] Water has visible wave patterns or texture (not flat solid color)
-- [ ] Ship sprite has proper hull shape with bow, stern, and bridge
-- [ ] Timer HUD has a framed panel look with "TIME" label
-- [ ] Speed gauge shows as vertical bar segments
-- [ ] Port name displays prominently during minigame
-- [ ] Arctic harbors show faceted iceberg obstacles
-- [ ] Tropical harbors show green vegetation/palm trees
-- [ ] Build succeeds with no errors
+- [x] Harbor rendering includes decorative elements: cranes, warehouses, bollards, trees
+- [x] Water has visible wave patterns or texture (not flat solid color)
+- [x] Ship sprite has proper hull shape with bow, stern, and bridge
+- [x] Timer HUD has a framed panel look with "TIME" label
+- [x] Speed gauge shows as vertical bar segments
+- [x] Port name displays prominently during minigame
+- [x] Arctic harbors show faceted iceberg obstacles
+- [x] Tropical harbors show green vegetation/palm trees
+- [x] Build succeeds with no errors
 
 ---
 

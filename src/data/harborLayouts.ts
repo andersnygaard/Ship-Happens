@@ -54,7 +54,7 @@ export type EnvironmentTheme =
 
 /** Obstacle decoration rendered on top of land/obstacle polygons. */
 export interface ObstacleDecoration {
-  type: "palm-tree" | "iceberg" | "crane" | "storage-tank" | "rock";
+  type: "palm-tree" | "iceberg" | "crane" | "storage-tank" | "rock" | "warehouse" | "bollard" | "pine-tree";
   x: number;
   y: number;
   /** Optional scale factor (default 1.0). */
@@ -126,6 +126,27 @@ const openBasinLayout: HarborLayout = {
   ],
   berth: { x: 710, y: 130, width: 40, height: 60 },
   start: { x: 80, y: 300, heading: 0 },
+  decorations: [
+    // Cranes along the top quay
+    { type: "crane", x: 150, y: 100 },
+    { type: "crane", x: 450, y: 65 },
+    { type: "crane", x: 680, y: 100 },
+    // Warehouses on top land
+    { type: "warehouse", x: 50, y: 50 },
+    { type: "warehouse", x: 200, y: 50 },
+    { type: "warehouse", x: 620, y: 50, scale: 1.2 },
+    // Bollards along dock edges
+    { type: "bollard", x: 350, y: 118 },
+    { type: "bollard", x: 400, y: 118 },
+    { type: "bollard", x: 450, y: 118 },
+    { type: "bollard", x: 500, y: 118 },
+    { type: "bollard", x: 700, y: 195 },
+    // Pine trees on land
+    { type: "pine-tree", x: 100, y: 40 },
+    { type: "pine-tree", x: 300, y: 50 },
+    { type: "pine-tree", x: 400, y: 500 },
+    { type: "pine-tree", x: 600, y: 510 },
+  ],
 };
 
 // ─── Layout 2: Channel with Turn (Medium) ───────────────────────────────────
@@ -189,6 +210,22 @@ const channelTurnLayout: HarborLayout = {
   ],
   berth: { x: 730, y: 150, width: 40, height: 70 },
   start: { x: 80, y: 300, heading: 0 },
+  decorations: [
+    // Cranes on top quay
+    { type: "crane", x: 100, y: 130 },
+    { type: "crane", x: 650, y: 120 },
+    // Warehouses
+    { type: "warehouse", x: 50, y: 60 },
+    { type: "warehouse", x: 300, y: 60 },
+    // Bollards along dock
+    { type: "bollard", x: 720, y: 225 },
+    { type: "bollard", x: 750, y: 225 },
+    // Trees
+    { type: "pine-tree", x: 500, y: 50 },
+    { type: "pine-tree", x: 700, y: 60 },
+    // Rock on island
+    { type: "rock", x: 420, y: 285 },
+  ],
 };
 
 // ─── Layout 3: Narrow Channels (Hard) ───────────────────────────────────────
@@ -251,6 +288,17 @@ const narrowChannelsLayout: HarborLayout = {
   ],
   berth: { x: 740, y: 190, width: 40, height: 60 },
   start: { x: 80, y: 175, heading: 0 },
+  decorations: [
+    // Bollards along dock edge
+    { type: "bollard", x: 730, y: 255 },
+    { type: "bollard", x: 760, y: 255 },
+    // Warehouses
+    { type: "warehouse", x: 700, y: 50 },
+    { type: "warehouse", x: 350, y: 40 },
+    // Cranes
+    { type: "crane", x: 500, y: 120 },
+    { type: "crane", x: 750, y: 160 },
+  ],
 };
 
 // ─── Layout 4: Tropical (Medium) ────────────────────────────────────────────
@@ -658,6 +706,21 @@ const islandPassageLayout: HarborLayout = {
   ],
   berth: { x: 745, y: 90, width: 35, height: 70 },
   start: { x: 60, y: 300, heading: 0 },
+  decorations: [
+    // Trees on islands
+    { type: "pine-tree", x: 215, y: 235 },
+    { type: "pine-tree", x: 400, y: 310 },
+    { type: "pine-tree", x: 575, y: 375 },
+    // Rocks on islands
+    { type: "rock", x: 240, y: 260 },
+    { type: "rock", x: 420, y: 335 },
+    { type: "rock", x: 590, y: 395 },
+    // Bollards at dock
+    { type: "bollard", x: 740, y: 165 },
+    { type: "bollard", x: 765, y: 165 },
+    // Cranes near dock
+    { type: "crane", x: 760, y: 65 },
+  ],
 };
 
 // ─── All Layouts ─────────────────────────────────────────────────────────────
