@@ -84,13 +84,13 @@ Currently, the ShipCard component only shows a colored rectangle with the ship n
 
 ## Acceptance Criteria
 
-- [ ] Each of the 10 ship classes has a visually distinct CSS side-view profile
-- [ ] Ship cards in the broker show the ship illustration instead of a plain colored box
-- [ ] Ship info panel displays a large ship illustration on dark background
-- [ ] Repair dialog shows a front/bow dry dock view alongside the repair form
-- [ ] Port departure screen shows a ship-at-dock side-view illustration
-- [ ] All illustrations scale properly and don't break layout
-- [ ] Build succeeds with no errors
+- [x] Each of the 10 ship classes has a visually distinct CSS side-view profile
+- [x] Ship cards in the broker show the ship illustration instead of a plain colored box
+- [x] Ship info panel displays a large ship illustration on dark background
+- [x] Repair dialog shows a front/bow dry dock view alongside the repair form
+- [x] Port departure screen shows a ship-at-dock side-view illustration
+- [x] All illustrations scale properly and don't break layout
+- [x] Build succeeds with no errors
 
 ---
 

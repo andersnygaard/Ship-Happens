@@ -1,9 +1,10 @@
 /**
  * ShipCard — Individual ship display card for the Ship Broker screen.
- * Shows a colored placeholder image, ship type, price, and BUY/INFO buttons.
+ * Shows a CSS-drawn ship illustration, ship type, price, and BUY/INFO buttons.
  */
 
 import type { ShipSpec } from "../../data/types";
+import { createShipSideView } from "./ShipIllustration";
 
 /** Color mapping by price range for ship placeholder images. */
 function getShipColor(priceMillions: number): string {
@@ -33,16 +34,11 @@ export function createShipCard(spec: ShipSpec, callbacks: ShipCardCallbacks): HT
   const card = document.createElement("div");
   card.className = "ship-card";
 
-  // Ship placeholder image
+  // Ship illustration (CSS-drawn side-view)
   const imageBox = document.createElement("div");
   imageBox.className = "ship-card-image";
-  imageBox.style.backgroundColor = getShipColor(spec.priceMillions);
-
-  // Simple ship silhouette using text
-  const silhouette = document.createElement("div");
-  silhouette.className = "ship-card-silhouette";
-  silhouette.textContent = formatShipName(spec.id);
-  imageBox.appendChild(silhouette);
+  const shipIllust = createShipSideView(spec.id, 180, 100);
+  imageBox.appendChild(shipIllust);
 
   card.appendChild(imageBox);
 

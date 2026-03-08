@@ -12,6 +12,7 @@ import { debit } from "../../game/FinancialSystem";
 import { getTimeSnapshot } from "../../game/TimeSystem";
 import { generatePortArrivalEvent } from "../../game/EventSystem";
 import { toast } from "../components/Toast";
+import { createShipSideView } from "../components/ShipIllustration";
 import type { PortOperationsScreen } from "./PortOperationsScreen";
 import type { ManeuveringScreen } from "./ManeuveringScreen";
 
@@ -66,6 +67,21 @@ export class PortDepartureScreen implements GameScreen {
       statusLine.className = "port-departure-status data-display";
       statusLine.textContent = `Condition: ${ship.conditionPercent}% | Fuel: ${ship.fuelTons.toLocaleString()}t | Balance: $${(balance / 1_000_000).toFixed(1)}M`;
       panel.appendChild(statusLine);
+    }
+
+    // Ship-at-dock illustration
+    if (ship) {
+      const shipSection = document.createElement("div");
+      shipSection.className = "port-departure-ship-section";
+      const dockWrapper = document.createElement("div");
+      dockWrapper.className = "port-departure-dock";
+      const shipIllust = createShipSideView(ship.specId, 320, 100);
+      dockWrapper.appendChild(shipIllust);
+      const dockStructure = document.createElement("div");
+      dockStructure.className = "port-departure-dock-structure";
+      dockWrapper.appendChild(dockStructure);
+      shipSection.appendChild(dockWrapper);
+      panel.appendChild(shipSection);
     }
 
     // Description
