@@ -23,6 +23,7 @@ import { TurnIndicator } from "../components/TurnIndicator";
 import { TurnTransition } from "../components/TurnTransition";
 import type { Port } from "../../data/types";
 import type { TravelScreen } from "./TravelScreen";
+import type { PortOperationsScreen } from "./PortOperationsScreen";
 import { calculateDistanceNm } from "../../game/CharterSystem";
 import { getPortById } from "../../data/ports";
 import { getShipSpecById } from "../../data/ships";
@@ -145,6 +146,30 @@ export class WorldMapScreen implements GameScreen {
         noShipsBanner.appendChild(brokerBtn);
 
         this.container.appendChild(noShipsBanner);
+      } else {
+        // Show "Port Operations" button if the active ship is in port
+        const activeShip = player.ships[this.activeShipIndex];
+        if (activeShip && activeShip.currentPortId && !activeShip.isLaidUp) {
+          const portOpsPort = getPortById(activeShip.currentPortId);
+          if (portOpsPort) {
+            const portOpsBanner = document.createElement("div");
+            portOpsBanner.className = "worldmap-port-ops-banner";
+
+            const infoText = document.createElement("span");
+            infoText.textContent = `${activeShip.name} is docked at ${portOpsPort.name}.`;
+            portOpsBanner.appendChild(infoText);
+
+            const portOpsBtn = document.createElement("button");
+            portOpsBtn.className = "btn btn-primary";
+            portOpsBtn.textContent = "Port Operations";
+            portOpsBtn.addEventListener("click", () => {
+              this.goToPortOperations(this.activeShipIndex);
+            });
+            portOpsBanner.appendChild(portOpsBtn);
+
+            this.container.appendChild(portOpsBanner);
+          }
+        }
       }
     }
 
@@ -464,6 +489,15 @@ export class WorldMapScreen implements GameScreen {
       return;
     }
 
+    // Auto-select cargo destination if ship has loaded cargo and no destination was manually picked
+    if (!this.selectedDestination && selectedShip.cargoDestinationPortId) {
+      const cargoDestPort = getPortById(selectedShip.cargoDestinationPortId);
+      if (cargoDestPort) {
+        this.selectedDestination = cargoDestPort;
+        this.showStatusMessage(`Heading to ${cargoDestPort.name} to deliver ${selectedShip.cargoType}.`);
+      }
+    }
+
     if (!this.selectedDestination) {
       this.showStatusMessage("Select a destination port on the map first.");
       return;
@@ -529,6 +563,15 @@ export class WorldMapScreen implements GameScreen {
     if (result.newRound) {
       toast.show(result.message, "info");
     }
+  }
+
+  /** Navigate to port operations screen for a given ship. */
+  private goToPortOperations(shipIndex: number): void {
+    const portOps = this.screenManager.getScreen("port-operations") as PortOperationsScreen | undefined;
+    if (portOps) {
+      portOps.activeShipIndex = shipIndex;
+    }
+    this.screenManager.showScreen("port-operations");
   }
 
   private showStatusMessage(message: string): void {

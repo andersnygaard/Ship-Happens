@@ -104,17 +104,17 @@ A complete, smooth gameplay loop where:
 
 ## Acceptance Criteria
 
-- [ ] A new player can complete a full game loop: create game → buy ship → accept charter → travel → deliver cargo → profit
-- [ ] The "START ACTION" button on the world map works and advances the simulation
-- [ ] Port operations (repair, refuel, charter, load) all function correctly with proper dialogs
-- [ ] Ship broker allows purchasing a ship with naming and deposit selection
-- [ ] Travel screen shows voyage progress, handles events (storms, rescue, fuel), and arrives at destination
-- [ ] Maneuvering minigame is playable with clear controls and visible dock target
-- [ ] Player's financial situation (balance, revenue, costs) is always visible and accurate
-- [ ] Turn transitions in multiplayer are clear and functional
-- [ ] Save/load preserves game state correctly
-- [ ] Humor and personality are present (funny cargo names, sarcastic NPC text, news headlines)
+- [x] A new player can complete a full game loop: create game → buy ship → accept charter → travel → deliver cargo → profit
+- [x] The "START ACTION" button on the world map works and advances the simulation
+- [x] Port operations (repair, refuel, charter, load) all function correctly with proper dialogs
+- [x] Ship broker allows purchasing a ship with naming and deposit selection
+- [x] Travel screen shows voyage progress, handles events (storms, rescue, fuel), and arrives at destination
+- [x] Maneuvering minigame is playable with clear controls and visible dock target
+- [x] Player's financial situation (balance, revenue, costs) is always visible and accurate
+- [x] Turn transitions in multiplayer are clear and functional
+- [x] Save/load preserves game state correctly
+- [x] Humor and personality are present (funny cargo names, sarcastic NPC text, news headlines)
 
 ---
 
-**Next Steps**: Ready for implementation. Move to `.task-board/in-progress/` when starting work.
+**Status**: Completed

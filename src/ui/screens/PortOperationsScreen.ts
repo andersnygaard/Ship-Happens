@@ -28,6 +28,7 @@ import { createRepairDialog } from "../components/RepairDialog";
 import { createRefuelDialog } from "../components/RefuelDialog";
 import { createCharterDialog } from "../components/CharterDialog";
 import { createPortSkylineCanvas } from "../components/PortSkyline";
+import { toast } from "../components/Toast";
 
 export class PortOperationsScreen implements GameScreen {
   private container: HTMLElement;
@@ -72,7 +73,12 @@ export class PortOperationsScreen implements GameScreen {
     if (charter && ship.currentPortId === ship.cargoDestinationPortId) {
       const deliveryResult = deliverCargo(state, this.activeShipIndex);
       if (deliveryResult.success) {
-        // Show delivery message after rendering
+        // Show delivery result prominently using toast
+        const profitMsg = deliveryResult.netProfit >= 0
+          ? `Profit: $${deliveryResult.netProfit.toLocaleString()}`
+          : `Loss: $${Math.abs(deliveryResult.netProfit).toLocaleString()}`;
+        toast.show(`Cargo delivered! ${profitMsg}`, deliveryResult.netProfit >= 0 ? "success" : "error");
+        // Also show inline message after rendering
         setTimeout(() => this.showMessage(deliveryResult.message), 300);
       }
     }
@@ -163,10 +169,23 @@ export class PortOperationsScreen implements GameScreen {
     });
     footer.appendChild(backBtn);
 
-    // "Set Sail" button — prominent button to leave port and return to world map
+    // "Set Sail" button — prominent button to leave port
     const setSailBtn = document.createElement("button");
     setSailBtn.className = "btn btn-primary";
-    setSailBtn.textContent = "Set Sail";
+
+    // Show appropriate text based on ship state
+    const charter = player.activeCharters[ship.name];
+    if (ship.cargoType && ship.cargoDestinationPortId) {
+      const destPort = getPortById(ship.cargoDestinationPortId);
+      const destName = destPort ? destPort.name : ship.cargoDestinationPortId;
+      setSailBtn.textContent = `Set Sail to ${destName}`;
+    } else if (charter && !ship.cargoType) {
+      setSailBtn.textContent = "Load Cargo First!";
+      setSailBtn.disabled = true;
+    } else {
+      setSailBtn.textContent = "Set Sail";
+    }
+
     setSailBtn.addEventListener("click", () => {
       this.screenManager.showScreen("worldmap");
     });

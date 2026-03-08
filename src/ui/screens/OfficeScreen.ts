@@ -6,6 +6,7 @@
 
 import type { GameScreen, ScreenManager } from "../ScreenManager";
 import { getActivePlayer, getPlayerSummary, getPlayerBalance } from "../../game/GameState";
+import { getPortById } from "../../data/ports";
 import { renderFleetOverview } from "../components/FleetOverview";
 import { renderFinancialSummary } from "../components/FinancialSummary";
 import { renderStatsPanel } from "../components/StatsPanel";
@@ -166,10 +167,12 @@ export class OfficeScreen implements GameScreen {
 
     const info = document.createElement("div");
     info.className = "office-dialog-content";
+    const homePort = getPortById(player.homePortId);
+    const homePortName = homePort ? `${homePort.name}, ${homePort.country}` : player.homePortId;
     info.innerHTML = `
       <p><strong>Captain:</strong> ${player.name}</p>
       <p><strong>Company:</strong> ${player.companyName}</p>
-      <p><strong>Home Port:</strong> ${player.homePortId}</p>
+      <p><strong>Home Port:</strong> ${homePortName}</p>
       <p><strong>Fleet Size:</strong> ${player.ships.length} ship(s)</p>
     `;
     dialog.appendChild(info);

@@ -6,10 +6,12 @@
  */
 
 import type { GameScreen, ScreenManager } from "../ScreenManager";
-import { getActivePlayer } from "../../game/GameState";
+import { getActivePlayer, getPlayerBalance } from "../../game/GameState";
 import { getPortById } from "../../data/ports";
 import { debit } from "../../game/FinancialSystem";
 import { getTimeSnapshot } from "../../game/TimeSystem";
+import { generatePortArrivalEvent } from "../../game/EventSystem";
+import { toast } from "../components/Toast";
 import type { PortOperationsScreen } from "./PortOperationsScreen";
 import type { ManeuveringScreen } from "./ManeuveringScreen";
 
@@ -36,25 +38,34 @@ export class PortDepartureScreen implements GameScreen {
     }
 
     const player = getActivePlayer(state);
-    // Find first ship that is in port (the one that just arrived)
-    const ship = player.ships.find((s) => s.currentPortId !== null);
+    // Use the shipIndex set by the previous screen (travel or port-ops)
+    const ship = player.ships[this.shipIndex] ?? player.ships.find((s) => s.currentPortId !== null);
     const port = ship?.currentPortId ? getPortById(ship.currentPortId) : null;
+    const balance = getPlayerBalance(player);
 
     const panel = document.createElement("div");
     panel.className = "port-departure-panel panel panel-riveted";
 
-    // Title
+    // Title with ship name and captain
     const title = document.createElement("h2");
     title.className = "port-departure-title heading-copper";
-    title.textContent = "Arriving at Port";
+    title.textContent = ship ? `${ship.name}, captain ${ship.captainName}` : "Arriving at Port";
     panel.appendChild(title);
 
     // Port name
     if (port) {
       const portName = document.createElement("div");
       portName.className = "port-departure-port-name data-display";
-      portName.textContent = port.name;
+      portName.textContent = `${port.name}, ${port.country}`;
       panel.appendChild(portName);
+    }
+
+    // Ship status summary
+    if (ship) {
+      const statusLine = document.createElement("div");
+      statusLine.className = "port-departure-status data-display";
+      statusLine.textContent = `Condition: ${ship.conditionPercent}% | Fuel: ${ship.fuelTons.toLocaleString()}t | Balance: $${(balance / 1_000_000).toFixed(1)}M`;
+      panel.appendChild(statusLine);
     }
 
     // Description
@@ -64,26 +75,59 @@ export class PortDepartureScreen implements GameScreen {
       "Your ship is approaching the harbor. How would you like to dock?";
     panel.appendChild(desc);
 
+    // Show port arrival event if one is generated
+    const arrivalEvent = generatePortArrivalEvent();
+    if (arrivalEvent) {
+      const eventPanel = document.createElement("div");
+      eventPanel.className = "port-departure-event";
+      const eventTitle = document.createElement("strong");
+      eventTitle.textContent = arrivalEvent.title + ": ";
+      eventPanel.appendChild(eventTitle);
+      const eventDesc = document.createElement("span");
+      eventDesc.textContent = arrivalEvent.description;
+      eventPanel.appendChild(eventDesc);
+      panel.appendChild(eventPanel);
+    }
+
     // Choice buttons
     const btnContainer = document.createElement("div");
     btnContainer.className = "port-departure-buttons";
 
-    // Steer by hand (free)
+    // Cast off (skip docking minigame, go straight to port ops)
+    const castOffBtn = document.createElement("button");
+    castOffBtn.className = "btn btn-primary port-departure-btn";
+    castOffBtn.innerHTML = "<strong>Cast Off!</strong><br><span class='port-departure-cost'>Skip to port</span>";
+    castOffBtn.addEventListener("click", () => {
+      this.goToPortOperations();
+    });
+    btnContainer.appendChild(castOffBtn);
+
+    // Steer by hand (free, play maneuvering minigame)
     const steerBtn = document.createElement("button");
-    steerBtn.className = "btn btn-primary port-departure-btn";
-    steerBtn.innerHTML = "<strong>Steer by Hand</strong><br><span class='port-departure-cost'>Free</span>";
+    steerBtn.className = "btn btn-secondary port-departure-btn";
+    steerBtn.innerHTML = "<strong>Steer by Hand</strong><br><span class='port-departure-cost'>Free — play minigame</span>";
     steerBtn.addEventListener("click", () => {
       this.goToManeuvering();
     });
     btnContainer.appendChild(steerBtn);
 
-    // Use tug (costs money)
+    // Use tug (costs money, skip minigame)
     const tugBtn = document.createElement("button");
     tugBtn.className = "btn btn-secondary port-departure-btn";
+    const canAffordTug = balance >= TUG_COST;
     tugBtn.innerHTML = `<strong>Use Tug's Help</strong><br><span class='port-departure-cost'>$${TUG_COST.toLocaleString()}</span>`;
+    tugBtn.disabled = !canAffordTug;
+    if (!canAffordTug) {
+      tugBtn.title = "Insufficient funds for tug assistance";
+    }
     tugBtn.addEventListener("click", () => {
+      if (!canAffordTug) {
+        toast.show("Not enough money for tug assistance!", "error");
+        return;
+      }
       const time = getTimeSnapshot(state.time);
       debit(player.finances, TUG_COST, "Tug assistance at port", time);
+      toast.show(`Tug hired for $${TUG_COST.toLocaleString()}`, "info");
       this.goToPortOperations();
     });
     btnContainer.appendChild(tugBtn);

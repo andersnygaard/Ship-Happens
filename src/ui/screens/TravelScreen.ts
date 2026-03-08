@@ -12,6 +12,7 @@ import type { FullGameState } from "../../game/GameState";
 import {
   getActivePlayer,
   simulateVoyage,
+  stopAction,
 } from "../../game/GameState";
 import { getPortById } from "../../data/ports";
 import { getShipSpecById } from "../../data/ships";
@@ -351,6 +352,9 @@ export class TravelScreen implements GameScreen {
 
     const result = simulateVoyage(state, this.shipIndex, this.destinationPortId);
     statusArea.textContent = result.message;
+
+    // Stop the simulation now that the voyage is complete
+    stopAction(state);
 
     // After a delay, transition to port departure
     setTimeout(() => {

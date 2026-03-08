@@ -5,6 +5,7 @@
 
 import { OwnedShip, ShipSpec, CargoType, Port } from "../data/types";
 import { getShipSpecById, SHIP_CATALOG } from "../data/ships";
+import { getPortById as getPortByIdForName } from "../data/ports";
 import {
   MAX_CONDITION_PERCENT,
   BASE_FUEL_COST_PER_TON,
@@ -328,7 +329,9 @@ export function loadCargo(
   ship.cargoType = cargoType;
   ship.cargoDestinationPortId = destinationPortId;
 
-  return { success: true, message: `Loaded ${cargoType} onto ${ship.name}. Destination: ${destinationPortId}.` };
+  const destPortInfo = getPortByIdForName(destinationPortId);
+  const destName = destPortInfo ? destPortInfo.name : destinationPortId;
+  return { success: true, message: `Loaded ${cargoType} onto ${ship.name}. Destination: ${destName}.` };
 }
 
 /**
