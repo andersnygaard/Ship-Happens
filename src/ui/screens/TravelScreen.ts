@@ -33,6 +33,7 @@ import { TOWING_PENALTY } from "../../data/constants";
 import type { PortDepartureScreen } from "./PortDepartureScreen";
 import { getTravelSceneController } from "../../main";
 import { calculateFuelConsumptionAtSpeed } from "../../game/ShipManager";
+import { formatDeadlineCountdown, getCharterDeadlineInfo } from "../components/CharterDeadlineIndicator";
 
 export class TravelScreen implements GameScreen {
   private container: HTMLElement;
@@ -101,6 +102,20 @@ export class TravelScreen implements GameScreen {
       travelDays,
       ship.conditionPercent,
     );
+
+    // Augment storm event descriptions with charter deadline context
+    const activeCharterForEvents = player.activeCharters[ship.name];
+    if (activeCharterForEvents) {
+      const deadlineCountdown = formatDeadlineCountdown(activeCharterForEvents, state.time.totalDaysElapsed);
+      for (let i = 0; i < events.length; i++) {
+        if (events[i].type === "storm") {
+          events[i] = {
+            ...events[i],
+            description: events[i].description + `\n\n${deadlineCountdown}`,
+          };
+        }
+      }
+    }
 
     // --- Start the 3D scene travel animation ---
     const sceneController = getTravelSceneController();
@@ -179,6 +194,29 @@ export class TravelScreen implements GameScreen {
     weatherIndicator.textContent = "Clear seas";
     this.hudWeatherIndicator = weatherIndicator;
     hud.appendChild(weatherIndicator);
+
+    // Charter deadline countdown (only shown if ship has an active charter)
+    const activeCharter = player.activeCharters[ship.name];
+    if (activeCharter) {
+      const deadlineEl = document.createElement("div");
+      deadlineEl.className = "travel-hud-deadline";
+      const deadlineText = formatDeadlineCountdown(activeCharter, state.time.totalDaysElapsed);
+      deadlineEl.textContent = deadlineText;
+      const deadlineInfo = getCharterDeadlineInfo(activeCharter, state.time.totalDaysElapsed);
+      switch (deadlineInfo.urgency) {
+        case "safe":
+          deadlineEl.style.color = "var(--color-success, #44ff44)";
+          break;
+        case "warning":
+          deadlineEl.style.color = "var(--color-gold, #ffaa33)";
+          break;
+        case "danger":
+        case "overdue":
+          deadlineEl.style.color = "var(--color-danger, #ff4444)";
+          break;
+      }
+      hud.appendChild(deadlineEl);
+    }
 
     // Status message area (for event messages)
     const statusArea = document.createElement("div");

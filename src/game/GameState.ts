@@ -493,7 +493,14 @@ export function deliverCargo(
  * Advance to the next player's turn.
  * If a new round starts, advances time by one week and applies weekly costs.
  */
-export function endTurn(state: FullGameState): { newRound: boolean; message: string; newWorldEvents: WorldEvent[] } {
+/** Warning about a charter deadline entering the danger zone. */
+export interface DeadlineWarning {
+  shipName: string;
+  remainingDays: number;
+  totalDeadlineDays: number;
+}
+
+export function endTurn(state: FullGameState): { newRound: boolean; message: string; newWorldEvents: WorldEvent[]; deadlineWarnings: DeadlineWarning[] } {
   const newRound = nextTurn(state.turns);
   const newWorldEvents: WorldEvent[] = [];
 
@@ -541,10 +548,30 @@ export function endTurn(state: FullGameState): { newRound: boolean; message: str
     }
   }
 
+  // Check for charter deadline warnings (< 25% time remaining)
+  const deadlineWarnings: DeadlineWarning[] = [];
+  for (const player of state.players) {
+    for (const [shipName, charter] of Object.entries(player.activeCharters)) {
+      const daysElapsed = state.time.totalDaysElapsed - charter.acceptedDay;
+      const remainingDays = charter.deliveryDeadlineDays - daysElapsed;
+      const fractionRemaining = charter.deliveryDeadlineDays > 0
+        ? remainingDays / charter.deliveryDeadlineDays
+        : 0;
+      if (fractionRemaining < 0.25) {
+        deadlineWarnings.push({
+          shipName,
+          remainingDays,
+          totalDeadlineDays: charter.deliveryDeadlineDays,
+        });
+      }
+    }
+  }
+
   const activePlayer = getActivePlayer(state);
   return {
     newRound,
     newWorldEvents,
+    deadlineWarnings,
     message: newRound
       ? `New round! Week ${state.time.week}, Year ${state.time.year}. It's ${activePlayer.name}'s turn.`
       : `It's ${activePlayer.name}'s turn.`,
@@ -737,6 +764,25 @@ export function checkOfficeNeglect(state: FullGameState): {
   }
 
   return null;
+}
+
+// ─── Charter Deadline Helpers ─────────────────────────────────────────────────
+
+/**
+ * Get the remaining days for a ship's active charter deadline.
+ * Returns null if the ship has no active charter.
+ * Uses the same calculation as deliverCargo() to ensure consistency.
+ */
+export function getCharterRemainingDays(
+  state: FullGameState,
+  shipName: string,
+): number | null {
+  const player = getActivePlayer(state);
+  const charter = player.activeCharters[shipName];
+  if (!charter) return null;
+
+  const daysElapsed = state.time.totalDaysElapsed - charter.acceptedDay;
+  return charter.deliveryDeadlineDays - daysElapsed;
 }
 
 // ─── Display Helpers ─────────────────────────────────────────────────────────

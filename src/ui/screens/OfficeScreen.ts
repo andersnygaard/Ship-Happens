@@ -66,7 +66,11 @@ export class OfficeScreen implements GameScreen {
     mainArea.className = "office-main";
 
     // Fleet Overview Panel
-    const fleetPanel = renderFleetOverview({ ships: player.ships });
+    const fleetPanel = renderFleetOverview({
+      ships: player.ships,
+      activeCharters: player.activeCharters,
+      totalDaysElapsed: state.time.totalDaysElapsed,
+    });
     fleetPanel.classList.add("panel", "panel-riveted", "office-panel");
     mainArea.appendChild(fleetPanel);
 

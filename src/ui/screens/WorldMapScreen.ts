@@ -36,6 +36,7 @@ import { tutorialSystem } from "../../game/TutorialSystem";
 import { isPortBlocked, getPortCostMultiplier } from "../../game/WorldEvents";
 import { createSpeedSelector, type SpeedSelectionInfo } from "../components/SpeedSelector";
 import { calculateFuelConsumptionAtSpeed } from "../../game/ShipManager";
+import { createDeadlineBadge } from "../components/CharterDeadlineIndicator";
 
 export class WorldMapScreen implements GameScreen {
   private container: HTMLElement;
@@ -189,6 +190,14 @@ export class WorldMapScreen implements GameScreen {
             const infoText = document.createElement("span");
             infoText.textContent = `${activeShip.name} is docked at ${portOpsPort.name}.`;
             portOpsBanner.appendChild(infoText);
+
+            // Show charter deadline badge if ship has an active charter
+            const activeCharter = player.activeCharters[activeShip.name];
+            if (activeCharter) {
+              const deadlineBadge = createDeadlineBadge(activeCharter, state.time.totalDaysElapsed);
+              deadlineBadge.style.marginLeft = "12px";
+              portOpsBanner.appendChild(deadlineBadge);
+            }
 
             const portOpsBtn = document.createElement("button");
             portOpsBtn.className = "btn btn-primary";
@@ -650,6 +659,18 @@ export class WorldMapScreen implements GameScreen {
         setTimeout(() => {
           toast.show(`WORLD EVENT: ${evt.headline}`, "error");
         }, 500);
+      }
+    }
+
+    // Show toast for charter deadline warnings
+    if (result.deadlineWarnings && result.deadlineWarnings.length > 0) {
+      for (const warning of result.deadlineWarnings) {
+        setTimeout(() => {
+          const msg = warning.remainingDays <= 0
+            ? `OVERDUE: ${warning.shipName} charter is past deadline!`
+            : `WARNING: ${warning.shipName} charter deadline in ${warning.remainingDays} days!`;
+          toast.show(msg, "warning");
+        }, 1000);
       }
     }
   }

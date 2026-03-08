@@ -67,14 +67,14 @@ The spec defines charter contracts with delivery deadlines, late penalties (~11%
 - Ensure the deadline calculation matches exactly what `deliverCargo()` uses to avoid surprises.
 
 ## Acceptance Criteria
-- [ ] Active charter deadline (remaining days) is visible on the World Map screen for the selected ship.
-- [ ] Port Operations ship status panel shows remaining deadline days with color coding (green/yellow/red).
-- [ ] Office fleet overview includes deadline information per ship.
-- [ ] Storm event dialog shows remaining charter deadline to inform the player's decision.
-- [ ] Travel screen displays a deadline countdown during the voyage.
-- [ ] A warning toast fires when a charter deadline enters the danger zone (< 25% time remaining).
-- [ ] Deadline display correctly matches the actual deadline calculation used in `deliverCargo()`.
-- [ ] Ships without active charters show no deadline indicator (no visual noise).
+- [x] Active charter deadline (remaining days) is visible on the World Map screen for the selected ship.
+- [x] Port Operations ship status panel shows remaining deadline days with color coding (green/yellow/red).
+- [x] Office fleet overview includes deadline information per ship.
+- [x] Storm event dialog shows remaining charter deadline to inform the player's decision.
+- [x] Travel screen displays a deadline countdown during the voyage.
+- [x] A warning toast fires when a charter deadline enters the danger zone (< 25% time remaining).
+- [x] Deadline display correctly matches the actual deadline calculation used in `deliverCargo()`.
+- [x] Ships without active charters show no deadline indicator (no visual noise).
 
 ---
 **Next Steps**: Ready for implementation.

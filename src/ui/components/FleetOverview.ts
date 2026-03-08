@@ -3,13 +3,18 @@
  * with name, type, condition, fuel, current port, cargo status, and daily costs.
  */
 
-import type { OwnedShip } from "../../data/types";
+import type { OwnedShip, CharterContract } from "../../data/types";
 import { getShipSpecById } from "../../data/ships";
 import { getPortById } from "../../data/ports";
 import { getDailyOperatingCost } from "../../game/ShipManager";
+import { getCharterDeadlineInfo } from "./CharterDeadlineIndicator";
 
 export interface FleetOverviewData {
   ships: OwnedShip[];
+  /** Active charters keyed by ship name, with deadline data. */
+  activeCharters?: Record<string, CharterContract & { acceptedDay: number }>;
+  /** Current total days elapsed, needed for deadline calculation. */
+  totalDaysElapsed?: number;
 }
 
 /**
@@ -38,7 +43,7 @@ export function renderFleetOverview(data: FleetOverviewData): HTMLElement {
   // Header row
   const thead = document.createElement("thead");
   const headerRow = document.createElement("tr");
-  const headers = ["Ship", "Type", "Condition", "Fuel", "Port", "Cargo", "Daily Cost", "Mortgage"];
+  const headers = ["Ship", "Type", "Condition", "Fuel", "Port", "Cargo", "Deadline", "Daily Cost", "Mortgage"];
   for (const h of headers) {
     const th = document.createElement("th");
     th.textContent = h;
@@ -111,6 +116,39 @@ export function renderFleetOverview(data: FleetOverviewData): HTMLElement {
       tdCargo.classList.add("office-text-muted");
     }
     row.appendChild(tdCargo);
+
+    // Deadline
+    const tdDeadline = document.createElement("td");
+    tdDeadline.className = "data-display";
+    const charter = data.activeCharters?.[ship.name];
+    if (charter && data.totalDaysElapsed !== undefined) {
+      const deadlineInfo = getCharterDeadlineInfo(charter, data.totalDaysElapsed);
+      if (deadlineInfo.urgency === "overdue") {
+        tdDeadline.textContent = `OVERDUE ${Math.abs(deadlineInfo.remainingDays)}d`;
+      } else {
+        tdDeadline.textContent = `${deadlineInfo.remainingDays}d`;
+      }
+      // Color code based on urgency
+      switch (deadlineInfo.urgency) {
+        case "safe":
+          tdDeadline.style.color = "var(--color-success, #44ff44)";
+          break;
+        case "warning":
+          tdDeadline.style.color = "var(--color-gold, #ffaa33)";
+          break;
+        case "danger":
+        case "overdue":
+          tdDeadline.style.color = "var(--color-danger, #ff4444)";
+          break;
+      }
+      if (deadlineInfo.urgency === "overdue") {
+        tdDeadline.style.animation = "blink 0.8s infinite";
+      }
+    } else {
+      tdDeadline.textContent = "---";
+      tdDeadline.classList.add("office-text-muted");
+    }
+    row.appendChild(tdDeadline);
 
     // Daily cost
     const tdCost = document.createElement("td");

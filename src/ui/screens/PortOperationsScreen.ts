@@ -30,6 +30,7 @@ import { createCharterDialog } from "../components/CharterDialog";
 import { createPortSkylineCanvas } from "../components/PortSkyline";
 import { toast } from "../components/Toast";
 import { getPortCostMultiplier } from "../../game/WorldEvents";
+import { createDeadlineStatusRow } from "../components/CharterDeadlineIndicator";
 
 export class PortOperationsScreen implements GameScreen {
   private container: HTMLElement;
@@ -151,7 +152,7 @@ export class PortOperationsScreen implements GameScreen {
     const grid = document.createElement("div");
     grid.className = "port-ops-grid";
 
-    grid.appendChild(this.createShipStatusPanel(player, ship, port));
+    grid.appendChild(this.createShipStatusPanel(state, player, ship, port));
     grid.appendChild(this.createPortViewPanel(port));
     grid.appendChild(this.createCaptainOrdersPanel(state, player, ship, port));
     grid.appendChild(this.createPortInfoPanel(port));
@@ -228,7 +229,7 @@ export class PortOperationsScreen implements GameScreen {
 
   // ─── Top-Left: Ship Status Panel ──────────────────────────────────────────
 
-  private createShipStatusPanel(player: PlayerState, ship: OwnedShip, port: Port): HTMLElement {
+  private createShipStatusPanel(state: FullGameState, player: PlayerState, ship: OwnedShip, port: Port): HTMLElement {
     const panel = document.createElement("div");
     panel.className = "port-ops-quadrant port-ops-ship-status panel panel-riveted";
 
@@ -288,6 +289,30 @@ export class PortOperationsScreen implements GameScreen {
       row.appendChild(labelEl);
       row.appendChild(valueEl);
       table.appendChild(row);
+    }
+
+    // Charter deadline row (only if ship has an active charter)
+    if (charter) {
+      const deadlineRow = document.createElement("div");
+      deadlineRow.className = "port-ops-status-row";
+
+      const deadlineInfo = createDeadlineStatusRow(charter, state.time.totalDaysElapsed);
+
+      const deadlineLabelEl = document.createElement("span");
+      deadlineLabelEl.className = "port-ops-status-label";
+      deadlineLabelEl.textContent = deadlineInfo.label;
+
+      const deadlineValueEl = document.createElement("span");
+      deadlineValueEl.className = "port-ops-status-value data-display";
+      deadlineValueEl.textContent = deadlineInfo.value;
+      deadlineValueEl.style.color = deadlineInfo.color;
+      if (deadlineInfo.urgency === "overdue") {
+        deadlineValueEl.style.animation = "blink 0.8s infinite";
+      }
+
+      deadlineRow.appendChild(deadlineLabelEl);
+      deadlineRow.appendChild(deadlineValueEl);
+      table.appendChild(deadlineRow);
     }
 
     panel.appendChild(table);
