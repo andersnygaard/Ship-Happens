@@ -308,6 +308,180 @@ export function getRandomCrewEventTemplate(captainTrait?: string): CrewEventTemp
   return pickRandom(CREW_EVENT_TEMPLATES);
 }
 
+// ─── Endgame / Final Standings ──────────────────────────────────────────────
+
+/** Shipping magnate ratings based on performance tier (best to worst). */
+export const MAGNATE_RATINGS: readonly { title: string; minNetWorth: number }[] = [
+  { title: "Maritime Legend", minNetWorth: 100_000_000 },
+  { title: "Shipping Tycoon", minNetWorth: 50_000_000 },
+  { title: "Fleet Admiral of Fortune", minNetWorth: 30_000_000 },
+  { title: "Respected Shipowner", minNetWorth: 15_000_000 },
+  { title: "Competent Captain", minNetWorth: 8_000_000 },
+  { title: "Struggling Skipper", minNetWorth: 4_000_000 },
+  { title: "Barely Afloat", minNetWorth: 1_000_000 },
+  { title: "Davy Jones' Accountant", minNetWorth: 0 },
+] as const;
+
+/**
+ * Get the shipping magnate rating title for a given net worth.
+ */
+export function getMagnateRating(netWorth: number): string {
+  for (const tier of MAGNATE_RATINGS) {
+    if (netWorth >= tier.minNetWorth) {
+      return tier.title;
+    }
+  }
+  return "Davy Jones' Accountant";
+}
+
+/** Humorous commentary for the final standings, keyed by achievement type. */
+export const ENDGAME_COMMENTARY: Record<string, readonly string[]> = {
+  winner: [
+    "All hail the undisputed ruler of the seven seas (and their accountant)!",
+    "From humble beginnings to maritime magnificence. Your accountant is buying a yacht.",
+    "The shipping world will remember this name. Mostly because of the lawsuits.",
+  ],
+  loser: [
+    "At least the fish appreciated your contributions to their habitat (sunken ships).",
+    "Your business plan was bold. Your execution was... creative. Your balance sheet was tragic.",
+    "Some say the journey is more important than the destination. Your creditors disagree.",
+  ],
+  bankrupt: [
+    "Went down with the ship. And the second ship. And the company bank account.",
+    "Proved that it IS possible to lose money faster than a shipping container in a storm.",
+    "A valuable lesson in what NOT to do, preserved for future shipping magnates.",
+  ],
+  retired: [
+    "Walked away while still standing. A rare feat in the shipping business.",
+    "Retired to a beach house, paid for by the tears of rival shipping companies.",
+    "Decided the ocean had enough of their ships. The ocean agreed.",
+  ],
+  mostVoyages: [
+    "Has more frequent-sailor miles than a migrating whale.",
+    "If sea legs were currency, they'd be a billionaire.",
+  ],
+  mostPorts: [
+    "Collected ports like some people collect stamps. With more salt water.",
+    "Has been to more ports than a confused GPS signal.",
+  ],
+  mostDistance: [
+    "Sailed far enough to circumnavigate the globe. Several times. Backwards.",
+    "The ship's odometer filed a complaint about overwork.",
+  ],
+} as const;
+
+/**
+ * Get a random endgame commentary for a given achievement type.
+ */
+export function getEndgameCommentary(type: string): string {
+  const options = ENDGAME_COMMENTARY[type];
+  if (!options || options.length === 0) return "";
+  return pickRandom(options);
+}
+
+// ─── Docking Result Commentary ──────────────────────────────────────────────
+
+/** Performance tiers for docking results: perfect, good, rough, barely. */
+export const DOCKING_COMMENTARY: Record<string, readonly string[]> = {
+  perfect: [
+    "Textbook docking! The harbor master slow-clapped.",
+    "Flawless approach. Even the seagulls were impressed.",
+    "Not a scratch! The paint job thanks you, Captain.",
+    "Docked so smoothly the coffee didn't even spill. Well done!",
+    "The harbor master is wiping away a tear of joy. Beautiful.",
+  ],
+  good: [
+    "Solid docking with plenty of time to spare. Professional work.",
+    "Nice approach! The dock workers are mildly impressed.",
+    "Well handled, Captain. Only minor paint trading with the pier.",
+    "Good enough for government work — and certainly for shipping!",
+    "The harbor master gives you a respectful nod. Not bad at all.",
+  ],
+  rough: [
+    "You scraped every bollard in the harbor, but you made it.",
+    "The dock workers are already writing up the damage report.",
+    "That was more demolition derby than docking, Captain.",
+    "Ship is docked. The pier will need some... attention.",
+    "The harbor master is on the phone with your insurance company.",
+  ],
+  barely: [
+    "By the skin of your teeth! The tugboat crew was ready to intervene.",
+    "That was less 'docking' and more 'controlled crashing.'",
+    "The ship is in the berth. Technically. Let's not discuss how.",
+    "The harbor master has added your name to a 'special watchlist.'",
+    "You made it, but the harbor master suggests you try tugs next time.",
+  ],
+} as const;
+
+/**
+ * Get docking commentary based on performance tier.
+ * @param collisions - Number of collisions during docking
+ * @param timeRemainingPct - Percentage of time remaining (0-1)
+ */
+export function getDockingCommentary(collisions: number, timeRemainingPct: number): string {
+  let tier: string;
+  if (collisions === 0 && timeRemainingPct > 0.3) {
+    tier = "perfect";
+  } else if (collisions <= 1 && timeRemainingPct > 0.15) {
+    tier = "good";
+  } else if (collisions <= 3 || timeRemainingPct > 0.05) {
+    tier = "rough";
+  } else {
+    tier = "barely";
+  }
+  return pickRandom(DOCKING_COMMENTARY[tier]);
+}
+
+// ─── Debt Commentary ────────────────────────────────────────────────────────
+
+/** Humorous commentary keyed by debt level: debtFree, moderate, heavy, absurd. */
+export const DEBT_COMMENTARY: Record<string, readonly string[]> = {
+  debtFree: [
+    "Mortgage-free! The bank sent a sad emoji.",
+    "No debt! Your accountant is suspicious — this can't be right.",
+    "Zero mortgages. The shipping gods smile upon you... for now.",
+    "Debt-free fleet! The bank manager is crying into his coffee.",
+  ],
+  moderate: [
+    "A healthy amount of debt — just enough to keep the bank interested.",
+    "Manageable mortgages. Your accountant can still sleep at night.",
+    "Some debt on the books. The bank sends you a holiday card.",
+    "Moderate leverage. The finance textbooks would approve.",
+  ],
+  heavy: [
+    "Your ships owe more than a small country's GDP.",
+    "The bank has your portrait in their 'VIP Debtor' wall of fame.",
+    "Heavy debt load. The interest payments alone could buy a dinghy.",
+    "Your mortgage payments could fund a space program. A small one.",
+  ],
+  absurd: [
+    "Your debt is so large, economists are using it as a case study.",
+    "The bank has assigned a dedicated therapy team for your account manager.",
+    "At this point, the bank owes YOU an apology for letting you borrow this much.",
+    "Your mortgage balance has its own zip code.",
+    "The IMF called. They want to compare notes on national debt levels.",
+  ],
+} as const;
+
+/**
+ * Get debt commentary based on total outstanding debt relative to fleet value.
+ * @param totalDebt - Total outstanding mortgage debt in dollars
+ * @param fleetValue - Total fleet value in dollars
+ */
+export function getDebtCommentary(totalDebt: number, fleetValue: number): string {
+  if (totalDebt <= 0) {
+    return pickRandom(DEBT_COMMENTARY.debtFree);
+  }
+  const debtRatio = fleetValue > 0 ? totalDebt / fleetValue : 1;
+  if (debtRatio > 0.7) {
+    return pickRandom(DEBT_COMMENTARY.absurd);
+  }
+  if (debtRatio > 0.4) {
+    return pickRandom(DEBT_COMMENTARY.heavy);
+  }
+  return pickRandom(DEBT_COMMENTARY.moderate);
+}
+
 // ─── Helper Functions ────────────────────────────────────────────────────────
 
 /** Pick a random item from an array. */

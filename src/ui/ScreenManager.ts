@@ -23,7 +23,8 @@ export type ScreenId =
   | "travel"
   | "port-departure"
   | "maneuvering"
-  | "gameover";
+  | "gameover"
+  | "finalstandings";
 
 export class ScreenManager {
   private screens: Map<ScreenId, GameScreen> = new Map();

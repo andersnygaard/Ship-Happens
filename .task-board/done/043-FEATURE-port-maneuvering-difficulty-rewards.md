@@ -67,15 +67,15 @@ The spec describes ports with vastly different harbor layouts and difficulty lev
 - The results overlay should auto-dismiss after a few seconds or on click, so it doesn't block the flow to Port Operations.
 
 ## Acceptance Criteria
-- [ ] Each harbor layout has a difficulty rating (1-5) that reflects its actual navigational challenge.
-- [ ] Port Departure screen displays the difficulty rating next to "Steer by Hand."
-- [ ] Tug cost scales with port difficulty (cheaper for easy, expensive for hard).
-- [ ] Successful maneuvering awards a financial docking bonus credited to the player's balance.
-- [ ] Docking bonus is calculated from time remaining, collision count, and port difficulty.
-- [ ] A docking results overlay shows score breakdown with humorous commentary.
-- [ ] Zero-collision docking at any port awards an extra "clean docking" bonus.
-- [ ] Player statistics track total docking bonuses earned.
-- [ ] Failed docking (timeout) still applies damage penalty as before.
+- [x] Each harbor layout has a difficulty rating (1-5) that reflects its actual navigational challenge.
+- [x] Port Departure screen displays the difficulty rating next to "Steer by Hand."
+- [x] Tug cost scales with port difficulty (cheaper for easy, expensive for hard).
+- [x] Successful maneuvering awards a financial docking bonus credited to the player's balance.
+- [x] Docking bonus is calculated from time remaining, collision count, and port difficulty.
+- [x] A docking results overlay shows score breakdown with humorous commentary.
+- [x] Zero-collision docking at any port awards an extra "clean docking" bonus.
+- [x] Player statistics track total docking bonuses earned.
+- [x] Failed docking (timeout) still applies damage penalty as before.
 
 ---
 **Next Steps**: Ready for implementation.

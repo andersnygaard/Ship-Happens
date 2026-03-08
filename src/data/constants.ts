@@ -150,6 +150,41 @@ export const MAX_CHARTER_OPTIONS = 6;
 /** Speed multiplier used for travel time calculation (distance / (speed * 24)). */
 export const TRAVEL_TIME_SPEED_FACTOR = 24;
 
+// ─── Docking & Tug Constants ───────────────────────────────────────────────
+
+/** Tug cost per difficulty rating (1-5). Replaces the flat $50,000 fee. */
+export const TUG_COST_BY_DIFFICULTY: Record<number, number> = {
+  1: 30_000,
+  2: 40_000,
+  3: 50_000,
+  4: 65_000,
+  5: 80_000,
+};
+
+/** Base docking bonus per difficulty rating (1-5). */
+export const DOCKING_BASE_BONUS: Record<number, number> = {
+  1: 10_000,
+  2: 15_000,
+  3: 18_000,
+  4: 22_000,
+  5: 25_000,
+};
+
+/** Bonus awarded for zero-collision docking at any port. */
+export const DOCKING_CLEAN_BONUS = 15_000;
+
+/** Time bonus rate: dollars earned per second remaining. */
+export const DOCKING_TIME_BONUS_RATE = 500;
+
+/** Difficulty multiplier for total docking bonus (applied to base + time + clean). */
+export const DOCKING_DIFFICULTY_MULTIPLIER: Record<number, number> = {
+  1: 1.0,
+  2: 1.3,
+  3: 1.6,
+  4: 2.0,
+  5: 2.5,
+};
+
 // ─── Office Neglect Constants ─────────────────────────────────────────────
 
 /** Number of weeks without visiting the office before embezzlement can trigger. */

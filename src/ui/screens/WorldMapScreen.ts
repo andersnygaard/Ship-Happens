@@ -40,6 +40,15 @@ import { createDeadlineBadge } from "../components/CharterDeadlineIndicator";
 import { calculateVoyageEstimate, getAdjustedFuelCost } from "../../game/VoyageEstimator";
 import { getFuelCostPerTon } from "../../game/ShipManager";
 import { createVoyageCostSummary } from "../components/VoyageProfitEstimate";
+import {
+  createPortInfoTooltip,
+  createComparePortsPanel,
+  findCheapestPorts,
+  getAverageRepairCost,
+  getAverageFuelCost,
+} from "../components/PortInfoTooltip";
+import { getEventsAffectingPort } from "../../game/WorldEvents";
+import { PORTS } from "../../data/ports";
 
 export class WorldMapScreen implements GameScreen {
   private container: HTMLElement;
@@ -59,6 +68,8 @@ export class WorldMapScreen implements GameScreen {
   private speedSelectorContainer: HTMLElement | null = null;
   private speedSelection: SpeedSelectionInfo | null = null;
   private speedSelectorGetSelection: (() => SpeedSelectionInfo) | null = null;
+  /** Compare ports panel element (if open). */
+  private comparePortsPanel: HTMLElement | null = null;
   constructor(private screenManager: ScreenManager) {
     this.container = document.createElement("div");
     this.container.className = "screen worldmap-screen";
@@ -150,6 +161,9 @@ export class WorldMapScreen implements GameScreen {
         this.mapCanvas.setBlockedPorts(blockedIds);
         this.mapCanvas.setAffectedPorts(affectedIds);
       }
+
+      // Set need-based icons and cheapest port highlights
+      this.updateNeedBasedIcons(state);
     }
 
     mainArea.appendChild(mapContainer);
@@ -266,6 +280,10 @@ export class WorldMapScreen implements GameScreen {
     this.speedSelectorContainer = null;
     this.speedSelection = null;
     this.speedSelectorGetSelection = null;
+    if (this.comparePortsPanel) {
+      this.comparePortsPanel.remove();
+      this.comparePortsPanel = null;
+    }
     this.container.remove();
   }
 
@@ -324,6 +342,13 @@ export class WorldMapScreen implements GameScreen {
     sidebar.appendChild(
       this.createSidebarBtn("Broker", "broker", () => {
         this.screenManager.showScreen("shipbroker");
+      }),
+    );
+
+    // Compare Ports button
+    sidebar.appendChild(
+      this.createSidebarBtn("Compare", "compare", () => {
+        this.toggleComparePortsPanel();
       }),
     );
 
@@ -426,24 +451,6 @@ export class WorldMapScreen implements GameScreen {
     this.selectedPortInfo.className = "worldmap-port-info";
     this.selectedPortInfo.innerHTML = "";
 
-    const name = document.createElement("span");
-    name.className = "port-info-name";
-    name.textContent = port.name;
-
-    const country = document.createElement("span");
-    country.className = "port-info-country";
-    country.textContent = port.country;
-
-    const ships = document.createElement("span");
-    ships.className = "port-info-detail";
-    ships.textContent = `${port.shipCount.toLocaleString()} ships`;
-
-    const cargo = document.createElement("span");
-    cargo.className = "port-info-detail";
-    cargo.textContent = `${(port.cargoCapacityTdw / 1_000_000).toFixed(1)}M tdw`;
-
-    // Calculate and show distance from ship's current port, with speed selector
-    const state = this.screenManager.getGameState();
     // Remove previous speed selector if any
     if (this.speedSelectorContainer && this.speedSelectorContainer.parentElement) {
       this.speedSelectorContainer.remove();
@@ -452,83 +459,75 @@ export class WorldMapScreen implements GameScreen {
     this.speedSelection = null;
     this.speedSelectorGetSelection = null;
 
+    const state = this.screenManager.getGameState();
+    const worldEvents = state?.worldEvents ?? [];
+
+    // Get active ship data for the tooltip
+    let activeShip: import("../../data/types").OwnedShip | null = null;
+    let shipSpec: import("../../data/types").ShipSpec | null = null;
+    let originPort: Port | null = null;
+
     if (state) {
       const player = getActivePlayer(state);
-      const activeShip = player.ships[this.activeShipIndex] ?? player.ships.find(
+      activeShip = player.ships[this.activeShipIndex] ?? player.ships.find(
         (s) => s.currentPortId !== null && !s.isLaidUp,
-      );
-      if (activeShip && activeShip.currentPortId) {
-        const originPort = getPortById(activeShip.currentPortId);
-        if (originPort && originPort.id !== port.id) {
-          const distanceNm = calculateDistanceNm(originPort, port);
-          const spec = getShipSpecById(activeShip.specId);
-
-          const distEl = document.createElement("span");
-          distEl.className = "port-info-detail";
-          distEl.textContent = `Distance: ${distanceNm.toLocaleString()} nm`;
-          this.selectedPortInfo.appendChild(distEl);
-
-          if (spec) {
-            // Show the speed selector component instead of static estimates
-            const activeCharter = player.activeCharters[activeShip.name] ?? null;
-            const { element, getSelection } = createSpeedSelector({
-              spec,
-              distanceNm,
-              currentFuelTons: activeShip.fuelTons,
-              activeCharter,
-              totalDaysElapsed: state.time.totalDaysElapsed,
-              onSpeedChange: (info) => {
-                this.speedSelection = info;
-              },
-            });
-            this.speedSelectorGetSelection = getSelection;
-            this.speedSelection = getSelection();
-            this.speedSelectorContainer = element;
-            this.selectedPortInfo.appendChild(element);
-
-            // Show estimated voyage cost summary
-            const baseFuelCost = getFuelCostPerTon(activeShip.currentPortId!);
-            const departureMult = state.worldEvents
-              ? getPortCostMultiplier(activeShip.currentPortId!, state.worldEvents)
-              : 1.0;
-            const adjustedFuel = getAdjustedFuelCost(baseFuelCost, departureMult);
-            const voyageEstimate = calculateVoyageEstimate(spec, distanceNm, adjustedFuel);
-            const costSummary = createVoyageCostSummary(voyageEstimate);
-            this.selectedPortInfo!.appendChild(costSummary);
-          }
+      ) ?? null;
+      if (activeShip) {
+        shipSpec = getShipSpecById(activeShip.specId) ?? null;
+        if (activeShip.currentPortId) {
+          originPort = getPortById(activeShip.currentPortId) ?? null;
         }
       }
     }
 
-    // World event warnings
-    if (state && state.worldEvents) {
-      if (isPortBlocked(port.id, state.worldEvents)) {
-        const blockedBadge = document.createElement("span");
-        blockedBadge.className = "port-info-detail";
-        blockedBadge.style.color = "var(--color-danger, #ff4444)";
-        blockedBadge.style.fontWeight = "bold";
-        blockedBadge.textContent = "PORT BLOCKED — World Event";
-        this.selectedPortInfo.appendChild(blockedBadge);
-      } else {
-        const multiplier = getPortCostMultiplier(port.id, state.worldEvents);
-        if (multiplier > 1.0) {
-          const costBadge = document.createElement("span");
-          costBadge.className = "port-info-detail";
-          costBadge.style.color = "var(--color-gold, #ffaa33)";
-          costBadge.textContent = `Costs +${Math.round((multiplier - 1) * 100)}% (World Event)`;
-          this.selectedPortInfo.appendChild(costBadge);
-        }
-      }
+    // Create expanded port info tooltip
+    const tooltip = createPortInfoTooltip({
+      port,
+      activeShip,
+      shipSpec,
+      originPort,
+      worldEvents,
+      currentWeek: state?.time.week ?? 0,
+      currentYear: state?.time.year ?? 0,
+    });
+    this.selectedPortInfo.appendChild(tooltip);
+
+    // Speed selector and voyage cost estimate (below the tooltip)
+    if (state && activeShip && shipSpec && originPort && originPort.id !== port.id) {
+      const player = getActivePlayer(state);
+      const distanceNm = calculateDistanceNm(originPort, port);
+
+      const activeCharter = player.activeCharters[activeShip.name] ?? null;
+      const { element, getSelection } = createSpeedSelector({
+        spec: shipSpec,
+        distanceNm,
+        currentFuelTons: activeShip.fuelTons,
+        activeCharter,
+        totalDaysElapsed: state.time.totalDaysElapsed,
+        onSpeedChange: (info) => {
+          this.speedSelection = info;
+        },
+      });
+      this.speedSelectorGetSelection = getSelection;
+      this.speedSelection = getSelection();
+      this.speedSelectorContainer = element;
+      this.selectedPortInfo.appendChild(element);
+
+      // Show estimated voyage cost summary
+      const baseFuelCost = getFuelCostPerTon(activeShip.currentPortId!);
+      const departureMult = state.worldEvents
+        ? getPortCostMultiplier(activeShip.currentPortId!, state.worldEvents)
+        : 1.0;
+      const adjustedFuel = getAdjustedFuelCost(baseFuelCost, departureMult);
+      const voyageEstimate = calculateVoyageEstimate(shipSpec, distanceNm, adjustedFuel);
+      const costSummary = createVoyageCostSummary(voyageEstimate);
+      this.selectedPortInfo.appendChild(costSummary);
     }
 
+    // Destination badge
     const destBadge = document.createElement("span");
     destBadge.className = "port-info-destination";
     destBadge.textContent = "DESTINATION";
-
-    this.selectedPortInfo.appendChild(name);
-    this.selectedPortInfo.appendChild(country);
-    this.selectedPortInfo.appendChild(ships);
-    this.selectedPortInfo.appendChild(cargo);
     this.selectedPortInfo.appendChild(destBadge);
 
     // Update destination label in footer
@@ -646,6 +645,13 @@ export class WorldMapScreen implements GameScreen {
 
     const result = endTurn(state);
 
+    // If the game has ended, transition to final standings
+    if (result.gameEnded) {
+      toast.show(result.message, "info");
+      this.screenManager.showScreen("finalstandings" as import("../ScreenManager").ScreenId);
+      return;
+    }
+
     // Get the new active player info
     const newPlayer = getActivePlayer(state);
     const playerNumber = state.turns.activePlayerIndex + 1;
@@ -759,6 +765,125 @@ export class WorldMapScreen implements GameScreen {
     );
   }
 
+  // ── Need-based Icons & Compare Ports ─────────────────────────────────
+
+  /**
+   * Update need-based port icon overlays on the map canvas
+   * based on the active ship's condition and fuel level.
+   */
+  private updateNeedBasedIcons(state: import("../../game/GameState").FullGameState): void {
+    if (!this.mapCanvas) return;
+
+    const player = getActivePlayer(state);
+    const activeShip = player.ships[this.activeShipIndex] ?? null;
+    const worldEvents = state.worldEvents ?? [];
+
+    // Find cheapest ports
+    const cheapest = findCheapestPorts(worldEvents);
+    this.mapCanvas.setCheapestPorts(
+      cheapest.cheapestRepairPortId,
+      cheapest.cheapestFuelPortId,
+    );
+
+    if (!activeShip) {
+      this.mapCanvas.setRepairNeededPorts([]);
+      this.mapCanvas.setFuelNeededPorts([]);
+      return;
+    }
+
+    const spec = getShipSpecById(activeShip.specId);
+    if (!spec) {
+      this.mapCanvas.setRepairNeededPorts([]);
+      this.mapCanvas.setFuelNeededPorts([]);
+      return;
+    }
+
+    const avgRepairCost = getAverageRepairCost(worldEvents);
+    const avgFuelCost = getAverageFuelCost(worldEvents);
+
+    const repairNeededIds: string[] = [];
+    const fuelNeededIds: string[] = [];
+
+    // Show wrench if ship condition < 50%, at ports with below-average repair cost
+    const needsRepair = activeShip.conditionPercent < 50;
+    // Show fuel icon if ship fuel < 30% capacity, at ports with below-average fuel cost
+    const needsFuel = activeShip.fuelTons < spec.bunkerCapacityTons * 0.3;
+
+    if (needsRepair || needsFuel) {
+      for (const port of PORTS) {
+        if (isPortBlocked(port.id, worldEvents)) continue;
+        const costMult = getPortCostMultiplier(port.id, worldEvents);
+
+        if (needsRepair) {
+          const effectiveRepairCost = port.repairCostPerPercent * costMult;
+          if (effectiveRepairCost < avgRepairCost) {
+            repairNeededIds.push(port.id);
+          }
+        }
+
+        if (needsFuel) {
+          const effectiveFuelCost = getFuelCostPerTon(port.id) * costMult;
+          if (effectiveFuelCost < avgFuelCost) {
+            fuelNeededIds.push(port.id);
+          }
+        }
+      }
+    }
+
+    this.mapCanvas.setRepairNeededPorts(repairNeededIds);
+    this.mapCanvas.setFuelNeededPorts(fuelNeededIds);
+  }
+
+  /**
+   * Toggle the Compare Ports panel open/closed.
+   */
+  private toggleComparePortsPanel(): void {
+    if (this.comparePortsPanel) {
+      this.comparePortsPanel.remove();
+      this.comparePortsPanel = null;
+      return;
+    }
+
+    const state = this.screenManager.getGameState();
+    const worldEvents = state?.worldEvents ?? [];
+
+    let originPort: Port | null = null;
+    let shipSpec: import("../../data/types").ShipSpec | null = null;
+
+    if (state) {
+      const player = getActivePlayer(state);
+      const activeShip = player.ships[this.activeShipIndex] ?? null;
+      if (activeShip) {
+        shipSpec = getShipSpecById(activeShip.specId) ?? null;
+        if (activeShip.currentPortId) {
+          originPort = getPortById(activeShip.currentPortId) ?? null;
+        }
+      }
+    }
+
+    this.comparePortsPanel = createComparePortsPanel(
+      originPort,
+      shipSpec,
+      worldEvents,
+      (port) => {
+        // Clicking a port in the comparison table selects it on the map
+        this.handlePortClick(port);
+        if (this.mapCanvas) {
+          this.mapCanvas.setSelectedPort(port.id);
+        }
+      },
+      () => {
+        // Close button
+        if (this.comparePortsPanel) {
+          this.comparePortsPanel.remove();
+          this.comparePortsPanel = null;
+        }
+      },
+    );
+
+    this.container.appendChild(this.comparePortsPanel);
+  }
+
   // ── DOM Helpers ─────────────────────────────────────────────────────
 
   private createInfoItem(label: string, value: string): HTMLElement {
@@ -865,6 +990,18 @@ export class WorldMapScreen implements GameScreen {
           <path d="M4 18V8l8-4 8 4v10"/>
           <path d="M12 4v6"/>
           <rect x="8" y="14" width="8" height="4"/>
+        </svg>`;
+        break;
+      case "compare":
+        icon.innerHTML = `<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="7" height="18" rx="1"/>
+          <rect x="14" y="3" width="7" height="18" rx="1"/>
+          <line x1="6.5" y1="8" x2="6.5" y2="8.01"/>
+          <line x1="6.5" y1="12" x2="6.5" y2="12.01"/>
+          <line x1="6.5" y1="16" x2="6.5" y2="16.01"/>
+          <line x1="17.5" y1="8" x2="17.5" y2="8.01"/>
+          <line x1="17.5" y1="12" x2="17.5" y2="12.01"/>
+          <line x1="17.5" y1="16" x2="17.5" y2="16.01"/>
         </svg>`;
         break;
       case "help":

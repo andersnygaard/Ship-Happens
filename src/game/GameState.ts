@@ -109,6 +109,26 @@ export interface PlayerState {
 
 // ─── Full Game State ─────────────────────────────────────────────────────────
 
+/** Record of a player who has exited the game (retired or bankrupt). */
+export interface ExitedPlayer {
+  /** Player index (0-based). */
+  playerIndex: number;
+  /** Reason the player exited. */
+  reason: "retired" | "bankrupt";
+  /** Final net worth at time of exit ($0 for bankrupt). */
+  finalNetWorth: number;
+  /** Week when the player exited. */
+  exitWeek: number;
+  /** Year when the player exited. */
+  exitYear: number;
+  /** Snapshot of player statistics at time of exit. */
+  statistics: PlayerStatistics;
+  /** Player name. */
+  playerName: string;
+  /** Company name. */
+  companyName: string;
+}
+
 /** The complete, serializable game state. */
 export interface FullGameState {
   players: PlayerState[];
@@ -118,6 +138,10 @@ export interface FullGameState {
   worldEvents: WorldEvent[];
   /** Flag indicating the game has been initialized. */
   initialized: boolean;
+  /** Game duration in years, or null for unlimited/sandbox mode. */
+  gameDurationYears: number | null;
+  /** Players who have retired or gone bankrupt. */
+  exitedPlayers: ExitedPlayer[];
 }
 
 /** Configuration for creating a new game. */
@@ -127,6 +151,8 @@ export interface NewGameConfig {
     companyName: string;
     homePortId: string;
   }>;
+  /** Game duration in years, or null for unlimited/sandbox mode. */
+  gameDurationYears?: number | null;
 }
 
 // ─── Game Initialization ─────────────────────────────────────────────────────
@@ -167,6 +193,8 @@ export function createNewGame(config: NewGameConfig): FullGameState {
     turns: createTurnState(config.players.length),
     worldEvents: [],
     initialized: true,
+    gameDurationYears: config.gameDurationYears ?? null,
+    exitedPlayers: [],
   };
 }
 
@@ -357,6 +385,60 @@ export function sellShip(
   };
 }
 
+// ─── Extra Mortgage Payment ──────────────────────────────────────────────────
+
+/**
+ * Make a voluntary extra mortgage payment on a specific ship.
+ * Deducts from the player's cash balance and reduces the ship's outstanding mortgage.
+ * @param state - Full game state
+ * @param shipIndex - Index of the ship in the active player's fleet
+ * @param amount - Dollar amount to pay (will be capped to remaining balance)
+ */
+export function extraMortgagePayment(
+  state: FullGameState,
+  shipIndex: number,
+  amount: number,
+): { success: boolean; amountPaid: number; message: string } {
+  const player = getActivePlayer(state);
+  const ship = player.ships[shipIndex];
+  if (!ship) {
+    return { success: false, amountPaid: 0, message: "Ship not found." };
+  }
+  if (ship.mortgageRemaining <= 0) {
+    return { success: false, amountPaid: 0, message: "This ship has no outstanding mortgage." };
+  }
+  if (amount <= 0) {
+    return { success: false, amountPaid: 0, message: "Payment amount must be positive." };
+  }
+
+  // Cap payment to remaining mortgage balance
+  const actualPayment = Math.min(amount, ship.mortgageRemaining);
+
+  // Check if player can afford it
+  if (!canAfford(player.finances, actualPayment)) {
+    return { success: false, amountPaid: 0, message: "Insufficient funds for this payment." };
+  }
+
+  const time = getTimeSnapshot(state.time);
+  const shipKey = `${ship.specId}-${ship.name.replace("MS ", "")}`;
+
+  const result = makeMortgagePayment(player.finances, shipKey, actualPayment, time);
+  if (result.success) {
+    ship.mortgageRemaining = Math.max(0, ship.mortgageRemaining - actualPayment);
+    if (ship.mortgageRemaining <= 0) {
+      ship.mortgagePayment = 0;
+    }
+    const paidOff = ship.mortgageRemaining <= 0 ? " Mortgage fully paid off!" : "";
+    return {
+      success: true,
+      amountPaid: actualPayment,
+      message: `Extra payment of $${actualPayment.toLocaleString()} applied to ${ship.name}.${paidOff}`,
+    };
+  }
+
+  return { success: false, amountPaid: 0, message: result.message };
+}
+
 // ─── Charter Actions ─────────────────────────────────────────────────────────
 
 /**
@@ -500,8 +582,9 @@ export interface DeadlineWarning {
   totalDeadlineDays: number;
 }
 
-export function endTurn(state: FullGameState): { newRound: boolean; message: string; newWorldEvents: WorldEvent[]; deadlineWarnings: DeadlineWarning[] } {
-  const newRound = nextTurn(state.turns);
+export function endTurn(state: FullGameState): { newRound: boolean; message: string; newWorldEvents: WorldEvent[]; deadlineWarnings: DeadlineWarning[]; gameEnded: boolean } {
+  const exitedIndices = (state.exitedPlayers || []).map((e) => e.playerIndex);
+  const newRound = nextTurn(state.turns, exitedIndices);
   const newWorldEvents: WorldEvent[] = [];
 
   if (newRound) {
@@ -567,14 +650,29 @@ export function endTurn(state: FullGameState): { newRound: boolean; message: str
     }
   }
 
+  // Check if the game should end (year limit reached at end of a full round)
+  let gameEnded = false;
+  if (newRound && state.gameDurationYears != null && state.time.year >= state.gameDurationYears) {
+    gameEnded = true;
+  }
+
+  // Check if all players are exited (bankrupt or retired)
+  if (!state.exitedPlayers) state.exitedPlayers = [];
+  if (state.exitedPlayers.length >= state.players.length) {
+    gameEnded = true;
+  }
+
   const activePlayer = getActivePlayer(state);
   return {
     newRound,
     newWorldEvents,
     deadlineWarnings,
-    message: newRound
-      ? `New round! Week ${state.time.week}, Year ${state.time.year}. It's ${activePlayer.name}'s turn.`
-      : `It's ${activePlayer.name}'s turn.`,
+    gameEnded,
+    message: gameEnded
+      ? "The game has ended! Final standings are being tallied..."
+      : newRound
+        ? `New round! Week ${state.time.week}, Year ${state.time.year}. It's ${activePlayer.name}'s turn.`
+        : `It's ${activePlayer.name}'s turn.`,
   };
 }
 
@@ -785,6 +883,131 @@ export function getCharterRemainingDays(
   return charter.deliveryDeadlineDays - daysElapsed;
 }
 
+// ─── Net Worth Calculation ────────────────────────────────────────────────────
+
+/**
+ * Calculate a player's net worth: cash + fleet value (sale price already factors in mortgages).
+ * For net worth we use: balance + sum of ship sale prices (which already deduct mortgage).
+ * Actually, per Leaderboard: netWorth = balance + fleetValue (sale price without mortgage deduction).
+ * We follow the same approach as the leaderboard for consistency.
+ */
+export function calculatePlayerNetWorth(player: PlayerState, week: number, year: number): number {
+  const balance = getPlayerBalance(player);
+  let fleetValue = 0;
+  for (const ship of player.ships) {
+    const valuation = calculateShipValue(ship, week, year);
+    fleetValue += valuation.salePrice;
+  }
+  return balance + fleetValue;
+}
+
+// ─── Retirement ──────────────────────────────────────────────────────────────
+
+/**
+ * Retire the active player from the game.
+ * Sells all ships at market value (settling mortgages), records final score.
+ * Returns the retirement result.
+ */
+export function retirePlayer(state: FullGameState): {
+  success: boolean;
+  message: string;
+  finalNetWorth: number;
+} {
+  const playerIndex = getActivePlayerIndex(state.turns);
+  const player = getActivePlayer(state);
+
+  if (!state.exitedPlayers) state.exitedPlayers = [];
+
+  // Check if already exited
+  if (state.exitedPlayers.some((e) => e.playerIndex === playerIndex)) {
+    return { success: false, message: "Player has already exited the game.", finalNetWorth: 0 };
+  }
+
+  const time = getTimeSnapshot(state.time);
+
+  // Sell all ships (liquidate fleet)
+  while (player.ships.length > 0) {
+    const ship = player.ships[0];
+    const valuation = calculateShipValue(ship, time.week, time.year);
+    const salePrice = valuation.salePrice;
+    const mortgageDeducted = Math.min(ship.mortgageRemaining, salePrice);
+    const netProceeds = salePrice - mortgageDeducted;
+
+    if (netProceeds > 0) {
+      credit(player.finances, netProceeds, `Retirement sale of ${ship.name}`, time);
+    }
+
+    // If mortgage exceeds sale price, the player owes the difference
+    if (ship.mortgageRemaining > salePrice) {
+      const deficit = ship.mortgageRemaining - salePrice;
+      debit(player.finances, deficit, `Mortgage deficit on ${ship.name}`, time);
+    }
+
+    // Clear mortgage
+    const shipKey = `${ship.specId}-${ship.name.replace("MS ", "")}`;
+    if (player.finances.mortgages[shipKey]) {
+      delete player.finances.mortgages[shipKey];
+    }
+
+    // Remove active charter if any
+    delete player.activeCharters[ship.name];
+
+    // Remove ship
+    player.ships.splice(0, 1);
+  }
+
+  const finalNetWorth = Math.max(0, getPlayerBalance(player));
+
+  // Record the exit
+  state.exitedPlayers.push({
+    playerIndex,
+    reason: "retired",
+    finalNetWorth,
+    exitWeek: time.week,
+    exitYear: time.year,
+    statistics: { ...player.statistics, portsVisited: [...player.statistics.portsVisited] },
+    playerName: player.name,
+    companyName: player.companyName,
+  });
+
+  return {
+    success: true,
+    finalNetWorth,
+    message: `${player.name} has retired from the shipping business with $${finalNetWorth.toLocaleString()}. A life well sailed!`,
+  };
+}
+
+/**
+ * Record a player as bankrupt in the exitedPlayers list.
+ * Should be called when bankruptcy is detected.
+ */
+export function recordBankruptPlayer(state: FullGameState, playerIndex: number): void {
+  if (!state.exitedPlayers) state.exitedPlayers = [];
+  if (state.exitedPlayers.some((e) => e.playerIndex === playerIndex)) return;
+
+  const player = state.players[playerIndex];
+  if (!player) return;
+
+  state.exitedPlayers.push({
+    playerIndex,
+    reason: "bankrupt",
+    finalNetWorth: 0,
+    exitWeek: state.time.week,
+    exitYear: state.time.year,
+    statistics: { ...player.statistics, portsVisited: [...player.statistics.portsVisited] },
+    playerName: player.name,
+    companyName: player.companyName,
+  });
+}
+
+/**
+ * Check if a player has exited the game (retired or bankrupt).
+ */
+export function isPlayerExited(state: FullGameState, playerIndex: number): boolean {
+  if (!state.exitedPlayers) return false;
+  return state.exitedPlayers.some((e) => e.playerIndex === playerIndex);
+}
+
 // ─── Display Helpers ─────────────────────────────────────────────────────────
 
 /**
@@ -836,12 +1059,31 @@ export function deserializeGameState(json: string): FullGameState {
   if (!parsed.worldEvents) {
     parsed.worldEvents = [];
   }
+  // Backward compatibility: default to unlimited duration for old saves
+  if (parsed.gameDurationYears === undefined) {
+    parsed.gameDurationYears = null;
+  }
+  // Backward compatibility: ensure exitedPlayers array exists
+  if (!parsed.exitedPlayers) {
+    parsed.exitedPlayers = [];
+  }
   // Backward compatibility: assign random captain traits to ships without one
   for (const player of parsed.players) {
     for (const ship of player.ships) {
       if (!ship.captainTrait) {
         ship.captainTrait = ALL_CAPTAIN_TRAITS[Math.floor(Math.random() * ALL_CAPTAIN_TRAITS.length)];
       }
+      // Backward compatibility: default originalMortgageAmount to mortgageRemaining
+      if (ship.originalMortgageAmount === undefined) {
+        ship.originalMortgageAmount = ship.mortgageRemaining;
+      }
+    }
+    // Backward compatibility: ensure docking bonus statistics exist
+    if (player.statistics.dockingBonusesEarned === undefined) {
+      player.statistics.dockingBonusesEarned = 0;
+    }
+    if (player.statistics.totalDockingBonus === undefined) {
+      player.statistics.totalDockingBonus = 0;
     }
   }
   return parsed;

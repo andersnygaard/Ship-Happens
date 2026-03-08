@@ -11,13 +11,13 @@ import { getPortById } from "../../data/ports";
 import { debit } from "../../game/FinancialSystem";
 import { getTimeSnapshot } from "../../game/TimeSystem";
 import { generatePortArrivalEvent } from "../../game/EventSystem";
-import { CRITICAL_CONDITION_PERCENT, BREAKDOWN_DEPARTURE_BLOCK_PERCENT } from "../../data/constants";
+import { CRITICAL_CONDITION_PERCENT, BREAKDOWN_DEPARTURE_BLOCK_PERCENT, TUG_COST_BY_DIFFICULTY } from "../../data/constants";
+import { getLayoutForPort, getDifficultyRating, getDifficultyLabel } from "../../data/harborLayouts";
+import type { DifficultyRating } from "../../data/harborLayouts";
 import { toast } from "../components/Toast";
 import { createShipSideView } from "../components/ShipIllustration";
 import type { PortOperationsScreen } from "./PortOperationsScreen";
 import type { ManeuveringScreen } from "./ManeuveringScreen";
-
-const TUG_COST = 50_000;
 
 export class PortDepartureScreen implements GameScreen {
   private container: HTMLElement;
@@ -117,6 +117,24 @@ export class PortDepartureScreen implements GameScreen {
       panel.appendChild(shipSection);
     }
 
+    // Get port difficulty for display and tug cost scaling
+    let difficultyRating: DifficultyRating = 3;
+    let difficultyLabel = "Challenging";
+    let tugCost = TUG_COST_BY_DIFFICULTY[3];
+    if (ship?.currentPortId) {
+      const layout = getLayoutForPort(ship.currentPortId);
+      difficultyRating = getDifficultyRating(layout);
+      difficultyLabel = getDifficultyLabel(difficultyRating);
+      tugCost = TUG_COST_BY_DIFFICULTY[difficultyRating] ?? 50_000;
+    }
+
+    // Difficulty indicator
+    const difficultyPanel = document.createElement("div");
+    difficultyPanel.className = "port-departure-difficulty data-display";
+    const stars = "\u2693".repeat(difficultyRating) + "\u25CB".repeat(5 - difficultyRating);
+    difficultyPanel.innerHTML = `Harbor Difficulty: <strong>${difficultyLabel}</strong> ${stars}`;
+    panel.appendChild(difficultyPanel);
+
     // Description
     const desc = document.createElement("p");
     desc.className = "port-departure-description";
@@ -154,7 +172,7 @@ export class PortDepartureScreen implements GameScreen {
     // Steer by hand (free, play maneuvering minigame)
     const steerBtn = document.createElement("button");
     steerBtn.className = "btn btn-secondary port-departure-btn";
-    steerBtn.innerHTML = "<strong>Steer by Hand</strong><br><span class='port-departure-cost'>Free — play minigame</span>";
+    steerBtn.innerHTML = `<strong>Steer by Hand</strong><br><span class='port-departure-cost'>Free — ${difficultyLabel} (${"\u2693".repeat(difficultyRating)})</span>`;
     steerBtn.addEventListener("click", () => {
       this.goToManeuvering();
     });
@@ -163,8 +181,8 @@ export class PortDepartureScreen implements GameScreen {
     // Use tug (costs money, skip minigame)
     const tugBtn = document.createElement("button");
     tugBtn.className = "btn btn-secondary port-departure-btn";
-    const canAffordTug = balance >= TUG_COST;
-    tugBtn.innerHTML = `<strong>Use Tug's Help</strong><br><span class='port-departure-cost'>$${TUG_COST.toLocaleString()}</span>`;
+    const canAffordTug = balance >= tugCost;
+    tugBtn.innerHTML = `<strong>Use Tug's Help</strong><br><span class='port-departure-cost'>$${tugCost.toLocaleString()}</span>`;
     tugBtn.disabled = !canAffordTug;
     if (!canAffordTug) {
       tugBtn.title = "Insufficient funds for tug assistance";
@@ -175,8 +193,8 @@ export class PortDepartureScreen implements GameScreen {
         return;
       }
       const time = getTimeSnapshot(state.time);
-      debit(player.finances, TUG_COST, "Tug assistance at port", time);
-      toast.show(`Tug hired for $${TUG_COST.toLocaleString()}`, "info");
+      debit(player.finances, tugCost, "Tug assistance at port", time);
+      toast.show(`Tug hired for $${tugCost.toLocaleString()}`, "info");
       this.goToPortOperations();
     });
     btnContainer.appendChild(tugBtn);

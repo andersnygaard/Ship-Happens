@@ -84,6 +84,8 @@ export interface OwnedShip {
   mortgageRemaining: number;
   /** Weekly mortgage payment amount in dollars. */
   mortgagePayment: number;
+  /** Original mortgage amount in dollars at time of purchase (for tracking interest paid). */
+  originalMortgageAmount: number;
   /** Week the ship was purchased (for age-based depreciation). */
   purchaseWeek: number;
   /** Year the ship was purchased (for age-based depreciation). */

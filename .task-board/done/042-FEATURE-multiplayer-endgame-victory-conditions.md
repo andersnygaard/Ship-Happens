@@ -69,15 +69,15 @@ The spec describes a turn-based game for up to 7 players, with a time system tra
 - The endgame check should happen at the end of a full round (after all players have taken their turn) to be fair.
 
 ## Acceptance Criteria
-- [ ] Setup screen includes a game duration selector (5, 10, 20 years, or unlimited).
-- [ ] Game automatically ends when the selected year limit is reached, transitioning to Final Standings.
-- [ ] Final Standings screen ranks all players by net worth with detailed stat breakdowns.
-- [ ] Bankrupt players appear in standings with their exit week/year and a $0 net worth.
-- [ ] Players can voluntarily retire from the Office screen, liquidating assets and recording final score.
-- [ ] Retired/bankrupt players are skipped in multiplayer turn rotation.
-- [ ] Humorous "shipping magnate rating" titles are assigned based on performance tier.
-- [ ] Existing save files load correctly with unlimited duration as default.
-- [ ] Single-player mode stores high scores in localStorage for personal best tracking.
+- [x] Setup screen includes a game duration selector (5, 10, 20 years, or unlimited).
+- [x] Game automatically ends when the selected year limit is reached, transitioning to Final Standings.
+- [x] Final Standings screen ranks all players by net worth with detailed stat breakdowns.
+- [x] Bankrupt players appear in standings with their exit week/year and a $0 net worth.
+- [x] Players can voluntarily retire from the Office screen, liquidating assets and recording final score.
+- [x] Retired/bankrupt players are skipped in multiplayer turn rotation.
+- [x] Humorous "shipping magnate rating" titles are assigned based on performance tier.
+- [x] Existing save files load correctly with unlimited duration as default.
+- [x] Single-player mode stores high scores in localStorage for personal best tracking.
 
 ---
 **Next Steps**: Ready for implementation.

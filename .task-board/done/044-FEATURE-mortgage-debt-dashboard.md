@@ -74,15 +74,15 @@ The game's financial system already supports mortgages with interest rates, week
 - The Debt Dashboard should not overwhelm the Office screen — consider making it collapsible or tab-accessible if the player has many ships.
 
 ## Acceptance Criteria
-- [ ] Office screen displays a Debt Overview section with total outstanding mortgage debt.
-- [ ] Per-ship mortgage breakdown shows remaining balance, weekly payment, and payoff estimate.
-- [ ] Visual progress bars indicate how much of each mortgage has been paid off.
-- [ ] Players can make voluntary extra mortgage payments from the Office.
-- [ ] Net worth (cash + fleet value - mortgages) is calculated and displayed.
-- [ ] Fleet Overview shows mortgage indicators on ships with outstanding debt.
-- [ ] Financial Summary includes a weekly debt service total.
-- [ ] Humorous commentary reflects the player's debt situation.
-- [ ] Existing saves load correctly with default values for new fields.
+- [x] Office screen displays a Debt Overview section with total outstanding mortgage debt.
+- [x] Per-ship mortgage breakdown shows remaining balance, weekly payment, and payoff estimate.
+- [x] Visual progress bars indicate how much of each mortgage has been paid off.
+- [x] Players can make voluntary extra mortgage payments from the Office.
+- [x] Net worth (cash + fleet value - mortgages) is calculated and displayed.
+- [x] Fleet Overview shows mortgage indicators on ships with outstanding debt.
+- [x] Financial Summary includes a weekly debt service total.
+- [x] Humorous commentary reflects the player's debt situation.
+- [x] Existing saves load correctly with default values for new fields.
 
 ---
-**Next Steps**: Ready for implementation.
+**Next Steps**: Implementation complete.

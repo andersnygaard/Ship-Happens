@@ -71,14 +71,14 @@ The game has 30 ports with meaningfully different attributes — varying repair 
 - Need-based icons should update when the player switches active ships (different ships may have different fuel/condition levels).
 
 ## Acceptance Criteria
-- [ ] Clicking a port on the world map shows an expanded info panel with repair cost, fuel cost, cargo types, distance, and travel time.
-- [ ] World events affecting a port are displayed in the tooltip with surcharge percentage and remaining duration.
-- [ ] Ports display contextual need-based icon overlays (wrench for repair, fuel drop for refueling) when the active ship has relevant needs.
-- [ ] Blocked ports show a clear blocked indicator (red X or similar).
-- [ ] A "Compare Ports" panel is accessible from the world map, listing ports with sortable columns.
-- [ ] The cheapest repair and fuel ports within range are highlighted or labeled.
-- [ ] Port info updates correctly when switching between active ships.
-- [ ] Tooltip positioning does not obscure the map or other UI elements.
+- [x] Clicking a port on the world map shows an expanded info panel with repair cost, fuel cost, cargo types, distance, and travel time.
+- [x] World events affecting a port are displayed in the tooltip with surcharge percentage and remaining duration.
+- [x] Ports display contextual need-based icon overlays (wrench for repair, fuel drop for refueling) when the active ship has relevant needs.
+- [x] Blocked ports show a clear blocked indicator (red X or similar).
+- [x] A "Compare Ports" panel is accessible from the world map, listing ports with sortable columns.
+- [x] The cheapest repair and fuel ports within range are highlighted or labeled.
+- [x] Port info updates correctly when switching between active ships.
+- [x] Tooltip positioning does not obscure the map or other UI elements.
 
 ---
-**Next Steps**: Ready for implementation.
+**Status**: Complete.

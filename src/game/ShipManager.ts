@@ -152,6 +152,7 @@ export function purchaseShip(
     mortgagePercent,
     mortgageRemaining: mortgageAmount,
     mortgagePayment: weeklyPayment,
+    originalMortgageAmount: mortgageAmount,
     purchaseWeek: time.week,
     purchaseYear: time.year,
   };

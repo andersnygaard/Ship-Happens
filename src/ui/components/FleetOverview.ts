@@ -156,15 +156,20 @@ export function renderFleetOverview(data: FleetOverviewData): HTMLElement {
     tdCost.textContent = `$${dailyCost.toLocaleString()}`;
     row.appendChild(tdCost);
 
-    // Mortgage
+    // Mortgage badge indicator
     const tdMortgage = document.createElement("td");
     tdMortgage.className = "data-display";
     if (ship.mortgageRemaining > 0) {
-      tdMortgage.textContent = `$${(ship.mortgageRemaining / 1_000_000).toFixed(2)}M`;
-      tdMortgage.title = `Weekly payment: $${ship.mortgagePayment.toLocaleString()}`;
+      const badge = document.createElement("span");
+      badge.className = "fleet-mortgage-badge";
+      badge.textContent = `$ ${(ship.mortgageRemaining / 1_000_000).toFixed(2)}M`;
+      badge.title = `Weekly payment: $${ship.mortgagePayment.toLocaleString()} | Remaining: $${ship.mortgageRemaining.toLocaleString()}`;
+      tdMortgage.appendChild(badge);
     } else {
-      tdMortgage.textContent = "Paid off";
-      tdMortgage.classList.add("office-text-muted");
+      const paidBadge = document.createElement("span");
+      paidBadge.className = "fleet-mortgage-badge-paid";
+      paidBadge.textContent = "\u2713 Paid";
+      tdMortgage.appendChild(paidBadge);
     }
     row.appendChild(tdMortgage);
 

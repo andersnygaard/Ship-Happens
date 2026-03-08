@@ -11,7 +11,9 @@ import { TravelScreen } from './ui/screens/TravelScreen';
 import { PortDepartureScreen } from './ui/screens/PortDepartureScreen';
 import { ManeuveringScreen } from './ui/screens/ManeuveringScreen';
 import { GameOverScreen } from './ui/screens/GameOverScreen';
-import { checkBankruptcy, checkOfficeNeglect, recordOfficeVisit } from './game/GameState';
+import { FinalStandingsScreen } from './ui/screens/FinalStandingsScreen';
+import { checkBankruptcy, checkOfficeNeglect, recordOfficeVisit, recordBankruptPlayer } from './game/GameState';
+import { getActivePlayerIndex } from './game/TurnManager';
 import { OceanScene } from './scene/OceanScene';
 import { ShipModel } from './scene/ShipModel';
 import { SkySystem } from './scene/SkySystem';
@@ -171,6 +173,7 @@ const screenRegistrations: [string, () => GameScreen][] = [
   ["port-departure", () => new PortDepartureScreen(screenManager)],
   ["maneuvering", () => new ManeuveringScreen(screenManager)],
   ["gameover", () => new GameOverScreen(screenManager)],
+  ["finalstandings", () => new FinalStandingsScreen(screenManager)],
 ];
 
 for (const [id, factory] of screenRegistrations) {
@@ -204,12 +207,27 @@ screenManager.showScreen = (id) => {
     // Update tutorial progress based on current game state
     tutorialSystem.checkAutoComplete(state);
 
-    // Check for bankruptcy after any screen transition (except setup/gameover)
-    if (checkBankruptcy(state)) {
-      // Play UI click sound before redirecting to game over
+    // Check for bankruptcy after any screen transition (except setup/gameover/finalstandings)
+    if (id !== "finalstandings" && checkBankruptcy(state)) {
+      const playerIdx = getActivePlayerIndex(state.turns);
+      recordBankruptPlayer(state, playerIdx);
+
+      // In multiplayer: if not all players have exited, skip to next turn
+      if (state.players.length > 1 && state.exitedPlayers.length < state.players.length) {
+        const audio = AudioSystem.getInstance();
+        audio.play("uiClick");
+        originalShowScreen("gameover");
+        return;
+      }
+
+      // All players exited or single-player: show game over (single) or final standings (multi)
       const audio = AudioSystem.getInstance();
       audio.play("uiClick");
-      originalShowScreen("gameover");
+      if (state.players.length > 1) {
+        originalShowScreen("finalstandings");
+      } else {
+        originalShowScreen("gameover");
+      }
       return;
     }
   }

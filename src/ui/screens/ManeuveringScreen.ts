@@ -10,9 +10,19 @@
 
 import type { GameScreen, ScreenManager } from "../ScreenManager";
 import { getActivePlayer } from "../../game/GameState";
+import { credit } from "../../game/FinancialSystem";
+import { getTimeSnapshot } from "../../game/TimeSystem";
+import { recordDockingBonus, recordRevenue } from "../../game/Statistics";
 import type { PortOperationsScreen } from "./PortOperationsScreen";
-import { getLayoutForPort } from "../../data/harborLayouts";
-import type { HarborLayout, EnvironmentTheme, ObstacleDecoration } from "../../data/harborLayouts";
+import { getLayoutForPort, getDifficultyRating } from "../../data/harborLayouts";
+import type { HarborLayout, EnvironmentTheme, ObstacleDecoration, DifficultyRating } from "../../data/harborLayouts";
+import {
+  DOCKING_BASE_BONUS,
+  DOCKING_CLEAN_BONUS,
+  DOCKING_TIME_BONUS_RATE,
+  DOCKING_DIFFICULTY_MULTIPLIER,
+} from "../../data/constants";
+import { getDockingCommentary } from "../../data/humorTexts";
 import {
   createShipState,
   updateShipPhysics,
@@ -106,6 +116,9 @@ export class ManeuveringScreen implements GameScreen {
   private lastTimestamp: number = 0;
   private initialCondition: number = 100;
 
+  // Collision tracking for docking bonus
+  private collisionCount: number = 0;
+
   // Visual effects state
   private waveTime: number = 0;
   private damageFlashTimer: number = 0;
@@ -139,6 +152,7 @@ export class ManeuveringScreen implements GameScreen {
     this.mouseTarget = null;
     this.touchSteerDir = 0;
     this.touchThrottleDir = 0;
+    this.collisionCount = 0;
     this.waveTime = 0;
     this.damageFlashTimer = 0;
 
@@ -459,8 +473,9 @@ export class ManeuveringScreen implements GameScreen {
       // Track wave animation time
       this.waveTime += dt;
 
-      // Track damage flash
+      // Track damage flash and collision count
       if (collided) {
+        this.collisionCount++;
         this.damageFlashTimer = DAMAGE_FLASH_DURATION;
       }
       if (this.damageFlashTimer > 0) {
@@ -1177,6 +1192,15 @@ export class ManeuveringScreen implements GameScreen {
       this.animFrameId = 0;
     }
 
+    // Calculate docking bonus for successful maneuvering
+    let dockingBonus = 0;
+    let bonusBreakdown: { base: number; time: number; clean: number; multiplier: number; total: number } | null = null;
+    let difficultyRating: DifficultyRating = 3;
+
+    if (this.layout) {
+      difficultyRating = getDifficultyRating(this.layout);
+    }
+
     // Apply results to game state
     const state = this.screenManager.getGameState();
     if (state && this.ship) {
@@ -1192,6 +1216,22 @@ export class ManeuveringScreen implements GameScreen {
         } else {
           // Success: apply any collision damage that occurred
           ownedShip.conditionPercent = this.ship.conditionPercent;
+
+          // Calculate docking bonus
+          const baseBonus = DOCKING_BASE_BONUS[difficultyRating] ?? 18_000;
+          const timeBonus = Math.round(this.timeRemaining * DOCKING_TIME_BONUS_RATE);
+          const cleanBonus = this.collisionCount === 0 ? DOCKING_CLEAN_BONUS : 0;
+          const multiplier = DOCKING_DIFFICULTY_MULTIPLIER[difficultyRating] ?? 1.6;
+          const total = Math.round((baseBonus + timeBonus + cleanBonus) * multiplier);
+
+          bonusBreakdown = { base: baseBonus, time: timeBonus, clean: cleanBonus, multiplier, total };
+          dockingBonus = total;
+
+          // Credit the bonus to player finances
+          const time = getTimeSnapshot(state.time);
+          credit(player.finances, dockingBonus, "Docking bonus — skilled maneuvering", time);
+          recordRevenue(player.statistics, dockingBonus);
+          recordDockingBonus(player.statistics, dockingBonus);
         }
       }
     }
@@ -1200,10 +1240,14 @@ export class ManeuveringScreen implements GameScreen {
     this.render();
 
     // Show result overlay
-    this.showResultOverlay(result);
+    this.showResultOverlay(result, bonusBreakdown, difficultyRating);
   }
 
-  private showResultOverlay(result: "success" | "timeout" | "condition-fail"): void {
+  private showResultOverlay(
+    result: "success" | "timeout" | "condition-fail",
+    bonusBreakdown: { base: number; time: number; clean: number; multiplier: number; total: number } | null,
+    difficultyRating: DifficultyRating,
+  ): void {
     const overlay = document.createElement("div");
     overlay.className = "maneuvering-result-overlay";
 
@@ -1220,9 +1264,10 @@ export class ManeuveringScreen implements GameScreen {
 
     if (result === "success") {
       title.textContent = "Docking Successful!";
-      message.textContent = damageDealt > 0
-        ? `Ship docked safely. Minor collision damage: ${damageDealt}% condition lost.`
-        : "Ship docked without incident. Well done, Captain!";
+      // Get humorous commentary based on performance
+      const timeRemainingPct = this.layout ? this.timeRemaining / this.layout.timeLimit : 0;
+      const commentary = getDockingCommentary(this.collisionCount, timeRemainingPct);
+      message.textContent = commentary;
     } else if (result === "timeout") {
       title.textContent = "Time Expired";
       message.textContent = `Time ran out. The ship was towed in, suffering ${TIMEOUT_DAMAGE}% additional damage. Total damage: ${damageDealt + TIMEOUT_DAMAGE}%.`;
@@ -1234,13 +1279,57 @@ export class ManeuveringScreen implements GameScreen {
     panel.appendChild(title);
     panel.appendChild(message);
 
+    // Docking bonus breakdown (only on success)
+    if (result === "success" && bonusBreakdown) {
+      const bonusPanel = document.createElement("div");
+      bonusPanel.className = "maneuvering-result-bonus";
+
+      const bonusTitle = document.createElement("div");
+      bonusTitle.className = "maneuvering-result-bonus-title";
+      bonusTitle.textContent = "Docking Bonus";
+      bonusPanel.appendChild(bonusTitle);
+
+      const breakdownList = document.createElement("div");
+      breakdownList.className = "maneuvering-result-breakdown";
+
+      const addLine = (label: string, value: number, highlight?: boolean) => {
+        const line = document.createElement("div");
+        line.className = "maneuvering-result-breakdown-line" + (highlight ? " highlight" : "");
+        line.innerHTML = `<span>${label}</span><span>$${value.toLocaleString()}</span>`;
+        breakdownList.appendChild(line);
+      };
+
+      addLine("Base bonus:", bonusBreakdown.base);
+      addLine(`Time bonus (${Math.round(this.timeRemaining)}s left):`, bonusBreakdown.time);
+      if (bonusBreakdown.clean > 0) {
+        addLine("Clean docking (0 collisions):", bonusBreakdown.clean);
+      } else {
+        addLine(`Collisions: ${this.collisionCount}`, 0);
+      }
+      addLine(`Difficulty multiplier (${"\u2693".repeat(difficultyRating)}):`, 0);
+
+      const multiplierLine = document.createElement("div");
+      multiplierLine.className = "maneuvering-result-breakdown-line";
+      multiplierLine.innerHTML = `<span>x${bonusBreakdown.multiplier.toFixed(1)}</span><span></span>`;
+      breakdownList.appendChild(multiplierLine);
+
+      // Total line
+      const totalLine = document.createElement("div");
+      totalLine.className = "maneuvering-result-breakdown-total";
+      totalLine.innerHTML = `<span><strong>Total Bonus:</strong></span><span><strong>$${bonusBreakdown.total.toLocaleString()}</strong></span>`;
+      breakdownList.appendChild(totalLine);
+
+      bonusPanel.appendChild(breakdownList);
+      panel.appendChild(bonusPanel);
+    }
+
     // Condition summary
     const condSummary = document.createElement("div");
     condSummary.className = "maneuvering-result-condition";
     const finalCond = result === "timeout"
       ? Math.max(0, (this.ship?.conditionPercent ?? 0) - TIMEOUT_DAMAGE)
       : (this.ship?.conditionPercent ?? 0);
-    condSummary.textContent = `Ship Condition: ${Math.round(this.initialCondition)}% → ${Math.round(finalCond)}%`;
+    condSummary.textContent = `Ship Condition: ${Math.round(this.initialCondition)}% \u2192 ${Math.round(finalCond)}%`;
     panel.appendChild(condSummary);
 
     // Continue button

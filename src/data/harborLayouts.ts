@@ -44,6 +44,42 @@ export interface LandMass {
 
 export type HarborDifficulty = "easy" | "medium" | "hard";
 
+/** Numeric difficulty rating (1-5) for display and bonus calculations. */
+export type DifficultyRating = 1 | 2 | 3 | 4 | 5;
+
+/** Difficulty label for UI display. */
+export type DifficultyLabel = "Easy" | "Moderate" | "Challenging" | "Hard" | "Expert";
+
+/** Maps HarborDifficulty + layout properties to a numeric rating. */
+const DIFFICULTY_RATING_MAP: Record<string, DifficultyRating> = {
+  "Open Basin": 1,
+  "Mediterranean Harbor": 2,
+  "Channel Turn": 3,
+  "Tropical Harbor": 3,
+  "Industrial Port": 3,
+  "Island Passage": 3,
+  "Narrow Channels": 5,
+  "Arctic Harbor": 4,
+};
+
+/** Get the numeric difficulty rating (1-5) for a harbor layout. */
+export function getDifficultyRating(layout: HarborLayout): DifficultyRating {
+  return DIFFICULTY_RATING_MAP[layout.name] ?? 3;
+}
+
+/** Get the human-readable difficulty label for a rating. */
+export function getDifficultyLabel(rating: DifficultyRating): DifficultyLabel {
+  const labels: Record<DifficultyRating, DifficultyLabel> = {
+    1: "Easy",
+    2: "Moderate",
+    3: "Challenging",
+    4: "Hard",
+    5: "Expert",
+  };
+  return labels[rating];
+}
+
+
 /** Environment theme affects rendering colors and decorations. */
 export type EnvironmentTheme =
   | "standard"
@@ -817,4 +853,11 @@ export function getLayoutForPort(portId: string): HarborLayout {
   }
   const index = Math.abs(hash) % HARBOR_LAYOUTS.length;
   return HARBOR_LAYOUTS[index];
+}
+
+/** Get the difficulty rating for a specific port by its ID. */
+export function getPortDifficulty(portId: string): { rating: DifficultyRating; label: DifficultyLabel } {
+  const layout = getLayoutForPort(portId);
+  const rating = getDifficultyRating(layout);
+  return { rating, label: getDifficultyLabel(rating) };
 }

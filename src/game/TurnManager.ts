@@ -47,20 +47,39 @@ export function getActivePlayerNumber(state: TurnState): number {
 }
 
 /**
- * Advance to the next player's turn.
+ * Advance to the next player's turn, skipping exited (retired/bankrupt) players.
  * Returns true if a new round has started (all players have taken a turn).
+ * @param exitedPlayerIndices - 0-based indices of players who have exited the game
  */
-export function nextTurn(state: TurnState): boolean {
+export function nextTurn(state: TurnState, exitedPlayerIndices?: number[]): boolean {
   state.isSimulationRunning = false;
-  state.activePlayerIndex++;
 
+  const exited = exitedPlayerIndices ?? [];
+
+  // Advance at least once
+  state.activePlayerIndex++;
   if (state.activePlayerIndex >= state.playerCount) {
     state.activePlayerIndex = 0;
     state.round++;
-    return true; // New round started
   }
 
-  return false;
+  // Track whether we wrapped around (new round)
+  const startIndex = state.activePlayerIndex;
+  let newRound = startIndex === 0;
+
+  // Skip exited players
+  let iterations = 0;
+  while (exited.includes(state.activePlayerIndex) && iterations < state.playerCount) {
+    state.activePlayerIndex++;
+    if (state.activePlayerIndex >= state.playerCount) {
+      state.activePlayerIndex = 0;
+      state.round++;
+      newRound = true;
+    }
+    iterations++;
+  }
+
+  return newRound;
 }
 
 /**

@@ -59,6 +59,14 @@ export class WorldMapCanvas {
   private blockedPortIds: Set<string> = new Set();
   /** Port IDs with a cost multiplier > 1 from world events (not blocked). */
   private affectedPortIds: Set<string> = new Set();
+  /** Port IDs that should show a wrench icon (ship needs repairs, port has cheap repairs). */
+  private repairNeededPortIds: Set<string> = new Set();
+  /** Port IDs that should show a fuel icon (ship needs fuel, port has cheap fuel). */
+  private fuelNeededPortIds: Set<string> = new Set();
+  /** Port ID with the cheapest repairs (gets a subtle glow). */
+  private cheapestRepairPortId: string | null = null;
+  /** Port ID with the cheapest fuel (gets a subtle glow). */
+  private cheapestFuelPortId: string | null = null;
 
   // Map rendering constants
   private readonly OCEAN_COLOR = "#0a1e3d";
@@ -147,6 +155,25 @@ export class WorldMapCanvas {
   /** Set port IDs that are affected (cost multiplier) by world events. */
   setAffectedPorts(portIds: string[]): void {
     this.affectedPortIds = new Set(portIds);
+    this.render();
+  }
+
+  /** Set port IDs that should show a wrench (repair needed) icon. */
+  setRepairNeededPorts(portIds: string[]): void {
+    this.repairNeededPortIds = new Set(portIds);
+    this.render();
+  }
+
+  /** Set port IDs that should show a fuel drop icon. */
+  setFuelNeededPorts(portIds: string[]): void {
+    this.fuelNeededPortIds = new Set(portIds);
+    this.render();
+  }
+
+  /** Set the cheapest repair and fuel port IDs for highlighting. */
+  setCheapestPorts(repairPortId: string | null, fuelPortId: string | null): void {
+    this.cheapestRepairPortId = repairPortId;
+    this.cheapestFuelPortId = fuelPortId;
     this.render();
   }
 
@@ -410,6 +437,59 @@ export class WorldMapCanvas {
         this.ctx.arc(marker.x, dotY, 2.5, 0, Math.PI * 2);
         this.ctx.fillStyle = this.AFFECTED_PORT_COLOR;
         this.ctx.fill();
+      }
+
+      // Draw cheapest port glow
+      const isCheapestRepair = this.cheapestRepairPortId === marker.port.id;
+      const isCheapestFuel = this.cheapestFuelPortId === marker.port.id;
+      if ((isCheapestRepair || isCheapestFuel) && !isBlocked) {
+        this.ctx.beginPath();
+        this.ctx.arc(marker.x, marker.y, radius + 5, 0, Math.PI * 2);
+        this.ctx.strokeStyle = isCheapestRepair ? "rgba(100, 220, 100, 0.5)" : "rgba(100, 180, 255, 0.5)";
+        this.ctx.lineWidth = 1.5;
+        this.ctx.stroke();
+      }
+
+      // Draw need-based icons (wrench for repair, fuel drop for fuel)
+      const showRepairIcon = this.repairNeededPortIds.has(marker.port.id) && !isBlocked;
+      const showFuelIcon = this.fuelNeededPortIds.has(marker.port.id) && !isBlocked;
+
+      if (showRepairIcon || showFuelIcon) {
+        let iconOffsetX = 0;
+
+        if (showRepairIcon) {
+          // Draw small wrench icon to the right of the port dot
+          const ix = marker.x + radius + 4 + iconOffsetX;
+          const iy = marker.y - 3;
+          this.ctx.strokeStyle = "#66dd66";
+          this.ctx.lineWidth = 1.5;
+          this.ctx.beginPath();
+          // Simple wrench shape: diagonal line with small circles at ends
+          this.ctx.moveTo(ix, iy);
+          this.ctx.lineTo(ix + 5, iy + 5);
+          this.ctx.stroke();
+          this.ctx.beginPath();
+          this.ctx.arc(ix, iy, 1.5, 0, Math.PI * 2);
+          this.ctx.fillStyle = "#66dd66";
+          this.ctx.fill();
+          this.ctx.beginPath();
+          this.ctx.arc(ix + 5, iy + 5, 1.5, 0, Math.PI * 2);
+          this.ctx.fill();
+          iconOffsetX += 10;
+        }
+
+        if (showFuelIcon) {
+          // Draw small fuel drop icon
+          const ix = marker.x + radius + 4 + iconOffsetX;
+          const iy = marker.y - 4;
+          this.ctx.fillStyle = "#66aaff";
+          this.ctx.beginPath();
+          // Teardrop shape
+          this.ctx.moveTo(ix + 2.5, iy);
+          this.ctx.quadraticCurveTo(ix + 6, iy + 5, ix + 2.5, iy + 7);
+          this.ctx.quadraticCurveTo(ix - 1, iy + 5, ix + 2.5, iy);
+          this.ctx.fill();
+        }
       }
     }
   }
